@@ -44,7 +44,7 @@ export default function SkillsAdmin() {
   }
 
   return <div className="grid gap-6">
-    <Heading title={t('route_skills')} subtitle={t('cms_skills_subtitle')} />
+    <div className="grid gap-2"><Heading>t('route_skills')</Heading><p className="text-body text-foreground-muted">t('cms_skills_subtitle')</p></div>
     <SaveState message={saved} error={error}/>
     {invalidCount>0&&<p role="alert" className="text-body text-danger">{t('cms_invalid_items',{count:invalidCount})}</p>}
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
