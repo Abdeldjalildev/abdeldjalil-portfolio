@@ -85,7 +85,7 @@ function linkHref(link: ContactLink): string {
     case 'email':
       return value.startsWith('mailto:') ? value : `mailto:${value}`
     case 'phone':
-      return value.startsWith('tel:') ? value : `tel:${value.replace(/\\s+/g, '')}`
+      return value.startsWith('tel:') ? value : `tel:${value.replaceAll(' ', '')}`
     case 'whatsapp': {
       const digits = value.replace(/[^0-9]/g, '')
       return value.startsWith('http') ? value : `https://wa.me/${digits}`
