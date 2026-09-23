@@ -441,6 +441,13 @@ await expectAllow('admin create review as pending with publishedAt null', () =>
     updatedAt: serverTimestamp(),
   }),
 )
+await expectDeny('admin publish a pending review directly', () =>
+  updateDoc(doc(adminDb, 'reviews/new-review'), {
+    status: 'published',
+    publishedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }),
+)
 await expectAllow('admin approve a pending review (pending -> approved)', () =>
   updateDoc(doc(adminDb, 'reviews/new-review'), {
     status: 'approved',
@@ -565,6 +572,19 @@ await expectDeny('admin update project with a backdated client updatedAt', () =>
     order: 2,
     updatedAt: BACKDATED,
   }),
+)
+await expectDeny('admin move an approved review back to pending', () =>
+  updateDoc(doc(adminDb, 'reviews/new-review'), {
+    status: 'pending',
+    publishedAt: null,
+    updatedAt: serverTimestamp(),
+  }),
+)
+await expectDeny('admin create contact link with javascript target', () =>
+  setDoc(doc(adminDb, 'contactLinks/bad-target'), withStamps(validContactLink({ type: 'github', value: 'javascript:alert(1)' }))),
+)
+await expectDeny('admin create contact link with invalid phone target', () =>
+  setDoc(doc(adminDb, 'contactLinks/bad-phone'), withStamps(validContactLink({ type: 'phone', value: 'not-a-phone' }))),
 )
 await expectDeny('admin create review with rating 6', () =>
   setDoc(doc(adminDb, 'reviews/bad-rating-high'), withStamps(validReview({ rating: 6 }))),
