@@ -72,7 +72,7 @@ export default function ProfileAdmin() {
 
   return (
     <div className="grid gap-6">
-      <Heading title={t('route_profile')} subtitle={t('cms_profile_subtitle')} />
+      <div className="grid gap-2"><Heading>t('route_profile')</Heading><p className="text-body text-foreground-muted">t('cms_profile_subtitle')</p></div>
       <Surface as="section" padding="lg">
         <form className="grid gap-6" onSubmit={submit}>
           <div className="grid gap-4 md:grid-cols-2">
