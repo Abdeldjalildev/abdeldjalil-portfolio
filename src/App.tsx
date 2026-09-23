@@ -13,6 +13,11 @@ import LoadingFallback from './components/ui/LoadingFallback.tsx'
 import { AdminAccessBoundary } from './routes/AdminAccessBoundary.tsx'
 import { AuthProvider } from './auth/AuthProvider.tsx'
 import { useI18n } from './i18n/context.ts'
+import About from './features/public/About.tsx'
+import Services from './features/public/Services.tsx'
+import ProfileAdmin from './features/cms/ProfileAdmin.tsx'
+import ServicesAdmin from './features/cms/ServicesAdmin.tsx'
+import SkillsAdmin from './features/cms/SkillsAdmin.tsx'
 import type { TranslationKey } from './i18n/types.ts'
 
 const placeholder = (key: TranslationKey) => {
@@ -52,12 +57,12 @@ const router = createBrowserRouter([
       {
         path: 'about',
         handle: { title: 'About' } as RootHandle,
-        element: placeholder('route_about'),
+        element: <About />,
       },
       {
         path: 'services',
         handle: { title: 'Services' } as RootHandle,
-        element: placeholder('route_services'),
+        element: <Services />,
       },
       {
         path: 'reviews',
@@ -98,10 +103,10 @@ const router = createBrowserRouter([
         children: [
           { index: true, handle: { title: 'Dashboard' } as RootHandle, element: placeholder('route_dashboard') },
           { path: 'projects', handle: { title: 'Projects' } as RootHandle, element: placeholder('route_projects') },
-          { path: 'services', handle: { title: 'Services' } as RootHandle, element: placeholder('route_services') },
-          { path: 'skills', handle: { title: 'Skills' } as RootHandle, element: placeholder('route_skills') },
+          { path: 'services', handle: { title: 'Services' } as RootHandle, element: <ServicesAdmin /> },
+          { path: 'skills', handle: { title: 'Skills' } as RootHandle, element: <SkillsAdmin /> },
           { path: 'reviews', handle: { title: 'Reviews' } as RootHandle, element: placeholder('route_reviews') },
-          { path: 'profile', handle: { title: 'Profile' } as RootHandle, element: placeholder('route_profile') },
+          { path: 'profile', handle: { title: 'Profile' } as RootHandle, element: <ProfileAdmin /> },
           { path: 'contact', handle: { title: 'Contact & Social' } as RootHandle, element: placeholder('route_contact') },
           { path: 'analytics', handle: { title: 'Analytics' } as RootHandle, element: placeholder('route_analytics') },
           { path: 'settings', handle: { title: 'Settings' } as RootHandle, element: placeholder('route_settings') },
