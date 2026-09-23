@@ -1,15 +1,14 @@
 /**
  * Phase 06 — Public footer.
  *
- * Renders only published public social/contact links from the Phase 05
- * `contactLinks/{linkId}` collection (published: true). No private config,
- * no admin-only data, no submission workflow.
+ * Renders only published public social/contact links. Firestore documents cross
+ * the Phase 05 runtime schema boundary before entering the UI.
  */
-
 import { type JSX, type ReactNode, useEffect, useState } from 'react'
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore'
 import { getFirebaseApp } from '../../firebase/app.ts'
 import type { ContactLink } from '../../data/types.ts'
+import { contactLinkSchema, validate } from '../../data/schema/index.ts'
 import type { Locale } from '../../data/enums.ts'
 import { contactLinksPath } from '../../data/paths.ts'
 import { useI18n } from '../../i18n/context.ts'
@@ -28,19 +27,18 @@ export function PublicFooter(): ReactNode {
     const fetchLinks = async () => {
       try {
         const db = getFirestore(getFirebaseApp())
-        const q = query(
-          collection(db, contactLinksPath()),
-          where('published', '==', true),
-        )
+        const q = query(collection(db, contactLinksPath()), where('published', '==', true))
         const snapshot = await getDocs(q)
         const links = snapshot.docs
-          .map((doc) => doc.data() as ContactLink)
-          .filter((doc) => doc.published)
+          .map((doc) => validate(contactLinkSchema, doc.data(), doc.ref.path))
+          .filter((result): result is { ok: true; value: ContactLink } => result.ok)
+          .map((result) => result.value)
+          .filter((link) => link.published)
           .sort((a, b) => a.order - b.order)
         setState({ status: 'ready', links })
       } catch {
         // Public data is enhancement, not identity: the footer degrades to its
-        // static content instead of surfacing an error to visitors.
+        // static content instead of surfacing internal data errors to visitors.
         setState({ status: 'error' })
       }
     }
@@ -76,28 +74,18 @@ export function PublicFooter(): ReactNode {
   )
 }
 
-/**
- * Locale-aware label per the Phase 05 fallback rule: use the active locale's
- * text; when the Arabic translation is empty ("translation pending"), fall
- * back to English. Non-`en` empty text never reaches the visitor.
- */
 function linkLabel(link: ContactLink, locale: Locale): string {
   const localized = link.label[locale]
   return localized || link.label.en
 }
 
-/**
- * Build a usable href from the stored value. Phase 05 permits bare email
- * addresses and phone numbers for their respective types; web types require
- * https:// at the rules/schema layer, so only the missing schemes need adding.
- */
 function linkHref(link: ContactLink): string {
   const value = link.value.trim()
   switch (link.type) {
     case 'email':
       return value.startsWith('mailto:') ? value : `mailto:${value}`
     case 'phone':
-      return value.startsWith('tel:') ? value : `tel:${value.replace(/\s+/g, '')}`
+      return value.startsWith('tel:') ? value : `tel:${value.replace(/\\s+/g, '')}`
     case 'whatsapp': {
       const digits = value.replace(/[^0-9]/g, '')
       return value.startsWith('http') ? value : `https://wa.me/${digits}`
@@ -125,8 +113,6 @@ function SocialLink({ link, locale }: { link: ContactLink; locale: Locale }): JS
   )
 }
 
-// Minimal icon set — inline SVG, no external dependency.
-// Each icon is direction-agnostic and sized to 18×18px.
 function getIconForType(type: string): JSX.Element {
   const common = {
     width: 18,
