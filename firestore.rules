@@ -373,10 +373,17 @@ service cloud.firestore {
               : request.resource.data.publishedAt == request.time);
       }
 
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
       allow read: if resource.data.status == 'published' || isAdmin();
-      allow create: if isAdmin() && valid() && publishedAtOkOnCreate()
-        && timestampsOkOnCreate();
-      allow update: if isAdmin() && valid() && publishedAtOkOnUpdate()
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
         && timestampsOkOnUpdate();
       allow delete: if isAdmin();
     }
