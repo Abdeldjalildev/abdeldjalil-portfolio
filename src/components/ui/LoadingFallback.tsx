@@ -1,16 +1,13 @@
 import { type ReactNode } from 'react'
+import { useI18n } from '../../i18n/context.ts'
 
-/**
- * Phase 03 — Loading fallback.
- *
- * Used as the fallback for React 19's <Suspense> boundaries when future routes
- * are lazy-loaded. Purely visual, no data fetching and no business logic.
- */
 export default function LoadingFallback(): ReactNode {
+  const { t } = useI18n()
+
   return (
     <div
       role="status"
-      aria-label="Loading"
+      aria-label={t('loading_label')}
       className="grid min-h-[12rem] place-items-center"
     >
       <div className="size-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
