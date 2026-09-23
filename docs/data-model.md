@@ -70,3 +70,10 @@ Project media is never uploaded directly into a public project path while the pr
 6. Failed publish/unpublish writes attempt a best-effort media rollback rather than silently leaving the promoted object in place.
 
 This staging design is required because Storage rules cannot inspect the referenced Firestore publication state. Public project media paths therefore contain only media that belongs to the public content lifecycle.
+
+
+## Phase 10 — Reviews and contact publication contract
+
+Reviews use the moderation states `pending`, `approved`, and `published`. Public queries must constrain reads to `status == 'published'`; approved and pending reviews remain admin-only. A newly created review must start pending. The allowed moderation transitions are pending → approved → published and published → approved for unpublishing; keeping the same status is allowed for content edits. `publishedAt` is server-stamped when a review first becomes published and remains unchanged while it stays published.
+
+Contact links are public only when `published == true`. Their target is validated by type: web/social/custom targets use HTTPS, email uses a bare email or mailto target, phone uses a bare number or tel target, and WhatsApp uses HTTPS or a phone number. The same safety boundary is checked in the Firestore rules and the application validation layer.
