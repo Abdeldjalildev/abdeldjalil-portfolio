@@ -28,6 +28,15 @@ function localized(value: { en: string; ar: string }, locale: 'en' | 'ar') {
   return locale === 'ar' && value.ar ? value.ar : value.en
 }
 
+function contactHref(link: ContactLink): string {
+  if (link.type === 'email') return link.value.startsWith('mailto:') ? link.value : `mailto:${link.value}`
+  if (link.type === 'phone') return link.value.startsWith('tel:') ? link.value : `tel:${link.value}`
+  if (link.type === 'whatsapp' && !link.value.startsWith('https://')) {
+    return `https://wa.me/${link.value.replace(/\\D/g, '')}`
+  }
+  return link.value
+}
+
 export default function Home() {
   const { locale, t } = useI18n()
   const [data, setData] = useState<HomeData | null>(null)
@@ -261,9 +270,9 @@ export default function Home() {
             {data.contactLinks.slice(0, 4).map(link => (
               <a
                 key={link.id}
-                href={link.type === 'email' && !link.value.startsWith('mailto:') ? `mailto:${link.value}` : link.type === 'phone' && !link.value.startsWith('tel:') ? `tel:${link.value}` : link.value}
-                target={link.type === 'email' || link.type === 'phone' || link.type === 'whatsapp' ? undefined : '_blank'}
-                rel={link.type === 'email' || link.type === 'phone' || link.type === 'whatsapp' ? undefined : 'noopener noreferrer'}
+                href={contactHref(link)}
+                target={link.type === 'email' || link.type === 'phone' ? undefined : '_blank'}
+                rel={link.type === 'email' || link.type === 'phone' ? undefined : 'noopener noreferrer'}
                 className="text-sm text-foreground-muted underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               >
                 {localized(link.label, locale)}
