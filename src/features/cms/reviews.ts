@@ -40,9 +40,15 @@ export async function saveReview(id: string, input: ReviewInput, expectedUpdated
         (current.value.status === 'published' && input.status === 'approved')
       if (!allowed) throw new Error('INVALID_REVIEW_TRANSITION')
     }
+    const publicationTimestamp =
+      input.status !== 'published'
+        ? null
+        : current.value.status === 'published'
+          ? current.value.publishedAt
+          : serverTimestamp()
     transaction.update(reference, {
       ...input,
-      publishedAt: input.status === 'published' ? serverTimestamp() : null,
+      publishedAt: publicationTimestamp,
       updatedAt: serverTimestamp(),
     })
   })
