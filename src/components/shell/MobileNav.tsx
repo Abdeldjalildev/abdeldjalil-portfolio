@@ -51,7 +51,7 @@ export function MobileNav({ open, onClose }: MobileNavProps): ReactNode {
 
       const focusable = Array.from(
         panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      ).filter((element) => element.offsetParent !== null)
+      ).filter((element) => element.getClientRects().length > 0)
 
       if (focusable.length === 0) {
         event.preventDefault()
