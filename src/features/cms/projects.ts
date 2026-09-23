@@ -79,10 +79,10 @@ export async function getProject(slug: string): Promise<ProjectRecord | null> {
 }
 
 export async function getPublishedProject(slug: string): Promise<ProjectRecord | null> {
-  const snapshot = await getDoc(doc(db, projectPath(slug)))
-  if (!snapshot.exists()) return null
-
   try {
+    const snapshot = await getDoc(doc(db, projectPath(slug)))
+    if (!snapshot.exists()) return null
+
     const project = documentOrThrow(projectSchema, snapshot.data())
     return project.published ? { ...project, id: snapshot.id } : null
   } catch (error) {
