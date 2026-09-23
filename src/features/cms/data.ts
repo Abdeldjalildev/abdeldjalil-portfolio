@@ -9,7 +9,6 @@ import {
   runTransaction,
   serverTimestamp,
   where,
-  type DocumentData,
 } from 'firebase/firestore'
 import { getFirestore } from 'firebase/firestore'
 import { getFirebaseApp } from '../../firebase/app.ts'
@@ -107,8 +106,24 @@ export async function listServices(publishedOnly = false) {
   return listCollection<Service>(servicesPath(), serviceSchema, publishedOnly)
 }
 
-export async function listSkills(publishedOnly = false) {
-  return listCollection<Skill>(skillsPath(), skillSchema, publishedOnly)
+export type SkillRecord = Skill & { id: string }
+
+export async function listSkills(publishedOnly = false): Promise<{ items: SkillRecord[]; invalidCount: number }> {
+  const base = collection(db, skillsPath())
+  const q = publishedOnly
+    ? query(base, where('published', '==', true), orderBy('order', 'asc'))
+    : query(base, orderBy('order', 'asc'))
+  const snapshot = await getDocs(q)
+  const items: SkillRecord[] = []
+  let invalidCount = 0
+  for (const item of snapshot.docs) {
+    try {
+      items.push({ ...documentOrThrow(skillSchema, item.data()), id: item.id })
+    } catch {
+      invalidCount += 1
+    }
+  }
+  return { items, invalidCount }
 }
 
 export async function saveService(input: ServiceInput, expectedUpdatedAt?: Service['updatedAt']): Promise<void> {
@@ -135,9 +150,10 @@ export async function deleteService(service: Service): Promise<void> {
   await deleteDoc(doc(db, servicePath(service.slug)))
 }
 
-export async function saveSkill(input: SkillInput, expectedUpdatedAt?: Skill['updatedAt']): Promise<void> {
+export async function saveSkill(input: SkillInput, id?: string, expectedUpdatedAt?: Skill['updatedAt']): Promise<void> {
   const value = inputOrThrow(skillInputSchema, input)
-  const ref = doc(db, `${skillsPath()}/${value.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'skill'}`)
+  const skillId = id ?? crypto.randomUUID()
+  const ref = doc(db, `${skillsPath()}/${skillId}`)
 
   await runTransaction(db, async (transaction) => {
     const current = await transaction.get(ref)
@@ -155,7 +171,6 @@ export async function saveSkill(input: SkillInput, expectedUpdatedAt?: Skill['up
   })
 }
 
-export async function deleteSkill(skill: Skill): Promise<void> {
-  const id = skill.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'skill'
-  await deleteDoc(doc(db, `${skillsPath()}/${id}`))
+export async function deleteSkill(skill: SkillRecord): Promise<void> {
+  await deleteDoc(doc(db, `${skillsPath()}/${skill.id}`))
 }
