@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "admin:claim": "node scripts/provision-admin.mjs",
-    "test:rules": "firebase emulators:exec --only firestore,storage \"node scripts/test-rules.mjs\""
+    "test:rules": "firebase emulators:exec --only firestore,storage \"node scripts/test-rules.mjs\"",
+    "test:schema": "node scripts/test-schema.ts"
   },
   "dependencies": {
     "firebase": "^12.19.0",
