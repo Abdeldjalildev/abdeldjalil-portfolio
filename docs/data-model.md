@@ -50,6 +50,23 @@ Public media grants object `get`, not bucket listing. SVG is intentionally exclu
 
 ## Featured project invariant
 
-`settings/main.featuredProjectId` is the single source of truth. This avoids pretending that a cross-document boolean uniqueness constraint can be enforced by Firestore rules.
+`settings/main.featuredProjectId` is the single source of truth. The field contains at most one project ID, so there is no per-project boolean uniqueness race.
 
-Cross-document checks such as referenced-project existence/publication remain an application/server responsibility for the later CMS phases.
+The Phase 08 Firestore rules now enforce the cross-document invariant at the security boundary:
+- a non-null featured project ID must reference an existing published project;
+- a project cannot be unpublished while it is the featured project;
+- a featured project cannot be deleted;
+- selecting/clearing the featured project is performed by an atomic Firestore transaction.
+
+## Project media lifecycle
+
+Project media is never uploaded directly into a public project path while the project is being drafted.
+
+1. Admin uploads are validated client-side for type and size, and Storage rules independently enforce the same ceilings.
+2. New media is uploaded to `drafts/project-{slug}-thumbnail/*` or `drafts/project-{slug}-gallery/*`.
+3. Publishing promotes referenced draft objects into `projects/{slug}/thumbnail/*` or `projects/{slug}/gallery/*`.
+4. Unpublishing moves the referenced public objects back into the admin-only draft area before the Firestore document is changed to unpublished.
+5. Removed media is deleted after a successful Firestore write.
+6. Failed publish/unpublish writes attempt a best-effort media rollback rather than silently leaving the promoted object in place.
+
+This staging design is required because Storage rules cannot inspect the referenced Firestore publication state. Public project media paths therefore contain only media that belongs to the public content lifecycle.
