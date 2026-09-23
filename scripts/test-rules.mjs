@@ -413,6 +413,21 @@ await expectAllow('admin set featuredProjectId (single-source-of-truth field)', 
     updatedAt: serverTimestamp(),
   }),
 )
+await expectDeny('admin feature an unpublished project', () =>
+  updateDoc(doc(adminDb, 'settings/main'), {
+    featuredProjectId: 'draft-project',
+    updatedAt: serverTimestamp(),
+  }),
+)
+await expectDeny('admin unpublish the currently featured project', () =>
+  updateDoc(doc(adminDb, 'projects/published-project'), {
+    published: false,
+    updatedAt: serverTimestamp(),
+  }),
+)
+await expectDeny('admin delete the currently featured project', () =>
+  deleteDoc(doc(adminDb, 'projects/published-project')),
+)
 await expectAllow('admin update profile content', () =>
   updateDoc(doc(adminDb, 'profile/main'), {
     headline: localized('Senior frontend engineer'),
