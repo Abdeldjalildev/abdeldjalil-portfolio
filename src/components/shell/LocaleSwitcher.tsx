@@ -1,19 +1,12 @@
 /**
  * Phase 06 — Locale switcher.
  *
- * Accessible two-option toggle: English ↔ Arabic. Persists the choice to
- * localStorage (locale only) and lets the <I18nProvider> effect apply
- * lang/dir to the document element — no page reload required.
+ * Accessible two-option toggle. Persists the choice to localStorage and lets
+ * the I18nProvider synchronize the document lang/dir without a reload.
  */
-
 import { type JSX } from 'react'
 import { useI18n } from '../../i18n/context.ts'
 import type { Locale } from '../../data/enums.ts'
-
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  ar: 'العربية',
-}
 
 export function LocaleSwitcher(): JSX.Element {
   const { locale, setLocale, t } = useI18n()
@@ -27,11 +20,15 @@ export function LocaleSwitcher(): JSX.Element {
       aria-label={t('locale_switch_label')}
       title={t('locale_switch_label')}
     >
-      <span aria-hidden="true">{LOCALE_LABELS[locale]}</span>
+      <span aria-hidden="true">
+        {locale === 'en' ? t('locale_english') : t('locale_arabic')}
+      </span>
       <span aria-hidden="true" className="text-xs opacity-60">
         /
       </span>
-      <span className="font-semibold">{LOCALE_LABELS[nextLocale]}</span>
+      <span className="font-semibold">
+        {nextLocale === 'en' ? t('locale_english') : t('locale_arabic')}
+      </span>
     </button>
   )
 }
