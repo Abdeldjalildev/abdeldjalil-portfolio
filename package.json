@@ -12,7 +12,8 @@
     "test:rules": "firebase emulators:exec --only firestore,storage \"node scripts/test-rules.mjs\"",
     "test:schema": "node scripts/test-schema.ts",
     "test:phase07": "node scripts/test-phase07.mjs",
-    "test:phase08": "node scripts/test-phase08.mjs"
+    "test:phase08": "node scripts/test-phase08.mjs",
+    "test:phase09": "node scripts/test-phase09.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",
