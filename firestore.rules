@@ -200,7 +200,9 @@ service cloud.firestore {
           && isLocalized(request.resource.data.siteDescription, 320)
           && request.resource.data.defaultLocale in ['en', 'ar']
           && (request.resource.data.featuredProjectId == null
-              || isSlug(request.resource.data.featuredProjectId));
+              || (isSlug(request.resource.data.featuredProjectId)
+                  && exists(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId))
+                  && get(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId)).data.published == true));
       }
 
       allow read: if true;
@@ -261,8 +263,11 @@ service cloud.firestore {
       allow create: if isAdmin() && valid() && timestampsOkOnCreate();
       // slug is immutable: it is the document id and the public URL segment.
       allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
-        && request.resource.data.slug == resource.data.slug;
-      allow delete: if isAdmin();
+        && request.resource.data.slug == resource.data.slug
+        && (request.resource.data.published == true
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
+      allow delete: if isAdmin()
+        && get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId;
     }
 
     /**
