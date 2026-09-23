@@ -78,6 +78,22 @@ export async function getProject(slug: string): Promise<ProjectRecord | null> {
   return { ...documentOrThrow(projectSchema, snapshot.data()), id: snapshot.id }
 }
 
+export async function getPublishedProject(slug: string): Promise<ProjectRecord | null> {
+  const snapshot = await getDoc(doc(db, projectPath(slug)))
+  if (!snapshot.exists()) return null
+
+  try {
+    const project = documentOrThrow(projectSchema, snapshot.data())
+    return project.published ? { ...project, id: snapshot.id } : null
+  } catch (error) {
+    const code = error && typeof error === 'object' && 'code' in error
+      ? String((error as { code?: unknown }).code)
+      : ''
+    if (code === 'permission-denied') return null
+    throw error
+  }
+}
+
 export async function getFeaturedProjectId(): Promise<string | null> {
   const snapshot = await getDoc(doc(db, 'settings/main'))
   if (!snapshot.exists()) return null
