@@ -5,7 +5,6 @@ import { useI18n } from '../../i18n/context.ts'
 import { Heading } from '../../components/ui/Heading.tsx'
 import { Surface } from '../../components/ui/Surface.tsx'
 import { Text } from '../../components/ui/Text.tsx'
-import { Button } from '../../components/ui/Button.tsx'
 
 type ContactRecord = ContactLink & { id: string }
 
@@ -40,7 +39,7 @@ export default function Contact() {
           const external = href.startsWith('https://')
           return <Surface as="article" key={link.id} className="flex items-center justify-between gap-4">
             <div className="min-w-0"><Heading level={2}>{link.label[locale] || link.label.en}</Heading><Text variant="muted" className="truncate">{link.value}</Text></div>
-            <Button as="a" href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>{t('contact_open')}</Button>
+            <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined} className="inline-flex h-11 shrink-0 items-center justify-center rounded-md bg-accent px-5 text-body font-medium text-accent-foreground transition-standard hover:bg-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">{t('contact_open')}</a>
           </Surface>
         })}
       </div>
