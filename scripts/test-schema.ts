@@ -147,6 +147,11 @@ test('schemas reject structural and security-sensitive malformed values', () => 
 
   const badMedia = { ...validProject(), thumbnailPath: '../secret.webp' }
   assert.equal(validate(projectSchema, badMedia, 'project').ok, false)
+  const tooManyGalleryImages = { ...validProject(), galleryPaths: Array.from({ length: 13 }, (_, index) => `projects/project/gallery/${index}.webp`) }
+  assert.equal(validate(projectSchema, tooManyGalleryImages, 'project').ok, false)
+
+  const tooManyProjectLinks = { ...validProject(), links: Array.from({ length: 11 }, (_, index) => ({ label: localized(`Link ${index}`), url: 'https://example.com' })) }
+  assert.equal(validate(projectSchema, tooManyProjectLinks, 'project').ok, false)
 
   const badRating = { ...validReview(), rating: 6 }
   assert.equal(validate(reviewSchema, badRating, 'review').ok, false)
