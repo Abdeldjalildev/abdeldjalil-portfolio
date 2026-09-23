@@ -1,0 +1,74 @@
+/*
+ * Phase 02 base layer: element defaults, Arabic/RTL typography rules, focus contract
+ * and the mandatory reduced-motion behaviour. All of it is direction-agnostic.
+ */
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background-color: var(--color-background);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Arabic: dedicated stack, generous leading, and never negative tracking. */
+  [lang='ar'],
+  [dir='rtl'] {
+    font-family: var(--font-arabic);
+  }
+
+  [lang='ar'] :is(h1, h2, h3, h4, h5, h6),
+  [dir='rtl'] :is(h1, h2, h3, h4, h5, h6) {
+    letter-spacing: normal;
+    line-height: 1.35;
+  }
+
+  [lang='ar'] :is(p, li),
+  [dir='rtl'] :is(p, li) {
+    line-height: 1.9;
+  }
+
+  /* Focus is never removed. One visible ring for every interactive element. */
+  :where(a, button, input, select, summary, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+
+  /* Logical-property default: indentation follows the writing direction. */
+  :where(ul, ol) {
+    padding-inline-start: 1.25rem;
+  }
+}
+
+/*
+ * Mandatory reduced-motion support. Motion is removed, functionality is not:
+ * nothing is hidden, focus rings and state changes still apply instantly.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,146 @@
+rules_version = '2';
+
+/**
+ * Abdeldjalil Portfolio — Cloud Storage Security Rules (Phase 05 contract).
+ *
+ * AUTHORITATIVE LAYER
+ *   These rules are the security boundary for Storage. As with Firestore, the
+ *   only trusted authorization source is the Phase 04 admin claim:
+ *   request.auth.token.admin == true. No client field, URL parameter or UI state
+ *   can grant write access.
+ *
+ * POSTURE
+ *   Deny by default. Only the contracted path shapes below are matched; every
+ *   other path falls to the final catch-all and is unreadable and unwritable.
+ *
+ * PUBLIC MEDIA IS `get`, NEVER `list`
+ *   Public content media only grants single-object `get`. There is no `allow list`
+ *   anywhere, so the bucket can never be enumerated by a client even though
+ *   individual objects are public — which is what a portfolio needs.
+ *
+ * SVG IS DELIBERATELY EXCLUDED
+ *   Only raster content types are accepted for images. An uploaded SVG is an
+ *   active document; serving one from the site origin is a script-injection
+ *   vector. Brand/UI icons are inline SVG in the app, not uploaded media.
+ *
+ * DOCUMENTED LIMITATION — PUBLISH STATE CANNOT BE EVALUATED HERE
+ *   Storage rules cannot read the referencing Firestore document, so they cannot
+ *   know whether a project is published. Media that must stay private until
+ *   publication MUST be staged under `drafts/` (admin-only) and copied to a
+ *   content path as part of publishing. This is a declared Phase 08 obligation,
+ *   recorded in docs/data-model.md rather than silently assumed.
+ */
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    /** The Phase 04 trusted admin claim. */
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    /**
+     * One path segment: bounded, no slashes.
+     * The pattern requires the first character to be alphanumeric, which makes
+     * '.' and '..' segments impossible. Deliberate: rules `split()` takes a
+     * REGEX, so `split('..')` would mean "any two characters" and be wrong.
+     */
+    function isSafeSegment(seg) {
+      return seg is string && seg.size() > 0 && seg.size() <= 100
+        && seg.matches('^[A-Za-z0-9][A-Za-z0-9._-]*$');
+    }
+
+    /** Raster images only — see the SVG note above. */
+    function isRasterImage() {
+      return request.resource.contentType in ['image/png', 'image/jpeg',
+                                              'image/webp', 'image/avif'];
+    }
+
+    function isPdf() {
+      return request.resource.contentType == 'application/pdf';
+    }
+
+    /** Admin write of a raster image within the size ceiling for that path. */
+    function canWriteImage(maxBytes) {
+      return isAdmin() && isRasterImage() && request.resource.size <= maxBytes;
+    }
+
+    function canWritePdf(maxBytes) {
+      return isAdmin() && isPdf() && request.resource.size <= maxBytes;
+    }
+
+    // ----------------------------------------- public content media (approved)
+    // Read: public single-object get. Write: admin only, validated.
+
+    match /profile/avatar/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(fileName) && canWriteImage(2097152);
+      allow update: if isSafeSegment(fileName) && canWriteImage(2097152);
+      allow delete: if isAdmin();
+    }
+
+    match /profile/resume/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(fileName) && canWritePdf(10485760);
+      allow update: if isSafeSegment(fileName) && canWritePdf(10485760);
+      allow delete: if isAdmin();
+    }
+
+    match /projects/{projectId}/thumbnail/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(projectId) && isSafeSegment(fileName)
+        && canWriteImage(5242880);
+      allow update: if isSafeSegment(projectId) && isSafeSegment(fileName)
+        && canWriteImage(5242880);
+      allow delete: if isAdmin();
+    }
+
+    match /projects/{projectId}/gallery/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(projectId) && isSafeSegment(fileName)
+        && canWriteImage(5242880);
+      allow update: if isSafeSegment(projectId) && isSafeSegment(fileName)
+        && canWriteImage(5242880);
+      allow delete: if isAdmin();
+    }
+
+    match /services/{serviceId}/icon/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(serviceId) && isSafeSegment(fileName)
+        && canWriteImage(1048576);
+      allow update: if isSafeSegment(serviceId) && isSafeSegment(fileName)
+        && canWriteImage(1048576);
+      allow delete: if isAdmin();
+    }
+
+    match /skills/{skillId}/icon/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(skillId) && isSafeSegment(fileName)
+        && canWriteImage(524288);
+      allow update: if isSafeSegment(skillId) && isSafeSegment(fileName)
+        && canWriteImage(524288);
+      allow delete: if isAdmin();
+    }
+
+    match /reviews/{reviewId}/avatar/{fileName} {
+      allow get: if true;
+      allow create: if isSafeSegment(reviewId) && isSafeSegment(fileName)
+        && canWriteImage(2097152);
+      allow update: if isSafeSegment(reviewId) && isSafeSegment(fileName)
+        && canWriteImage(2097152);
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------------- admin staging area
+    // Media that must not be public before publication. Admin-only read and write,
+    // including list, because staging is an internal workspace. Nothing here is
+    // ever linked from the public site.
+    match /drafts/{scope}/{fileName} {
+      allow read, write: if isAdmin() && isSafeSegment(scope) && isSafeSegment(fileName);
+    }
+
+    // ---------------------------------------------------------- deny by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

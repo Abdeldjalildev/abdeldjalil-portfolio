@@ -1,75 +1,56 @@
-# React + TypeScript + Vite
+# Abdeldjalil Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal portfolio application for Abdeldjalil — a production-oriented React application with a
+private Admin CMS backed by Firebase.
 
-Currently, two official plugins are available:
+Development follows `AGENTS.md`, the authoritative project plan and agent contract.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Current status
 
-## React Compiler
+**Phase 01 — Foundation, repository baseline & Firebase bootstrap.**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The repository currently contains the technical foundation only. The public website, the Admin
+CMS, Firebase services, and the design system are implemented in later phases.
 
-## Expanding the ESLint configuration
+## Technical foundation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19 + TypeScript (strict mode) + Vite
+- ESLint with the flat configuration
+- Firebase Web SDK — client application initialization only, no Firebase service is enabled yet
+- Environment-driven Firebase configuration (`VITE_FIREBASE_*`)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Tailwind CSS, routing, authentication, Firestore, Storage, Cloud Functions, and the CMS are
+intentionally not part of Phase 01.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Requirements
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js 24+ (developed against Node.js 24)
+- npm 11+
 
-```
+## Setup
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+1. Install dependencies:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+   ```bash
+   npm install
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Create your local environment file from the template:
 
-```
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. Fill in the Firebase Web App values
+   (Firebase console → Project settings → Your apps → Web app → SDK setup and configuration).
+
+`.env.local` is gitignored and must never be committed.
+
+## Commands
+
+| Command           | Purpose                                        |
+| ----------------- | ---------------------------------------------- |
+| `npm run dev`     | Start the Vite development server              |
+| `npm run build`   | Type-check (`tsc -b`) and build for production |
+| `npm run lint`    | Run ESLint                                     |
+| `npm run preview` | Preview the production build locally           |

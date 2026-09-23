@@ -22,3 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables (real values must never be committed; .env.example is tracked)
+.env
+.env.*
+!.env.example
+
+# Firebase CLI local artifacts
+.firebase/
+firebase-debug.log*
+ui-debug.log*
+
+# Privileged Firebase Admin credentials — NEVER commit these.
+# The Phase 04 admin-provisioning tool reads credentials through
+# GOOGLE_APPLICATION_CREDENTIALS or gcloud application-default credentials.
+*service-account*.json
+*serviceAccountKey*.json
+serviceAccount*.json

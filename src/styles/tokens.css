@@ -1,0 +1,174 @@
+/*
+ * Phase 02 design tokens — single source of truth for the visual system.
+ *
+ * Everything visual is defined here and consumed through Tailwind utilities
+ * (bg-surface, text-foreground-muted, rounded-lg, shadow-elevated, max-w-content,
+ * ease-emphasized, ...) or through the matching CSS variables.
+ *
+ * Rules for every later phase:
+ * - Consume tokens; never hard-code raw colour, radius, shadow or timing values.
+ * - The identity is dark-first. This is the single theme for now; no light theme is defined.
+ */
+
+@theme {
+  /* ----------------------------------------------------------- colour */
+  /* Surfaces — deep electronic indigo, dark-first */
+  --color-background: oklch(0.16 0.028 275);
+  --color-background-elevated: oklch(0.2 0.032 275);
+  --color-background-subtle: oklch(0.13 0.024 275);
+  --color-surface: oklch(0.21 0.034 275);
+  --color-surface-elevated: oklch(0.25 0.038 275);
+  --color-surface-glass: oklch(0.31 0.04 275 / 0.5);
+
+  /* Text */
+  --color-foreground: oklch(0.97 0.008 275);
+  --color-foreground-muted: oklch(0.81 0.018 275);
+  --color-foreground-subtle: oklch(0.69 0.022 275);
+
+  /* Borders */
+  --color-border: oklch(0.33 0.032 275);
+  --color-border-strong: oklch(0.46 0.045 275);
+
+  /* Brand.
+     --color-primary is a FILL colour: paired with --color-primary-foreground it is
+     deliberately deeper than the indigo used for text, so button labels stay legible.
+     --color-primary-subtle is the text/icon form of the brand colour on dark surfaces. */
+  --color-primary: oklch(0.5 0.19 278);
+  --color-primary-foreground: oklch(0.99 0.005 275);
+  --color-primary-subtle: oklch(0.74 0.15 278);
+  --color-accent: oklch(0.81 0.14 178);
+  --color-accent-foreground: oklch(0.2 0.03 200);
+
+  /* Semantic states */
+  --color-success: oklch(0.75 0.16 152);
+  --color-success-foreground: oklch(0.19 0.03 152);
+  --color-warning: oklch(0.84 0.15 85);
+  --color-warning-foreground: oklch(0.2 0.03 85);
+  --color-error: oklch(0.69 0.19 22);
+  --color-error-foreground: oklch(0.99 0.005 22);
+  --color-info: oklch(0.76 0.12 235);
+  --color-info-foreground: oklch(0.19 0.03 235);
+
+  /* Interaction */
+  --color-focus: oklch(0.86 0.14 178);
+  --color-disabled: oklch(0.29 0.02 275);
+  --color-disabled-foreground: oklch(0.59 0.015 275);
+
+  /* ------------------------------------------------------- typography */
+  /* System-first stacks: no webfont download, no fragile runtime dependency.
+     Arabic gets its own stack and its own leading rules (see base.css). */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-arabic: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', 'Geeza Pro', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', Consolas, 'Courier New', monospace;
+
+  --text-display: 3.25rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.03em;
+
+  --text-h1: 2.375rem;
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.025em;
+
+  --text-h2: 1.75rem;
+  --text-h2--line-height: 1.2;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.3;
+  --text-h3--letter-spacing: -0.015em;
+
+  --text-h4: 1.125rem;
+  --text-h4--line-height: 1.4;
+  --text-h4--letter-spacing: -0.01em;
+
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.7;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.65;
+
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.5;
+
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.06em;
+
+  --text-code: 0.875rem;
+  --text-code--line-height: 1.6;
+
+  /* ------------------------------------------------------------ shape */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+
+  /* ------------------------------------------------------------ depth */
+  --shadow-soft: 0 1px 2px 0 oklch(0.09 0.02 275 / 0.45);
+  --shadow-elevated: 0 10px 28px -12px oklch(0.06 0.02 275 / 0.7),
+    0 2px 8px -4px oklch(0.06 0.02 275 / 0.5);
+  --shadow-glass: 0 16px 40px -18px oklch(0.05 0.02 275 / 0.75);
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 40%, transparent),
+    0 12px 32px -14px color-mix(in oklab, var(--color-primary) 50%, transparent);
+
+  /* ----------------------------------------------------------- layout */
+  --container-content: 72rem;
+  --container-wide: 90rem;
+
+  /* ----------------------------------------------------------- motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --animate-rise: rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 240ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/*
+ * Fixed three-step duration scale, so timing never drifts per component.
+ * Plain variables (not utilities): pair them with duration-150 / duration-200 / duration-300.
+ */
+:root {
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --glass-blur: 16px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Glass is an intentional surface variant, not a default. */
+@utility glass-surface {
+  background-color: var(--color-surface-glass);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-glass);
+}
+
+/* One transition contract for every interactive element. */
+@utility transition-standard {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-standard);
+}
