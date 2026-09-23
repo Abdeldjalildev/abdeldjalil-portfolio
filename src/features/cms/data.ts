@@ -59,7 +59,9 @@ export async function getPublicProfile(): Promise<Profile | null> {
 }
 
 export async function getAdminProfile(): Promise<Profile | null> {
-  return getPublicProfile()
+  const snapshot = await getDoc(doc(db, profilePath()))
+  if (!snapshot.exists()) return null
+  return documentOrThrow(profileSchema, snapshot.data())
 }
 
 export async function saveProfile(input: ProfileInput, expectedUpdatedAt?: Profile['updatedAt']): Promise<void> {
