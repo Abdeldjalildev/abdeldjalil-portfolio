@@ -17,6 +17,10 @@ import About from './features/public/About.tsx'
 import Services from './features/public/Services.tsx'
 import Projects from './features/public/Projects.tsx'
 import ProjectDetail from './features/public/ProjectDetail.tsx'
+import Reviews from './features/public/Reviews.tsx'
+import Contact from './features/public/Contact.tsx'
+import ReviewsAdmin from './features/cms/ReviewsAdmin.tsx'
+import ContactLinksAdmin from './features/cms/ContactLinksAdmin.tsx'
 import ProfileAdmin from './features/cms/ProfileAdmin.tsx'
 import ServicesAdmin from './features/cms/ServicesAdmin.tsx'
 import SkillsAdmin from './features/cms/SkillsAdmin.tsx'
@@ -70,12 +74,12 @@ const router = createBrowserRouter([
       {
         path: 'reviews',
         handle: { title: 'Reviews' } as RootHandle,
-        element: placeholder('route_reviews'),
+        element: <Reviews />,
       },
       {
         path: 'contact',
         handle: { title: 'Contact' } as RootHandle,
-        element: placeholder('route_contact'),
+        element: <Contact />,
       },
       {
         path: 'projects',
@@ -108,9 +112,9 @@ const router = createBrowserRouter([
           { path: 'projects', handle: { title: 'Projects' } as RootHandle, element: <ProjectsAdmin /> },
           { path: 'services', handle: { title: 'Services' } as RootHandle, element: <ServicesAdmin /> },
           { path: 'skills', handle: { title: 'Skills' } as RootHandle, element: <SkillsAdmin /> },
-          { path: 'reviews', handle: { title: 'Reviews' } as RootHandle, element: placeholder('route_reviews') },
+          { path: 'reviews', handle: { title: 'Reviews' } as RootHandle, element: <ReviewsAdmin /> },
           { path: 'profile', handle: { title: 'Profile' } as RootHandle, element: <ProfileAdmin /> },
-          { path: 'contact', handle: { title: 'Contact & Social' } as RootHandle, element: placeholder('route_contact') },
+          { path: 'contact', handle: { title: 'Contact & Social' } as RootHandle, element: <ContactLinksAdmin /> },
           { path: 'analytics', handle: { title: 'Analytics' } as RootHandle, element: placeholder('route_analytics') },
           { path: 'settings', handle: { title: 'Settings' } as RootHandle, element: placeholder('route_settings') },
         ],
