@@ -229,7 +229,7 @@ export async function unpublishProject(project: ProjectRecord, input: ProjectInp
     for (const path of stagedPaths) {
       try {
         const fileName = path.split('/').pop()
-        if (fileName) await moveStorageObject(path, projectThumbnailObjectPath(project.id, fileName))
+        if (fileName) await moveStorageObject(path, path.includes('-thumbnail/') ? projectThumbnailObjectPath(project.id, fileName) : projectGalleryObjectPath(project.id, fileName))
       } catch { /* preserve the original write error */ }
     }
     throw error
