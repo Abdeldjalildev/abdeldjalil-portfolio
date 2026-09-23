@@ -1,0 +1,63 @@
+# Phase 10 — Reviews, Social Proof & Contact
+
+## Scope
+Phase 10 implements the frozen Reviews and Contact/ContactLinks contracts. It does not implement Home/featured presentation, Analytics, or Phase 14 cross-cutting hardening.
+
+## Gate 1 — Discovery & contract
+- Re-read canonical Review and ContactLink types, schemas, paths, indexes and current Firestore rules.
+- Review workflow is pending -> approved -> published, with published -> approved for unpublishing.
+- Public visibility is limited to published reviews and published contact links.
+- All client writes remain admin-only; no anonymous review-write endpoint was introduced.
+- Public aggregate rating is calculated only from published reviews.
+
+## Gate 2 — Architecture/data design
+- Review data access: src/features/cms/reviews.ts.
+- Contact-link data access: src/features/cms/contactLinks.ts.
+- Public presentation: Reviews.tsx and Contact.tsx.
+- Admin workflows: ReviewsAdmin.tsx and ContactLinksAdmin.tsx.
+- Existing composite indexes are reused: reviews status+order and contactLinks published+order.
+- Contact targets are validated by type in the application and Firestore rules.
+- Review status transitions and publishedAt semantics are enforced by Firestore rules.
+
+## Gate 3 — Implementation
+- Added public Reviews page with localized published reviews, 1–5 rating display and aggregate average/count.
+- Added public Contact page with dynamically managed published contact/social links.
+- Added admin review creation/editing/deletion and moderation controls.
+- Added admin contact/social CRUD and publication control.
+- Added type-aware contact-target validation.
+- Added server-authoritative review transition validation and contact-target validation in Firestore rules.
+- Extended the existing rules test suite with denied transition and unsafe-target cases.
+- Added Phase 10 static verification harness.
+
+## Gate 4 — Verification
+GitHub/static verification was performed after implementation.
+
+Not claimed because local execution is unavailable:
+- npm run lint
+- npm run build
+- npm run test:schema
+- npm run test:rules
+- npm run test:phase07
+- npm run test:phase08
+- npm run test:phase09
+- npm run test:phase10
+- browser/responsive/accessibility testing
+- real Firestore/Storage propagation
+
+Public queries intentionally match their Firestore publication predicates because Firestore rules are not filters; a query must itself satisfy the rule constraints. citeturn1search0turn1search1
+
+## Gate 5 — Hardening/review
+- Anonymous writes are not exposed.
+- Ratings remain bounded 1–5.
+- Review publication timestamps are server-controlled.
+- Invalid review status transitions are denied.
+- Contact web targets are HTTPS-only; email/phone/WhatsApp use constrained target forms.
+- External contact links opened in a new tab use noopener.
+- No new runtime dependency was added.
+
+## Gate 6 — Closure/evidence
+**BLOCKED / pending local runtime verification and owner acceptance.**
+
+AGENTS.md remains unchanged; the phase is not marked CLOSED.
+
+**I did not advance to the next phase.**
