@@ -236,6 +236,10 @@ export async function unpublishProject(project: ProjectRecord, input: ProjectInp
   }
 }
 
+export async function deleteProjectMedia(path: string): Promise<void> {
+  await deleteObject(ref(storage, path))
+}
+
 export async function deleteProject(project: ProjectRecord): Promise<void> {
   const media = [project.thumbnailPath, ...project.galleryPaths].filter((path): path is string => Boolean(path))
   if (media.length) await deleteMedia(media)
