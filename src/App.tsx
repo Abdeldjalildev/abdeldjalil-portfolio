@@ -15,6 +15,8 @@ import { AuthProvider } from './auth/AuthProvider.tsx'
 import { useI18n } from './i18n/context.ts'
 import About from './features/public/About.tsx'
 import Services from './features/public/Services.tsx'
+import Projects from './features/public/Projects.tsx'
+import ProjectDetail from './features/public/ProjectDetail.tsx'
 import ProfileAdmin from './features/cms/ProfileAdmin.tsx'
 import ServicesAdmin from './features/cms/ServicesAdmin.tsx'
 import SkillsAdmin from './features/cms/SkillsAdmin.tsx'
@@ -78,12 +80,12 @@ const router = createBrowserRouter([
       {
         path: 'projects',
         handle: { title: 'Projects' } as RootHandle,
-        element: placeholder('route_projects'),
+        element: <Projects />,
       },
       {
         path: 'projects/:slug',
         handle: { title: 'Project detail', hideInNavigation: true } as RootHandle,
-        element: placeholder('route_project'),
+        element: <ProjectDetail />,
       },
       ...developmentRoutes,
       {
