@@ -20,28 +20,18 @@ export default function AdminLayout() {
       <header className="border-b border-border-strong bg-surface-elevated py-3">
         <Container width="content">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-sm font-medium text-foreground-muted">
+            <span className="text-sm font-medium text-foreground">
               {t('route_dashboard')}
             </span>
             {state.status === 'authenticated' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  void handleSignOut()
-                }}
-              >
+              <Button variant="ghost" size="sm" onClick={() => void handleSignOut()}>
                 {t('sign_out')}
               </Button>
             )}
           </div>
         </Container>
       </header>
-      <Container
-        as="main"
-        width="content"
-        className="min-h-[calc(100dvh-4rem)] py-8"
-      >
+      <Container as="main" width="content" className="min-h-[calc(100dvh-4rem)] py-8">
         <Outlet />
       </Container>
     </>
