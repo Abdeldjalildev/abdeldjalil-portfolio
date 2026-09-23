@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button.tsx'
 import { Heading } from '../../components/ui/Heading.tsx'
 import { Surface } from '../../components/ui/Surface.tsx'
 import { Field, inputClass, textareaClass, SaveState } from './fields.tsx'
-import { deleteProject, getFeaturedProjectId, listProjects, publishProject, saveProject, setFeaturedProject, uploadProjectMedia, type ProjectRecord } from './projects.ts'
+import { deleteProject, deleteProjectMedia, getFeaturedProjectId, listProjects, publishProject, saveProject, setFeaturedProject, uploadProjectMedia, type ProjectRecord } from './projects.ts'
 import { getErrorMessage } from './errors.ts'
 
 const blank: ProjectInput = {
@@ -108,6 +108,16 @@ export default function ProjectsAdmin() {
     } finally { setUploading(false) }
   }
 
+  async function removeMedia(path: string, kind: 'thumbnail' | 'gallery') {
+    setBusy(true); setError('')
+    try {
+      await deleteProjectMedia(path)
+      if (kind === 'thumbnail') setForm(current => ({ ...current, thumbnailPath: null }))
+      else setForm(current => ({ ...current, galleryPaths: current.galleryPaths.filter(item => item !== path) }))
+    } catch (cause) { setError(getErrorMessage(cause, t('cms_media_delete_error'))) }
+    finally { setBusy(false) }
+  }
+
   async function chooseFeatured() {
     if (!editing || !form.published) return
     setBusy(true); setError('')
@@ -160,13 +170,19 @@ export default function ProjectsAdmin() {
         <Field label={t('cms_summary_ar')} htmlFor="project-summary-ar"><textarea id="project-summary-ar" dir="rtl" className={textareaClass} value={form.summary.ar} onChange={e => setForm({...form,summary:{...form.summary,ar:e.target.value}})} /></Field>
         <Field label={t('cms_description_en')} htmlFor="project-description-en"><textarea id="project-description-en" className={textareaClass} value={form.description.en} onChange={e => setForm({...form,description:{...form.description,en:e.target.value}})} required /></Field>
         <Field label={t('cms_description_ar')} htmlFor="project-description-ar"><textarea id="project-description-ar" dir="rtl" className={textareaClass} value={form.description.ar} onChange={e => setForm({...form,description:{...form.description,ar:e.target.value}})} /></Field>
-        <Field label={t('cms_case_study')} htmlFor="project-case-study"><textarea id="project-case-study" className={textareaClass} value={form.caseStudy?.en ?? ''} onChange={e => setForm({...form,caseStudy:{en:e.target.value,ar:form.caseStudy?.ar ?? ''}})} /></Field>
+        <Field label={t('cms_case_study_en')} htmlFor="project-case-study-en"><textarea id="project-case-study-en" className={textareaClass} value={form.caseStudy?.en ?? ''} onChange={e => setForm({...form,caseStudy:{en:e.target.value,ar:form.caseStudy?.ar ?? ''}})} /></Field>
+        <Field label={t('cms_case_study_ar')} htmlFor="project-case-study-ar"><textarea id="project-case-study-ar" dir="rtl" className={textareaClass} value={form.caseStudy?.ar ?? ''} onChange={e => setForm({...form,caseStudy:{en:form.caseStudy?.en ?? '',ar:e.target.value}})} /></Field>
         <Field label={t('cms_technologies')} htmlFor="project-technologies"><input id="project-technologies" className={inputClass} value={form.technologies.join(', ')} onChange={e => setForm({...form,technologies:e.target.value.split(',').map(v=>v.trim()).filter(Boolean)})} /></Field>
         <Field label={t('cms_category')} htmlFor="project-category"><input id="project-category" className={inputClass} value={form.category ?? ''} onChange={e => setForm({...form,category:e.target.value||null})} /></Field>
-        <Field label={t('cms_thumbnail')} htmlFor="project-thumbnail"><input id="project-thumbnail" type="file" accept="image/png,image/jpeg,image/webp,image/avif" className={inputClass} onChange={e => void upload('thumbnail', e.target.files)} disabled={uploading || !form.slug} /><p className="text-caption text-foreground-muted">{form.thumbnailPath ?? t('cms_no_media')}</p></Field>
-        <Field label={t('cms_gallery')} htmlFor="project-gallery"><input id="project-gallery" type="file" multiple accept="image/png,image/jpeg,image/webp,image/avif" className={inputClass} onChange={e => void upload('gallery', e.target.files)} disabled={uploading || !form.slug} /><p className="text-caption text-foreground-muted">{t('cms_gallery_count', { count: form.galleryPaths.length })}</p></Field>
+        <Field label={t('cms_thumbnail')} htmlFor="project-thumbnail"><input id="project-thumbnail" type="file" accept="image/png,image/jpeg,image/webp,image/avif" className={inputClass} onChange={e => void upload('thumbnail', e.target.files)} disabled={uploading || !form.slug} /><div className="flex flex-wrap items-center gap-2"><p className="text-caption text-foreground-muted">{form.thumbnailPath ?? t('cms_no_media')}</p>{form.thumbnailPath && <Button type="button" size="sm" variant="ghost" onClick={()=>void removeMedia(form.thumbnailPath!, 'thumbnail')} disabled={busy}>{t('cms_remove_media')}</Button>}</div></Field>
+        <Field label={t('cms_gallery')} htmlFor="project-gallery"><input id="project-gallery" type="file" multiple accept="image/png,image/jpeg,image/webp,image/avif" className={inputClass} onChange={e => void upload('gallery', e.target.files)} disabled={uploading || !form.slug} /><p className="text-caption text-foreground-muted">{t('cms_gallery_count', { count: form.galleryPaths.length })}</p><div className="grid gap-2">{form.galleryPaths.map(path=><div key={path} className="flex items-center justify-between gap-2 rounded border border-border p-2"><span className="truncate text-caption text-foreground-muted">{path}</span><Button type="button" size="sm" variant="ghost" onClick={()=>void removeMedia(path,'gallery')} disabled={busy}>{t('cms_remove_media')}</Button></div>)}</div></Field>
         <Field label={t('cms_live_url')} htmlFor="project-live-url"><input id="project-live-url" type="url" className={inputClass} value={form.liveUrl ?? ''} onChange={e => setForm({...form,liveUrl:e.target.value||null})} /></Field>
         <Field label={t('cms_repo_url')} htmlFor="project-repo-url"><input id="project-repo-url" type="url" className={inputClass} value={form.repoUrl ?? ''} onChange={e => setForm({...form,repoUrl:e.target.value||null})} /></Field>
+        <Field label={t('cms_seo_title_en')} htmlFor="project-seo-title-en"><input id="project-seo-title-en" className={inputClass} value={form.seo.title?.en ?? ''} onChange={e=>setForm({...form,seo:{...form.seo,title:{en:e.target.value,ar:form.seo.title?.ar ?? ''}}})} /></Field>
+        <Field label={t('cms_seo_title_ar')} htmlFor="project-seo-title-ar"><input id="project-seo-title-ar" dir="rtl" className={inputClass} value={form.seo.title?.ar ?? ''} onChange={e=>setForm({...form,seo:{...form.seo,title:{en:form.seo.title?.en ?? '',ar:e.target.value}}})} /></Field>
+        <Field label={t('cms_seo_description_en')} htmlFor="project-seo-description-en"><textarea id="project-seo-description-en" className={textareaClass} value={form.seo.description?.en ?? ''} onChange={e=>setForm({...form,seo:{...form.seo,description:{en:e.target.value,ar:form.seo.description?.ar ?? ''}}})} /></Field>
+        <Field label={t('cms_seo_description_ar')} htmlFor="project-seo-description-ar"><textarea id="project-seo-description-ar" dir="rtl" className={textareaClass} value={form.seo.description?.ar ?? ''} onChange={e=>setForm({...form,seo:{...form.seo,description:{en:form.seo.description?.en ?? '',ar:e.target.value}}})} /></Field>
+        <div className="grid gap-3 rounded-lg border border-border p-3"><div className="flex items-center justify-between"><h3 className="text-body font-semibold text-foreground">{t('cms_project_links')}</h3><Button type="button" size="sm" variant="outline" onClick={()=>setForm({...form,links:[...form.links,{label:{en:'',ar:''},url:'https://'}]})}>{t('cms_add_link')}</Button></div>{form.links.map((link,index)=><div key={index} className="grid gap-2 rounded border border-border p-3"><input className={inputClass} aria-label={t('cms_link_label_en')} value={link.label.en} onChange={e=>{const links=[...form.links];links[index]={...links[index],label:{...links[index].label,en:e.target.value}};setForm({...form,links})}} /><input className={inputClass} dir="rtl" aria-label={t('cms_link_label_ar')} value={link.label.ar} onChange={e=>{const links=[...form.links];links[index]={...links[index],label:{...links[index].label,ar:e.target.value}};setForm({...form,links})}} /><input className={inputClass} type="url" aria-label={t('cms_link_url')} value={link.url} onChange={e=>{const links=[...form.links];links[index]={...links[index],url:e.target.value};setForm({...form,links})}} /><Button type="button" size="sm" variant="ghost" onClick={()=>setForm({...form,links:form.links.filter((_,i)=>i!==index)})}>{t('cms_remove_link')}</Button></div>)}</div>
         <Field label={t('cms_order')} htmlFor="project-order"><input id="project-order" type="number" min="0" max="100000" className={inputClass} value={form.order} onChange={e => setForm({...form,order:Number(e.target.value)})} /></Field>
         <label className="flex items-center gap-3 text-body text-foreground"><input type="checkbox" checked={form.published} onChange={e=>setForm({...form,published:e.target.checked})}/>{t('cms_published')}</label>
         {editing && <div className="flex flex-wrap gap-2">{featuredId === editing.id ? <Button type="button" variant="outline" onClick={()=>void clearFeatured()} disabled={busy}>{t('cms_clear_featured')}</Button> : <Button type="button" variant="outline" onClick={()=>void chooseFeatured()} disabled={busy || !form.published}>{t('cms_set_featured')}</Button>}</div>}
