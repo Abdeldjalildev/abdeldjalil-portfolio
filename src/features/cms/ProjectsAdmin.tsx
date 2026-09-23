@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button.tsx'
 import { Heading } from '../../components/ui/Heading.tsx'
 import { Surface } from '../../components/ui/Surface.tsx'
 import { Field, inputClass, textareaClass, SaveState } from './fields.tsx'
-import { deleteProject, getFeaturedProjectId, listProjects, publishProject, setFeaturedProject, uploadProjectMedia, type ProjectRecord } from './projects.ts'
+import { deleteProject, getFeaturedProjectId, listProjects, publishProject, saveProject, setFeaturedProject, uploadProjectMedia, type ProjectRecord } from './projects.ts'
 import { getErrorMessage } from './errors.ts'
 
 const blank: ProjectInput = {
@@ -79,7 +79,6 @@ export default function ProjectsAdmin() {
       } else if (editing) {
         await publishProject(editing, form)
       } else {
-        const { saveProject } = await import('./projects.ts')
         await saveProject(form)
       }
       reset(); setSaved(t('cms_saved')); await load()
@@ -160,7 +159,7 @@ export default function ProjectsAdmin() {
         <Field label={t('cms_summary_en')} htmlFor="project-summary-en"><textarea id="project-summary-en" className={textareaClass} value={form.summary.en} onChange={e => setForm({...form,summary:{...form.summary,en:e.target.value}})} required /></Field>
         <Field label={t('cms_summary_ar')} htmlFor="project-summary-ar"><textarea id="project-summary-ar" dir="rtl" className={textareaClass} value={form.summary.ar} onChange={e => setForm({...form,summary:{...form.summary,ar:e.target.value}})} /></Field>
         <Field label={t('cms_description_en')} htmlFor="project-description-en"><textarea id="project-description-en" className={textareaClass} value={form.description.en} onChange={e => setForm({...form,description:{...form.description,en:e.target.value}})} required /></Field>
-        <Field label={t('cms_description-ar')} htmlFor="project-description-ar"><textarea id="project-description-ar" dir="rtl" className={textareaClass} value={form.description.ar} onChange={e => setForm({...form,description:{...form.description,ar:e.target.value}})} /></Field>
+        <Field label={t('cms_description_ar')} htmlFor="project-description-ar"><textarea id="project-description-ar" dir="rtl" className={textareaClass} value={form.description.ar} onChange={e => setForm({...form,description:{...form.description,ar:e.target.value}})} /></Field>
         <Field label={t('cms_case_study')} htmlFor="project-case-study"><textarea id="project-case-study" className={textareaClass} value={form.caseStudy?.en ?? ''} onChange={e => setForm({...form,caseStudy:{en:e.target.value,ar:form.caseStudy?.ar ?? ''}})} /></Field>
         <Field label={t('cms_technologies')} htmlFor="project-technologies"><input id="project-technologies" className={inputClass} value={form.technologies.join(', ')} onChange={e => setForm({...form,technologies:e.target.value.split(',').map(v=>v.trim()).filter(Boolean)})} /></Field>
         <Field label={t('cms_category')} htmlFor="project-category"><input id="project-category" className={inputClass} value={form.category ?? ''} onChange={e => setForm({...form,category:e.target.value||null})} /></Field>
