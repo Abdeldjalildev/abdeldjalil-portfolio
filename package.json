@@ -14,7 +14,8 @@
     "test:phase07": "node scripts/test-phase07.mjs",
     "test:phase08": "node scripts/test-phase08.mjs",
     "test:phase09": "node scripts/test-phase09.mjs",
-    "test:phase10": "node scripts/test-phase10.mjs"
+    "test:phase10": "node scripts/test-phase10.mjs",
+    "test:phase11": "node scripts/test-phase11.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",
