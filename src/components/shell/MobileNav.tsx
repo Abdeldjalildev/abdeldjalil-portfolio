@@ -1,13 +1,12 @@
 /**
  * Phase 06 — Mobile navigation drawer.
  *
- * Rendered by PublicHeader. Uses a portal-free fixed panel with focus trapping
- * approximation: Escape and link clicks close it, and body scroll is locked
- * while open. No external UI library required.
+ * The drawer is modal while open: focus is moved inside, Tab/Shift+Tab cycle
+ * within the panel, Escape closes it, background scrolling is locked, and focus
+ * returns to the previously focused trigger when the drawer closes.
  */
-
 import type { ReactNode } from 'react'
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useI18n } from '../../i18n/context.ts'
 import { LocaleSwitcher } from './LocaleSwitcher.tsx'
@@ -18,57 +17,101 @@ export type MobileNavProps = {
   onClose: () => void
 }
 
-export function MobileNav({
-  open,
-  onClose,
-}: MobileNavProps): ReactNode {
-  const { t } = useI18n()
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-  // Close on Escape.
+export function MobileNav({ open, onClose }: MobileNavProps): ReactNode {
+  const { t } = useI18n()
+  const panelRef = useRef<HTMLElement | null>(null)
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
 
-  // Lock body scroll while the drawer is open.
-  useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.overflow = prev
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const focusFirst = () => {
+      closeButtonRef.current?.focus()
+    }
+    focusFirst()
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') return
+
+      const panel = panelRef.current
+      if (!panel) return
+
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((element) => element.offsetParent !== null)
+
+      if (focusable.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
-    return undefined
+
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      previousFocusRef.current?.focus()
+      previousFocusRef.current = null
+    }
+  }, [open, onClose])
+
+  useEffect(() => {
+    if (!open) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
   }, [open])
 
   if (!open) return null
 
   return (
     <Fragment>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-background/60 backdrop-blur-xs"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
       <aside
+        ref={panelRef}
         id="mobile-menu-panel"
         className="fixed top-0 end-0 bottom-0 w-72 max-w-[80vw] border-s border-border bg-surface-elevated shadow-elevated animate-fade"
         aria-label={t('nav_mobile')}
+        aria-modal="true"
+        role="dialog"
       >
         <div className="flex h-full flex-col p-4">
           <div className="flex items-center justify-between border-b border-border pb-4">
-            <span className="font-semibold text-foreground">
-              {t('header_brand')}
-            </span>
+            <span className="font-semibold text-foreground">{t('header_brand')}</span>
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={onClose}
               className="rounded-md border border-border px-2 py-1 text-foreground-muted transition-standard hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
@@ -88,9 +131,7 @@ export function MobileNav({
                   [
                     'rounded-md px-3 py-2 text-sm font-medium transition-standard',
                     'text-foreground-muted hover:text-foreground hover:bg-surface',
-                    isActive
-                      ? 'text-foreground bg-surface-elevated'
-                      : '',
+                    isActive ? 'text-foreground bg-surface-elevated' : '',
                   ].join(' ')
                 }
               >
