@@ -9,7 +9,7 @@
 
 import { type JSX } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useI18n } from '../../i18n/context.ts'
 import { Container } from '../ui/Container.tsx'
 import { LocaleSwitcher } from './LocaleSwitcher.tsx'
@@ -19,6 +19,7 @@ import { PUBLIC_NAVIGATION } from './navigation.ts'
 export function PublicHeader(): JSX.Element {
   const { t } = useI18n()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const closeMobileNav = useCallback(() => setMobileOpen(false), [])
 
   return (
     <>
@@ -85,7 +86,7 @@ export function PublicHeader(): JSX.Element {
         </Container>
       </header>
 
-      <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <MobileNav open={mobileOpen} onClose={closeMobileNav} />
     </>
   )
 }
