@@ -9,7 +9,6 @@ import { useI18n } from '../i18n/context.ts'
 import { Heading } from '../components/ui/Heading.tsx'
 import { Surface } from '../components/ui/Surface.tsx'
 import { Text } from '../components/ui/Text.tsx'
-import { Button } from '../components/ui/Button.tsx'
 import { ProjectCard } from '../features/public/ProjectCard.tsx'
 import { ProjectDetails } from '../features/public/ProjectDetails.tsx'
 import { localizeProjectText } from '../features/public/projectPresentation.ts'
@@ -114,9 +113,6 @@ export default function Home() {
             </Text>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button as={undefined} onClick={() => undefined} className="hidden" aria-hidden="true" tabIndex={-1}>
-              {t('home_primary_cta')}
-            </Button>
             <Link
               to="/projects"
               className="inline-flex h-11 items-center justify-center rounded-md bg-accent px-5 text-body font-medium text-accent-foreground shadow-soft transition-standard hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
