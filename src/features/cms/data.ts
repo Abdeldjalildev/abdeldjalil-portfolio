@@ -48,9 +48,14 @@ function documentOrThrow<T>(
 }
 
 export async function getPublicProfile(): Promise<Profile | null> {
-  const snapshot = await getDoc(doc(db, profilePath()))
-  if (!snapshot.exists()) return null
-  return documentOrThrow(profileSchema, snapshot.data())
+  try {
+    const snapshot = await getDoc(doc(db, profilePath()))
+    if (!snapshot.exists()) return null
+    return documentOrThrow(profileSchema, snapshot.data())
+  } catch (error) {
+    if ((error as { code?: string }).code === 'permission-denied') return null
+    throw error
+  }
 }
 
 export async function getAdminProfile(): Promise<Profile | null> {
