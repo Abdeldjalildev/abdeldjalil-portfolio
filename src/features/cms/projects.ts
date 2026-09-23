@@ -31,6 +31,7 @@ import {
   projectsPath,
 } from '../../data/paths.ts'
 import { CmsConflictError, CmsValidationError } from './errors.ts'
+import { ALLOWED_IMAGE_CONTENT_TYPES, STORAGE_LIMITS } from '../../data/paths.ts'
 
 const app = getFirebaseApp()
 const db = getFirestore(app)
@@ -100,6 +101,13 @@ export async function uploadProjectMedia(
   kind: 'thumbnail' | 'gallery',
   file: File,
 ): Promise<{ path: string; url: string }> {
+  const maxBytes = kind === 'thumbnail' ? STORAGE_LIMITS.projectThumbnail : STORAGE_LIMITS.projectGallery
+  if (!ALLOWED_IMAGE_CONTENT_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_CONTENT_TYPES)[number])) {
+    throw new Error('Only PNG, JPEG, WebP and AVIF images are accepted.')
+  }
+  if (file.size > maxBytes) {
+    throw new Error(`This file exceeds the ${Math.round(maxBytes / 1024 / 1024)} MB limit.`)
+  }
   const fileName = safeFileName(file)
   const path = draftObjectPath(`project-${projectId}-${kind}`, fileName)
   const storageRef = ref(storage, path)
@@ -167,31 +175,44 @@ export async function saveProject(
   })
 }
 
+async function cleanupRemovedMedia(previous: ProjectRecord, next: ProjectInput): Promise<void> {
+  const keep = new Set([next.thumbnailPath, ...next.galleryPaths].filter((path): path is string => Boolean(path)))
+  const old = [previous.thumbnailPath, ...previous.galleryPaths].filter((path): path is string => Boolean(path))
+  const removed = old.filter((path) => !keep.has(path))
+  if (removed.length) await deleteMedia(removed)
+}
+
 export async function publishProject(
   project: ProjectRecord,
   input: ProjectInput,
 ): Promise<void> {
   const value = inputOrThrow(projectInputSchema, input)
   if (!value.published) {
-    await saveProject(value, project.updatedAt)
+    await unpublishProject(project, value)
     return
   }
 
-  const thumbnail = value.thumbnailPath
-    ? await moveMediaPaths(project.id, [value.thumbnailPath], true)
-    : []
+  const original = [value.thumbnailPath, ...value.galleryPaths].filter((path): path is string => Boolean(path))
+  const thumbnail = value.thumbnailPath ? await moveMediaPaths(project.id, [value.thumbnailPath], true) : []
   const gallery = await moveMediaPaths(project.id, value.galleryPaths, true)
-  const promoted: ProjectInput = {
-    ...value,
-    thumbnailPath: thumbnail[0] ?? null,
-    galleryPaths: gallery,
-  }
+  const promoted: ProjectInput = { ...value, thumbnailPath: thumbnail[0] ?? null, galleryPaths: gallery }
 
   try {
     await saveProject(promoted, project.updatedAt)
   } catch (error) {
+    // Best-effort rollback keeps failed writes from leaving promoted objects behind.
+    const promotedPaths = [promoted.thumbnailPath, ...promoted.galleryPaths].filter((path): path is string => Boolean(path))
+    for (const path of promotedPaths) {
+      if (!original.includes(path)) {
+        try {
+          const fileName = path.split('/').pop()
+          if (fileName) await moveStorageObject(path, draftObjectPath(`project-${project.id}-${path.includes('/thumbnail/') ? 'thumbnail' : 'gallery'}`, fileName))
+        } catch { /* preserve the original write error */ }
+      }
+    }
     throw error
   }
+  await cleanupRemovedMedia(project, promoted)
 }
 
 export async function unpublishProject(project: ProjectRecord, input: ProjectInput): Promise<void> {
@@ -200,7 +221,19 @@ export async function unpublishProject(project: ProjectRecord, input: ProjectInp
   const staged = await moveMediaPaths(project.id, all, false)
   const thumbnail = staged.find((path) => path.includes('-thumbnail/')) ?? null
   const gallery = staged.filter((path) => path.includes('-gallery/'))
-  await saveProject({ ...value, published: false, thumbnailPath: thumbnail, galleryPaths: gallery }, project.updatedAt)
+  const next = { ...value, published: false, thumbnailPath: thumbnail, galleryPaths: gallery }
+  try {
+    await saveProject(next, project.updatedAt)
+  } catch (error) {
+    const stagedPaths = [next.thumbnailPath, ...next.galleryPaths].filter((path): path is string => Boolean(path))
+    for (const path of stagedPaths) {
+      try {
+        const fileName = path.split('/').pop()
+        if (fileName) await moveStorageObject(path, projectThumbnailObjectPath(project.id, fileName))
+      } catch { /* preserve the original write error */ }
+    }
+    throw error
+  }
 }
 
 export async function deleteProject(project: ProjectRecord): Promise<void> {
