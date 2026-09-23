@@ -18,6 +18,7 @@ import Services from './features/public/Services.tsx'
 import ProfileAdmin from './features/cms/ProfileAdmin.tsx'
 import ServicesAdmin from './features/cms/ServicesAdmin.tsx'
 import SkillsAdmin from './features/cms/SkillsAdmin.tsx'
+import ProjectsAdmin from './features/cms/ProjectsAdmin.tsx'
 import type { TranslationKey } from './i18n/types.ts'
 
 const placeholder = (key: TranslationKey) => {
@@ -102,7 +103,7 @@ const router = createBrowserRouter([
         errorElement: <ErrorFallback />,
         children: [
           { index: true, handle: { title: 'Dashboard' } as RootHandle, element: placeholder('route_dashboard') },
-          { path: 'projects', handle: { title: 'Projects' } as RootHandle, element: placeholder('route_projects') },
+          { path: 'projects', handle: { title: 'Projects' } as RootHandle, element: <ProjectsAdmin /> },
           { path: 'services', handle: { title: 'Services' } as RootHandle, element: <ServicesAdmin /> },
           { path: 'skills', handle: { title: 'Skills' } as RootHandle, element: <SkillsAdmin /> },
           { path: 'reviews', handle: { title: 'Reviews' } as RootHandle, element: placeholder('route_reviews') },
