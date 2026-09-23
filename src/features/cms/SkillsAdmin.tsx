@@ -34,7 +34,7 @@ export default function SkillsAdmin() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();setBusy(true);setError('');setSaved('')
-    try { await saveSkill(form,editing?.id,editing?.updatedAt); setSaved(t('cms_saved'));reset();await load() }
+    try { await saveSkill(form,editing?.id,editing?.updatedAt); reset(); setSaved(t('cms_saved')); await load() }
     catch(cause){setError(getErrorMessage(cause,t('cms_save_error')))}finally{setBusy(false)}
   }
   async function remove(item: SkillRecord){
