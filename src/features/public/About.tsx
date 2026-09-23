@@ -29,10 +29,10 @@ export default function About() {
 
   const localized = (value: { en: string; ar: string }) => locale === 'ar' && value.ar ? value.ar : value.en
   return <div className="grid gap-8">
-    <Heading title={localized(profile.fullName)} subtitle={localized(profile.headline)} />
+    <div className="grid gap-2"><Heading>localized(profile.fullName)</Heading><p className="text-body text-foreground-muted">localized(profile.headline)</p></div>
     <Surface as="section" padding="lg">
       <Text variant="lead" className="whitespace-pre-wrap">{localized(profile.bio)}</Text>
     </Surface>
-    {skills.length>0 && <section className="grid gap-4"><Heading title={t('route_skills')} /><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{skills.map(skill=><Surface key={skill.name} padding="md"><h2 className="font-semibold text-foreground">{skill.name}</h2><p className="text-caption text-foreground-muted">{t(`skill_group_${skill.group}` as Parameters<typeof t>[0])}</p></Surface>)}</div></section>}
+    {skills.length>0 && <section className="grid gap-4"><Heading>t('route_skills')</Heading><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{skills.map(skill=><Surface key={skill.name} padding="md"><h2 className="font-semibold text-foreground">{skill.name}</h2><p className="text-caption text-foreground-muted">{t(`skill_group_${skill.group}` as Parameters<typeof t>[0])}</p></Surface>)}</div></section>}
   </div>
 }
