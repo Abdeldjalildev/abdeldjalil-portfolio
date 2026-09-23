@@ -267,7 +267,8 @@ service cloud.firestore {
         && (request.resource.data.published == true
             || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
       allow delete: if isAdmin()
-        && get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId;
+        && (!exists(/databases/$(database)/documents/settings/main)
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId);
     }
 
     /**
