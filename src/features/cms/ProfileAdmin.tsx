@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import type { Profile, ProfileInput } from '../../data/index.ts'
 import { useI18n } from '../../i18n/context.ts'
 import { Surface } from '../../components/ui/Surface.tsx'
@@ -51,7 +51,7 @@ export default function ProfileAdmin() {
 
   useEffect(() => { void load() }, [])
 
-  async function submit(event: React.FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault()
     setSaving(true); setError(''); setSaved('')
     try {
