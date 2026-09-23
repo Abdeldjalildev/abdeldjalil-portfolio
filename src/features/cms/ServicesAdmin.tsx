@@ -50,7 +50,7 @@ export default function ServicesAdmin() {
     event.preventDefault(); setBusy(true); setError(''); setSaved('')
     try {
       await saveService(form, editing?.updatedAt)
-      setSaved(t('cms_saved')); reset(); await load()
+      reset(); setSaved(t('cms_saved')); await load()
     } catch (cause) { setError(getErrorMessage(cause, t('cms_save_error'))) }
     finally { setBusy(false) }
   }
