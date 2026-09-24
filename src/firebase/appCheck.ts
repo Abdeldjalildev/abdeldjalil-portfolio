@@ -8,9 +8,13 @@ export function initializeConfiguredAppCheck(): void {
   const siteKey = String(import.meta.env.VITE_FIREBASE_APPCHECK_RECAPTCHA_ENTERPRISE_KEY ?? '').trim()
   if (!siteKey) return
 
-  initializeAppCheck(getFirebaseApp(), {
-    provider: new ReCaptchaEnterpriseProvider(siteKey),
-    isTokenAutoRefreshEnabled: true,
-  })
-  initialized = true
+  try {
+    initializeAppCheck(getFirebaseApp(), {
+      provider: new ReCaptchaEnterpriseProvider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    })
+    initialized = true
+  } catch {
+    // Optional protection must not make the public application unavailable.
+  }
 }
