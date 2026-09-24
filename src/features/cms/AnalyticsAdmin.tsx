@@ -22,7 +22,7 @@ function dateKey(daysAgo: number): string {
 function decodePath(key: string): string {
   try {
     const normalized = key.replaceAll('-', '+').replaceAll('_', '/')
-    return atob(normalized)
+    return atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='))
   } catch { return key }
 }
 
