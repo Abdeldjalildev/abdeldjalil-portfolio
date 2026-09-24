@@ -63,7 +63,7 @@ function expirationFor(now, days) {
   return Timestamp.fromDate(expires)
 }
 
-exports.recordAnalyticsEvent = onCall(async request => {
+exports.recordAnalyticsEvent = onCall({ enforceAppCheck: true }, async request => {
   const data = request.data
   if (!isPlainObject(data)) {
     throw new HttpsError('invalid-argument', 'Invalid analytics payload.')
