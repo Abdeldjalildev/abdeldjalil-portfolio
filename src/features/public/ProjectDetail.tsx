@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { trackEvent } from '../../data/analytics.ts'
 import { Link, useParams } from 'react-router-dom'
 import type { Project } from '../../data/types.ts'
 import { getPublishedProject } from '../cms/projects.ts'
@@ -47,6 +48,7 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     if (!project) return
+    trackEvent('project_view', { projectId: project.id, path: `/projects/${project.slug}` })
 
     const previousTitle = document.title
     const title = getProjectSeoTitle(project, locale)
