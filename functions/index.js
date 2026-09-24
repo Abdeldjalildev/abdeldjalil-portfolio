@@ -2,6 +2,7 @@ const crypto = require('node:crypto')
 const { initializeApp } = require('firebase-admin/app')
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore')
 const { HttpsError, onCall } = require('firebase-functions/v2/https')
+const { onSchedule } = require('firebase-functions/v2/scheduler')
 const { setGlobalOptions } = require('firebase-functions/v2')
 
 initializeApp()
@@ -119,7 +120,7 @@ exports.recordAnalyticsEvent = onCall(async request => {
     }
 
     const seenEvents = isPlainObject(visitorData.events) ? visitorData.events : {}
-    const firstVisitForEvent = seenEvents[eventName] !== true
+    const firstVisitForDay = !visitorSnapshot.exists
 
     const dailyData = dailySnapshot.exists ? dailySnapshot.data() : {}
     const eventCounts = isPlainObject(dailyData.eventCounts) ? dailyData.eventCounts : {}
@@ -157,7 +158,7 @@ exports.recordAnalyticsEvent = onCall(async request => {
         pathCounts: nextPathCounts,
         serviceCounts: nextServiceCounts,
         projectCounts: nextProjectCounts,
-        uniqueVisitors: Number(dailyData.uniqueVisitors ?? 0) + (firstVisitForEvent ? 1 : 0),
+        uniqueVisitors: Number(dailyData.uniqueVisitors ?? 0) + (firstVisitForDay ? 1 : 0),
         updatedAt: FieldValue.serverTimestamp(),
         expiresAt: expirationFor(now, RETENTION_DAYS),
       },
@@ -177,4 +178,20 @@ exports.recordAnalyticsEvent = onCall(async request => {
   })
 
   return { accepted: true }
+})
+
+
+exports.pruneAnalytics = onSchedule('every 24 hours', async () => {
+  const now = Timestamp.now()
+  const collections = ['analyticsDaily', 'analyticsVisitors']
+  for (const collectionName of collections) {
+    const snapshot = await db.collection(collectionName)
+      .where('expiresAt', '<=', now)
+      .limit(100)
+      .get()
+    if (snapshot.empty) continue
+    const batch = db.batch()
+    snapshot.docs.forEach(snapshotDoc => batch.delete(snapshotDoc.ref))
+    await batch.commit()
+  }
 })
