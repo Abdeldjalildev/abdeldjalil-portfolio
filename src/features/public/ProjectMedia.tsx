@@ -56,6 +56,7 @@ export function ProjectMedia({ path, alt, priority = false, className = '' }: Pr
       src={url}
       alt={alt}
       loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
       className={`block w-full object-cover ${className}`}
       onError={() => setFailed(true)}
