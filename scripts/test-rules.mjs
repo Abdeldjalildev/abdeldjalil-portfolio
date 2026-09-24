@@ -265,7 +265,7 @@ await testEnv.withSecurityRulesDisabled(async (ctx) => {
     { contentType: 'image/png' },
   )
   await uploadBytes(
-    ref(ctx.storage(), 'drafts/projects/wip.webp'),
+    ref(ctx.storage(), 'drafts/project-published-project-thumbnail/wip.webp'),
     new Uint8Array([1, 2, 3]),
     { contentType: 'image/webp' },
   )
@@ -648,7 +648,7 @@ await expectAllow('anon get a public avatar object', () =>
   getBytes(ref(anonStorage, 'profile/avatar/seeded.png')),
 )
 await expectDeny('anon get a drafts object (staging is admin-only)', () =>
-  getBytes(ref(anonStorage, 'drafts/projects/wip.webp')),
+  getBytes(ref(anonStorage, 'drafts/project-published-project-thumbnail/wip.webp')),
 )
 await expectDeny('anon list a public projects folder (get is public, list is not)', () =>
   listAll(ref(anonStorage, 'projects/published-project/thumbnail')),
@@ -703,14 +703,24 @@ await expectDeny('anon upload a profile avatar', () =>
   }),
 )
 await expectDeny('non-admin read a drafts object', () =>
-  getBytes(ref(userStorage, 'drafts/projects/wip.webp')),
+  getBytes(ref(userStorage, 'drafts/project-published-project-thumbnail/wip.webp')),
 )
 await expectAllow('admin read a drafts object', () =>
-  getBytes(ref(adminStorage, 'drafts/projects/wip.webp')),
+  getBytes(ref(adminStorage, 'drafts/project-published-project-thumbnail/wip.webp')),
 )
 await expectDeny('admin upload to an uncontracted storage path', () =>
   uploadBytes(ref(adminStorage, 'misc/random.png'), png().data, {
     contentType: png().contentType,
+  }),
+)
+await expectDeny('admin upload SVG into a project staging path', () =>
+  uploadBytes(ref(adminStorage, 'drafts/project-published-project-thumbnail/evil.svg'), new Uint8Array(8), {
+    contentType: 'image/svg+xml',
+  }),
+)
+await expectDeny('admin upload a PDF into an image-only project staging path', () =>
+  uploadBytes(ref(adminStorage, 'drafts/project-published-project-thumbnail/file.pdf'), new Uint8Array(8), {
+    contentType: 'application/pdf',
   }),
 )
 
