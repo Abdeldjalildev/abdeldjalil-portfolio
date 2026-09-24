@@ -47,7 +47,11 @@ function getVisitorId(): string {
 
 export function trackEvent(event: AnalyticsEvent, details: Omit<AnalyticsPayload, 'event'> = {}): void {
   if (typeof window === 'undefined') return
-  const functions = getFunctions(getFirebaseApp(), 'us-central1')
-  const callable = httpsCallable<AnalyticsPayload, AnalyticsResponse>(functions, 'recordAnalyticsEvent')
-  void callable({ ...details, event, path: details.path ?? window.location.pathname, visitorId: getVisitorId() }).catch(() => {})
+  try {
+    const functions = getFunctions(getFirebaseApp(), 'us-central1')
+    const callable = httpsCallable<AnalyticsPayload, AnalyticsResponse>(functions, 'recordAnalyticsEvent')
+    void callable({ ...details, event, path: details.path ?? window.location.pathname, visitorId: getVisitorId() }).catch(() => {})
+  } catch {
+    // Firebase configuration or SDK initialization must never block the UI.
+  }
 }
