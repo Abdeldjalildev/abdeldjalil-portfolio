@@ -100,7 +100,7 @@ Abuse controls:
 - callable event allowlist and strict payload validation;
 - maximum 100 accepted events per visitor per UTC day;
 - Cloud Functions `maxInstances: 3` cost/scaling ceiling;
-- optional Firebase App Check client integration with reCAPTCHA Enterprise;
+- Firebase App Check enforcement on the analytics callable, with reCAPTCHA Enterprise client integration;
 - analytics failures are isolated from public rendering/navigation.
 
 Retention is 90 days. Both aggregate and visitor-marker documents carry `expiresAt`; the scheduled `pruneAnalytics` function removes expired documents daily. This cleanup requires the Cloud Scheduler capability used by scheduled Cloud Functions at deployment time.
