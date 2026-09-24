@@ -7,8 +7,8 @@ initializeConfiguredAppCheck()
 import App from './App.tsx'
 import { getFirebaseApp } from './firebase/app.ts'
 
-// Phase 01 bootstrap boundary: initialize the Firebase app only.
-// Firebase products (Auth, Firestore, Storage, Functions, Analytics) are intentionally not set up yet.
+// Firebase bootstrap boundary: initialize the client app and optional App Check early.
+// Feature-specific Firebase products remain lazy and are initialized at their data-access boundaries.
 getFirebaseApp()
 
 createRoot(document.getElementById('root')!).render(
