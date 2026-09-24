@@ -17,6 +17,7 @@ const ADMIN_NAVIGATION: Array<{ to: string; key: TranslationKey; end?: boolean }
   { to: '/admin/reviews', key: 'route_reviews' },
   { to: '/admin/profile', key: 'route_profile' },
   { to: '/admin/contact', key: 'route_contact' },
+  { to: '/admin/analytics', key: 'route_analytics' },
   { to: '/admin/settings', key: 'route_settings' },
 ]
 
