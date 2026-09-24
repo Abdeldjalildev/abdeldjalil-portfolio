@@ -6,6 +6,7 @@ import { Surface } from '../../components/ui/Surface.tsx'
 import { Text } from '../../components/ui/Text.tsx'
 import { ProjectMedia } from './ProjectMedia.tsx'
 import { localizeProjectText } from './projectPresentation.ts'
+import { trackEvent } from '../../data/analytics.ts'
 
 type ProjectDetailsProps = {
   project: Project & { id: string }
@@ -80,6 +81,7 @@ export function ProjectDetails({ project, compact = false }: ProjectDetailsProps
         {project.liveUrl && (
           <a
             href={project.liveUrl}
+            onClick={() => trackEvent('project_live_demo_click', { projectId: project.id })}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-surface transition-standard hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
@@ -90,6 +92,7 @@ export function ProjectDetails({ project, compact = false }: ProjectDetailsProps
         {project.repoUrl && (
           <a
             href={project.repoUrl}
+            onClick={() => trackEvent('github_click', { projectId: project.id })}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-md border border-border-strong px-4 py-2 text-sm font-semibold text-foreground transition-standard hover:bg-surface-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
