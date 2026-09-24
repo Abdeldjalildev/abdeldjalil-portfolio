@@ -232,6 +232,7 @@ export const ar = {
   home_load_error_title: 'تعذر تحميل الصفحة الرئيسية',
 
 
+  skip_to_content: 'تجاوز إلى المحتوى',
   admin_navigation: 'تنقل لوحة الإدارة',
   admin_menu: 'قائمة الإدارة',
   admin_dashboard_eyebrow: 'التشغيل',
