@@ -122,15 +122,17 @@ function getIconForType(type: string): JSX.Element {
     strokeWidth: 2,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
   }
-  switch (type) {
-    case 'github':
-      return <path {...common} d="M9 19c-5 1.5-5-2.1-5-2.1C2.5 15 2 14 2 12c-1.5-.7-1.5-.7-1.5-1.5 0-.5.5-1.5 1-2 .5-.7 1.5-1.5 2.5-1.3.5 0 1 .1 1.5.2 1.5-1.5 3.5-.5 4.5.5.5 0 1-.1 1.5-.2.5.5 1 1.5 1.3 2.5.5 0 1-.1 1.5-.2.5 0 1 0 1.5.2v2c0 .3-.2.7-.5 1-.3.3-.7.5-1 .5 0 .5-.5 1-1 1.5-.5.5-1 1-1.5 1.5v.3c0 .5.3 1 .5 1.3.5 0 1 .2 1.5.5" />
-    case 'linkedin':
-      return <path {...common} d="M16 8a6 6 0 0 1 0 8v3h4v-3a4 4 0 0 0-.5-2 4 4 0 0 0-3.5-3.5 4 4 0 0 0-3.5 3.5v3h4v-3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v3m-8 8H4v-13h4zm0 0h4" />
-    case 'email':
-      return <path {...common} d="M4 4h16c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-    default:
-      return <circle {...{ ...common, cx: 12, cy: 12, r: 5 }} />
+  const pathByType: Record<string, string> = {
+    github: 'M9 19c-5 1.5-5-2.1-5-2.1C2.5 15 2 14 2 12c-1.5-.7-1.5-.7-1.5-1.5 0-.5.5-1.5 1-2 .5-.7 1.5-1.5 2.5-1.3.5 0 1 .1 1.5.2 1.5-1.5 3.5-.5 4.5.5.5 0 1-.1 1.5-.2.5.5 1 1.5 1.3 2.5.5 0 1-.1 1.5-.2 0 1 0 1.5.2v2c0 .3-.2.7-.5 1-.3.3-.7.5-1 .5 0 .5-.5 1-1 1.5-.5.5-1 1-1.5 1.5v.3c0 .5.3 1 .5 1.3.5 0 1 .2 1.5.5',
+    linkedin: 'M16 8a6 6 0 0 1 0 8v3h4v-3a4 4 0 0 0-.5-2 4 4 0 0 0-3.5-3.5 4 4 0 0 0-3.5 3.5v3h4v-3a2 2 0 0 1 2-2 2 0 0 1 2 2v3m-8 8H4v-13h4zm0 0h4',
+    email: 'M4 4h16c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z',
   }
+  const path = pathByType[type]
+  return (
+    <svg {...common}>
+      {path ? <path d={path} /> : <circle cx="12" cy="12" r="5" />}
+    </svg>
+  )
 }
