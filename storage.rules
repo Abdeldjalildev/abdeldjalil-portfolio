@@ -135,7 +135,21 @@ service firebase.storage {
     // including list, because staging is an internal workspace. Nothing here is
     // ever linked from the public site.
     match /drafts/{scope}/{fileName} {
-      allow read, write: if isAdmin() && isSafeSegment(scope) && isSafeSegment(fileName);
+      allow read: if isAdmin() && isSafeSegment(scope) && isSafeSegment(fileName);
+      allow create, update: if isAdmin()
+        && isSafeSegment(scope) && isSafeSegment(fileName)
+        && scope.matches('^project-[A-Za-z0-9][A-Za-z0-9._-]*-(thumbnail|gallery)
+
+    // ---------------------------------------------------------- deny by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+)
+        && isRasterImage()
+        && request.resource.size <= 5242880;
+      allow delete: if isAdmin() && isSafeSegment(scope) && isSafeSegment(fileName);
     }
 
     // ---------------------------------------------------------- deny by default
