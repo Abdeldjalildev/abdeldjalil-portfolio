@@ -11,7 +11,6 @@ import { Surface } from '../components/ui/Surface.tsx'
 import { Text } from '../components/ui/Text.tsx'
 import { ProjectCard } from '../features/public/ProjectCard.tsx'
 import { ProjectDetails } from '../features/public/ProjectDetails.tsx'
-import { localizeProjectText } from '../features/public/projectPresentation.ts'
 
 type ProjectRecord = Project & { id: string }
 type ReviewRecord = Review & { id: string }
