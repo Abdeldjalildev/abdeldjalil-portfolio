@@ -298,6 +298,9 @@ PARTIAL pending runtime evidence.
 11. **Footer error diagnostics**
    - Added non-blocking diagnostics instead of silently dropping the failure.
 
+12. **SEO canonical origin reference**
+   - A stale constant reference was found in the post-implementation audit and replaced with the current deployment origin.
+
 ### Security review result
 
 No new client authorization path was introduced.
