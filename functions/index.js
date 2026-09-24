@@ -108,10 +108,8 @@ exports.recordAnalyticsEvent = onCall(async request => {
   const visitorRef = db.collection('analyticsVisitors').doc(`${day}_${visitorHash}`)
 
   await db.runTransaction(async transaction => {
-    const [dailySnapshot, visitorSnapshot] = await Promise.all([
-      transaction.get(dailyRef),
-      transaction.get(visitorRef),
-    ])
+    const dailySnapshot = await transaction.get(dailyRef)
+    const visitorSnapshot = await transaction.get(visitorRef)
 
     const visitorData = visitorSnapshot.exists ? visitorSnapshot.data() : {}
     const previousCount = Number(visitorData.eventCount ?? 0)
