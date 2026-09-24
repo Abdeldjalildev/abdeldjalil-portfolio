@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { trackEvent } from '../data/analytics.ts'
+import { useI18n } from '../i18n/context.ts'
 import Seo from '../components/seo/Seo.tsx'
 import { Container } from '../components/ui/Container.tsx'
 import { PublicHeader } from '../components/shell/PublicHeader.tsx'
@@ -18,6 +19,7 @@ import { PublicFooter } from '../components/shell/PublicFooter.tsx'
  */
 export default function PublicLayout() {
   const location = useLocation()
+  const { t } = useI18n()
   useEffect(() => {
     trackEvent('page_view', { path: location.pathname })
   }, [location.pathname])
