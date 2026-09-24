@@ -39,8 +39,9 @@ export default function PublicLayout() {
       <Seo title={
         location.pathname.startsWith('/projects/') ? `${t('route_projects')} · ${t('header_brand')}` : `${titles[location.pathname] ?? t('header_brand')} · ${t('header_brand')}`
       } path={location.pathname} noindex={location.pathname === '/sign-in'} />
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface-elevated focus:px-4 focus:py-3 focus:text-foreground focus:shadow-elevated">{t('skip_to_content')}</a>
       <PublicHeader />
-      <Container as="main" width="content" className="min-h-[calc(100dvh-4rem)] py-8">
+      <Container as="main" id="main-content" width="content" className="min-h-[calc(100dvh-4rem)] py-8">
         <Outlet />
       </Container>
       <PublicFooter />
