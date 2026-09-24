@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>/</loc></url>
-  <url><loc>/about</loc></url>
-  <url><loc>/services</loc></url>
-  <url><loc>/projects</loc></url>
-  <url><loc>/reviews</loc></url>
-  <url><loc>/contact</loc></url>
+  <url><loc>https://abdeldjalil-portfolio.web.app/</loc></url>
+  <url><loc>https://abdeldjalil-portfolio.web.app/about</loc></url>
+  <url><loc>https://abdeldjalil-portfolio.web.app/services</loc></url>
+  <url><loc>https://abdeldjalil-portfolio.web.app/projects</loc></url>
+  <url><loc>https://abdeldjalil-portfolio.web.app/reviews</loc></url>
+  <url><loc>https://abdeldjalil-portfolio.web.app/contact</loc></url>
 </urlset>
