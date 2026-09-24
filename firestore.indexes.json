@@ -107,18 +107,8 @@
       "indexes": []
     },
     {
-      "collectionGroup": "analyticsDaily",
-      "fieldPath": "expiresAt",
-      "indexes": []
-    },
-    {
       "collectionGroup": "analyticsVisitors",
       "fieldPath": "events",
-      "indexes": []
-    },
-    {
-      "collectionGroup": "analyticsVisitors",
-      "fieldPath": "expiresAt",
       "indexes": []
     }
   ]
