@@ -1,4 +1,6 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { trackEvent } from '../data/analytics.ts'
 import { Container } from '../components/ui/Container.tsx'
 import { PublicHeader } from '../components/shell/PublicHeader.tsx'
 import { PublicFooter } from '../components/shell/PublicFooter.tsx'
@@ -14,6 +16,11 @@ import { PublicFooter } from '../components/shell/PublicFooter.tsx'
  * Uses the Phase 02 Container primitive; no new styling invented here.
  */
 export default function PublicLayout() {
+  const location = useLocation()
+  useEffect(() => {
+    trackEvent('page_view', { path: location.pathname })
+  }, [location.pathname])
+
   return (
     <>
       <PublicHeader />
