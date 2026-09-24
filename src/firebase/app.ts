@@ -40,7 +40,8 @@ function readFirebaseOptions(): FirebaseOptions {
 /**
  * Returns the initialized Firebase app, creating it on first use (safe for Vite HMR reloads).
  * Phase 01 initializes the Firebase app only; Firebase products (Auth, Firestore, Storage,
- * Functions, Analytics, App Check) are deliberately not set up yet.
+ * Functions and Analytics are not initialized here; Phase 13 initializes the analytics
+ * callable and optional App Check at their dedicated boundaries.
  */
 export function getFirebaseApp(): FirebaseApp {
   if (getApps().length > 0) {
