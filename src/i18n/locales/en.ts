@@ -247,6 +247,7 @@ export const en = {
   admin_status_featured: 'Featured project',
   admin_status_reviews: 'Review moderation',
   admin_status_data: 'Stored data',
+  admin_status_settings: 'Site settings',
   admin_status_missing: 'Needs setup',
   admin_status_pending_count: '{count} item(s) pending',
   admin_status_invalid_count: '{count} invalid item(s)',
