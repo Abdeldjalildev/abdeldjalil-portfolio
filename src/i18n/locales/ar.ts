@@ -264,4 +264,15 @@ export const ar = {
   admin_featured_setting_help: 'يتم اختيار المشروع المميز بشكل ذري من قسم المشاريع، ويجب أن يكون منشورًا.',
   admin_manage_featured: 'إدارة المشروع المميز',
 
+  admin_analytics_subtitle: 'إشارات واعية بالخصوصية حول الزيارات والتحويلات لآخر 14 يومًا.',
+  admin_analytics_summary: 'ملخص التحليلات',
+  admin_analytics_unique_visitors: 'الزوار الفريدون',
+  admin_analytics_page_views: 'مشاهدات الصفحات',
+  admin_analytics_project_views: 'مشاهدات المشاريع',
+  admin_analytics_contact_clicks: 'نقرات الاتصال',
+  admin_analytics_events: 'إجماليات الأحداث',
+  admin_analytics_top_pages: 'أهم الصفحات',
+  admin_analytics_empty: 'لم يتم تسجيل بيانات تحليلية بعد.',
+  admin_analytics_load_error: 'تعذر تحميل التحليلات الآن.',
+
 } as const satisfies typeof import('./en.ts').en
