@@ -1,8 +1,9 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DEFAULT_LOCALE, type Locale } from '../data/enums.ts'
 import { dictionaries, getDirection } from './index.ts'
 import { I18nContext } from './context.ts'
-import { LOCALE_STORAGE_KEY, makeTranslator, persistLocale, readPersistedLocale } from './helpers.ts'
+import { LOCALE_STORAGE_KEY, hasPersistedLocale, makeTranslator, persistLocale, readPersistedLocale } from './helpers.ts'
+import { getPublicDefaultLocale } from '../data/publicSettings.ts'
 
 /**
  * Phase 06 — i18n provider.
@@ -16,13 +17,22 @@ import { LOCALE_STORAGE_KEY, makeTranslator, persistLocale, readPersistedLocale 
  * effect below synchronizes the document attributes.
  */
 export function I18nProvider({ children }: { children: ReactNode }): ReactNode {
-  const [locale, setLocaleState] = useState<Locale>(() =>
-    readPersistedLocale(DEFAULT_LOCALE),
-  )
+  const [locale, setLocaleState] = useState<Locale>(() => readPersistedLocale(DEFAULT_LOCALE))
+  const userSelectedLocale = useRef(false)
 
   const setLocale = useCallback((next: Locale) => {
+    userSelectedLocale.current = true
     setLocaleState(next)
     persistLocale(next)
+  }, [])
+
+  useEffect(() => {
+    if (hasPersistedLocale()) return
+    let active = true
+    void getPublicDefaultLocale().then(defaultLocale => {
+      if (active && !userSelectedLocale.current && defaultLocale) setLocaleState(defaultLocale)
+    })
+    return () => { active = false }
   }, [])
 
   const dir = getDirection(locale)
