@@ -1,65 +1,39 @@
 rules_version = '2';
 
 /**
- * Abdeldjalil Portfolio — Cloud Storage Security Rules (Phase 05 contract).
+ * Abdeldjalil Portfolio — Cloud Storage Security Rules.
  *
- * AUTHORITATIVE LAYER
- *   These rules are the security boundary for Storage. As with Firestore, the
- *   only trusted authorization source is the Phase 04 admin claim:
- *   request.auth.token.admin == true. No client field, URL parameter or UI state
- *   can grant write access.
- *
- * POSTURE
- *   Deny by default. Only the contracted path shapes below are matched; every
- *   other path falls to the final catch-all and is unreadable and unwritable.
- *
- * PUBLIC MEDIA IS `get`, NEVER `list`
- *   Public content media only grants single-object `get`. There is no `allow list`
- *   anywhere, so the bucket can never be enumerated by a client even though
- *   individual objects are public — which is what a portfolio needs.
- *
- * SVG IS DELIBERATELY EXCLUDED
- *   Only raster content types are accepted for images. An uploaded SVG is an
- *   active document; serving one from the site origin is a script-injection
- *   vector. Brand/UI icons are inline SVG in the app, not uploaded media.
- *
- * DOCUMENTED LIMITATION — PUBLISH STATE CANNOT BE EVALUATED HERE
- *   Storage rules cannot read the referencing Firestore document, so they cannot
- *   know whether a project is published. Media that must stay private until
- *   publication MUST be staged under `drafts/` (admin-only) and copied to a
- *   content path as part of publishing. This is a declared Phase 08 obligation,
- *   recorded in docs/data-model.md rather than silently assumed.
+ * Security boundary:
+ * - only the trusted Phase 04 admin claim can write/delete;
+ * - public content media is single-object readable, never listable;
+ * - SVG is excluded from uploaded media;
+ * - draft project media is admin-only and validated before staging.
  */
 service firebase.storage {
   match /b/{bucket}/o {
 
-    /** The Phase 04 trusted admin claim. */
     function isAdmin() {
       return request.auth != null && request.auth.token.admin == true;
     }
 
-    /**
-     * One path segment: bounded, no slashes.
-     * The pattern requires the first character to be alphanumeric, which makes
-     * '.' and '..' segments impossible. Deliberate: rules `split()` takes a
-     * REGEX, so `split('..')` would mean "any two characters" and be wrong.
-     */
     function isSafeSegment(seg) {
       return seg is string && seg.size() > 0 && seg.size() <= 100
         && seg.matches('^[A-Za-z0-9][A-Za-z0-9._-]*$');
     }
 
-    /** Raster images only — see the SVG note above. */
     function isRasterImage() {
-      return request.resource.contentType in ['image/png', 'image/jpeg',
-                                              'image/webp', 'image/avif'];
+      return request.resource.contentType in [
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+        'image/avif'
+      ];
     }
 
     function isPdf() {
       return request.resource.contentType == 'application/pdf';
     }
 
-    /** Admin write of a raster image within the size ceiling for that path. */
     function canWriteImage(maxBytes) {
       return isAdmin() && isRasterImage() && request.resource.size <= maxBytes;
     }
@@ -67,9 +41,6 @@ service firebase.storage {
     function canWritePdf(maxBytes) {
       return isAdmin() && isPdf() && request.resource.size <= maxBytes;
     }
-
-    // ----------------------------------------- public content media (approved)
-    // Read: public single-object get. Write: admin only, validated.
 
     match /profile/avatar/{fileName} {
       allow get: if true;
@@ -130,29 +101,24 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
-    // ------------------------------------------------------- admin staging area
-    // Media that must not be public before publication. Admin-only read and write,
-    // including list, because staging is an internal workspace. Nothing here is
-    // ever linked from the public site.
+    // Draft project media remains private until promotion to a public content path.
     match /drafts/{scope}/{fileName} {
-      allow read: if isAdmin() && isSafeSegment(scope) && isSafeSegment(fileName);
-      allow create, update: if isAdmin()
-        && isSafeSegment(scope) && isSafeSegment(fileName)
-        && scope.matches('^project-[A-Za-z0-9][A-Za-z0-9._-]*-(thumbnail|gallery)
+      allow read: if isAdmin()
+        && isSafeSegment(scope)
+        && isSafeSegment(fileName);
 
-    // ---------------------------------------------------------- deny by default
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)
+      allow create, update: if isAdmin()
+        && isSafeSegment(scope)
+        && isSafeSegment(fileName)
+        && scope.matches('^project-[A-Za-z0-9][A-Za-z0-9._-]*-(thumbnail|gallery)$')
         && isRasterImage()
         && request.resource.size <= 5242880;
-      allow delete: if isAdmin() && isSafeSegment(scope) && isSafeSegment(fileName);
+
+      allow delete: if isAdmin()
+        && isSafeSegment(scope)
+        && isSafeSegment(fileName);
     }
 
-    // ---------------------------------------------------------- deny by default
     match /{allPaths=**} {
       allow read, write: if false;
     }
