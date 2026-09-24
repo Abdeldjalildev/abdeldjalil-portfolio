@@ -65,7 +65,7 @@ export default function Seo({
       upsertMeta('name', 'twitter:card', 'summary'),
       upsertMeta('name', 'twitter:title', title),
       upsertMeta('name', 'twitter:description', description),
-      upsertCanonical(new URL(path, SITE_ORIGIN).toString()),
+      upsertCanonical(new URL(path, window.location.origin).toString()),
     ]
 
     return () => {
