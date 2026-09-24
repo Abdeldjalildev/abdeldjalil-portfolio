@@ -59,7 +59,7 @@ export default function AdminLayout() {
   useEffect(() => {
     if (!mobileOpen) return
     const panel = mobileMenuRef.current
-    mobileTriggerRef.current?.focus()
+    panel?.querySelector<HTMLElement>('a[href], button:not([disabled])')?.focus()
     const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
