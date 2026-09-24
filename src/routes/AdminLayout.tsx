@@ -116,7 +116,7 @@ export default function AdminLayout() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground md:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="inline-flex h-11 items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground md:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 aria-expanded={mobileOpen}
                 aria-controls="admin-mobile-navigation"
                 onClick={() => setMobileOpen(value => !value)}
