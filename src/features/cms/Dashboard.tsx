@@ -9,6 +9,7 @@ import { getAdminProfile, listServices, listSkills } from './data.ts'
 import { getFeaturedProjectId, listProjects, type ProjectRecord } from './projects.ts'
 import { listReviews, type ReviewRecord } from './reviews.ts'
 import { listContactLinks, type ContactLinkRecord } from './contactLinks.ts'
+import { getSiteSettings } from './settings.ts'
 
 type DashboardState = {
   profile: Profile | null
@@ -18,6 +19,7 @@ type DashboardState = {
   reviews: ReviewRecord[]
   contactLinks: ContactLinkRecord[]
   featuredProjectId: string | null
+  settingsReady: boolean
   invalidCount: number
 }
 
@@ -56,8 +58,9 @@ export default function Dashboard() {
       listReviews(true),
       listContactLinks(true),
       getFeaturedProjectId(),
+      getSiteSettings(),
     ])
-      .then(([profile, services, skills, projects, reviews, contactLinks, featuredProjectId]) => {
+      .then(([profile, services, skills, projects, reviews, contactLinks, featuredProjectId, settings]) => {
         if (!active) return
         setState({
           profile,
@@ -67,6 +70,7 @@ export default function Dashboard() {
           reviews: reviews.items,
           contactLinks: contactLinks.items,
           featuredProjectId,
+          settingsReady: Boolean(settings),
           invalidCount:
             services.invalidCount +
             skills.invalidCount +
@@ -124,6 +128,12 @@ export default function Dashboard() {
       ok: pendingReviews === 0,
     },
     {
+      label: t('admin_status_settings'),
+      value: state.settingsReady ? t('admin_status_clear') : t('admin_status_missing'),
+      to: '/admin/settings',
+      ok: state.settingsReady,
+    },
+    {
       label: t('admin_status_data'),
       value: state.invalidCount > 0 ? t('admin_status_invalid_count', { count: state.invalidCount }) : t('admin_status_clear'),
       to: '/admin',
@@ -148,6 +158,7 @@ export default function Dashboard() {
           <SummaryCard label={t('route_reviews')} value={state.reviews.length} detail={t('admin_review_breakdown', { pending: pendingReviews, approved: approvedReviews, published: publishedReviews })} to="/admin/reviews" />
           <SummaryCard label={t('route_contact')} value={state.contactLinks.length} detail={t('admin_contact_breakdown', { published: publishedContacts, drafts: unpublishedContacts })} to="/admin/contact" />
           <SummaryCard label={t('route_profile')} value={state.profile ? t('cms_published') : t('admin_status_missing')} to="/admin/profile" />
+          <SummaryCard label={t('route_settings')} value={state.settingsReady ? t('admin_status_clear') : t('admin_status_missing')} to="/admin/settings" />
         </div>
       </section>
 
