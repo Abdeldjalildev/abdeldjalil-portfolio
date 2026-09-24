@@ -16,6 +16,8 @@ const en = read('src/i18n/locales/en.ts')
 const ar = read('src/i18n/locales/ar.ts')
 const rules = read('firestore.rules')
 const report = read('docs/phase-12-report.md')
+const i18n = read('src/i18n/I18nProvider.tsx')
+const publicSettings = read('src/data/publicSettings.ts')
 
 const checks = [
   ['Dashboard route is real, not a placeholder', app.includes("element: <Dashboard />") && !app.includes("index: true, handle: { title: 'Dashboard' } as RootHandle, element: placeholder('route_dashboard')")],
@@ -27,6 +29,7 @@ const checks = [
   ['Dashboard reports invalid stored data', dashboard.includes('invalidCount') && dashboard.includes('admin_status_invalid_count')],
   ['Dashboard reports settings readiness', dashboard.includes('getSiteSettings()') && dashboard.includes('settingsReady')],
   ['Settings uses canonical runtime schema', settingsData.includes('siteSettingsInputSchema') && settingsData.includes('siteSettingsSchema')],
+  ['Default locale is operational for new visitors', i18n.includes('getPublicDefaultLocale') && i18n.includes('hasPersistedLocale') && publicSettings.includes('getPublicDefaultLocale')],
   ['Settings writes are optimistic-concurrency protected', settingsData.includes('CmsConflictError') && settingsData.includes('isEqual(expectedUpdatedAt)')],
   ['Settings is admin-only through existing rules', rules.includes('match /settings/main') && rules.includes('allow update: if isAdmin() && valid()')],
   ['Featured project remains managed by Projects contract', settings.includes('getFeaturedProjectId()') && settings.includes('/admin/projects')],
