@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { getAuth, signOut } from 'firebase/auth'
 import { getFirebaseApp } from '../firebase/app.ts'
@@ -53,6 +53,39 @@ export default function AdminLayout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null)
+  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const panel = mobileMenuRef.current
+    mobileTriggerRef.current?.focus()
+    const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setMobileOpen(false)
+        return
+      }
+      if (event.key !== 'Tab' || !panel) return
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector)).filter(node => node.getClientRects().length > 0)
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      mobileTriggerRef.current?.focus()
+    }
+  }, [mobileOpen])
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -93,7 +126,7 @@ export default function AdminLayout() {
       </header>
 
       {mobileOpen && (
-        <div id="admin-mobile-navigation" className="border-b border-border bg-surface p-4 md:hidden">
+        <div id="admin-mobile-navigation" ref={mobileMenuRef} role="dialog" aria-modal="true" aria-label={t('admin_navigation')} className="border-b border-border bg-surface p-4 md:hidden">
           <Navigation onNavigate={() => setMobileOpen(false)} />
         </div>
       )}
