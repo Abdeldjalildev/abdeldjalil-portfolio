@@ -264,4 +264,15 @@ export const en = {
   admin_featured_setting_help: 'The featured project is selected atomically from the Projects area and must be published.',
   admin_manage_featured: 'Manage featured project',
 
+  admin_analytics_subtitle: 'Privacy-conscious traffic and conversion signals for the last 14 days.',
+  admin_analytics_summary: 'Analytics summary',
+  admin_analytics_unique_visitors: 'Unique visitors',
+  admin_analytics_page_views: 'Page views',
+  admin_analytics_project_views: 'Project views',
+  admin_analytics_contact_clicks: 'Contact clicks',
+  admin_analytics_events: 'Event totals',
+  admin_analytics_top_pages: 'Top pages',
+  admin_analytics_empty: 'No analytics data has been recorded yet.',
+  admin_analytics_load_error: 'Analytics could not be loaded right now.',
+
 } as const
