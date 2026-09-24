@@ -105,6 +105,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-background">
+      <a href="#admin-main-content" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface-elevated focus:px-4 focus:py-3 focus:text-foreground focus:shadow-elevated">{t('skip_to_content')}</a>
       <header className="sticky top-0 z-30 border-b border-border-strong bg-surface-elevated/95 backdrop-blur-xs">
         <Container width="content" className="py-3">
           <div className="flex items-center justify-between gap-4">
@@ -144,7 +145,7 @@ export default function AdminLayout() {
             <Navigation />
           </Surface>
         </aside>
-        <main className="min-w-0">
+        <main id="admin-main-content" className="min-w-0">
           <Outlet />
         </main>
       </Container>
