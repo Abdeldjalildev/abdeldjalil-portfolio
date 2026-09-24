@@ -65,7 +65,7 @@ export default function ServicesAdmin() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-2"><Heading>t('route_services')</Heading><p className="text-body text-foreground-muted">t('cms_services_subtitle')</p></div>
+      <div className="grid gap-2"><Heading level={1}>{t('route_services')}</Heading><p className="text-body text-foreground-muted">{t('cms_services_subtitle')}</p></div>
       <SaveState message={saved} error={error} />
       {invalidCount > 0 && <p role="alert" className="text-body text-danger">{t('cms_invalid_items', { count: invalidCount })}</p>}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
