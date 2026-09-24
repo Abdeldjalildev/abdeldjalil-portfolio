@@ -25,6 +25,8 @@ import ProfileAdmin from './features/cms/ProfileAdmin.tsx'
 import ServicesAdmin from './features/cms/ServicesAdmin.tsx'
 import SkillsAdmin from './features/cms/SkillsAdmin.tsx'
 import ProjectsAdmin from './features/cms/ProjectsAdmin.tsx'
+import Dashboard from './features/cms/Dashboard.tsx'
+import SettingsAdmin from './features/cms/SettingsAdmin.tsx'
 import type { TranslationKey } from './i18n/types.ts'
 
 const placeholder = (key: TranslationKey) => {
@@ -108,7 +110,7 @@ const router = createBrowserRouter([
         element: <AdminLayout />,
         errorElement: <ErrorFallback />,
         children: [
-          { index: true, handle: { title: 'Dashboard' } as RootHandle, element: placeholder('route_dashboard') },
+          { index: true, handle: { title: 'Dashboard' } as RootHandle, element: <Dashboard /> },
           { path: 'projects', handle: { title: 'Projects' } as RootHandle, element: <ProjectsAdmin /> },
           { path: 'services', handle: { title: 'Services' } as RootHandle, element: <ServicesAdmin /> },
           { path: 'skills', handle: { title: 'Skills' } as RootHandle, element: <SkillsAdmin /> },
@@ -116,7 +118,7 @@ const router = createBrowserRouter([
           { path: 'profile', handle: { title: 'Profile' } as RootHandle, element: <ProfileAdmin /> },
           { path: 'contact', handle: { title: 'Contact & Social' } as RootHandle, element: <ContactLinksAdmin /> },
           { path: 'analytics', handle: { title: 'Analytics' } as RootHandle, element: placeholder('route_analytics') },
-          { path: 'settings', handle: { title: 'Settings' } as RootHandle, element: placeholder('route_settings') },
+          { path: 'settings', handle: { title: 'Settings' } as RootHandle, element: <SettingsAdmin /> },
         ],
       },
     ],
