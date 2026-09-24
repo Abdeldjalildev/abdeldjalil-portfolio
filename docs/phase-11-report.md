@@ -114,6 +114,12 @@ Static review confirms:
 
 Local browser/accessibility/performance evidence remains pending.
 
+## Deep audit after implementation
+
+A repository-level audit was performed before Phase 12 work. One concrete Phase 11 quality issue was found: `Home.tsx` imported `localizeProjectText` but did not use it. Because the TypeScript configuration enables `noUnusedLocals`, this could block a production typecheck/build. The unused import was removed, and the Phase 11 static harness was strengthened to assert that the dead import does not return.
+
+No Phase 11 contract, publication boundary, featured-project invariant, or scope boundary was changed during this repair.
+
 ## Gate 6 — Closure/evidence
 
 **BLOCKED / pending local verification and owner acceptance.**
