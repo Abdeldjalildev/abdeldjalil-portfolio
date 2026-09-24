@@ -28,7 +28,7 @@ const checks = [
   ['Analytics rate limit is bounded', functions.includes('MAX_EVENTS_PER_VISITOR_PER_DAY = 100') && functions.includes('Daily analytics limit reached')],
   ['Analytics stores a hashed visitor identifier', functions.includes("createHash('sha256')") && functions.includes('visitorHash')],
   ['Analytics has bounded path cardinality', functions.includes('MAX_PATH_ENTRIES_PER_DAY = 50')],
-  ['Analytics function scaling is bounded', functions.includes('maxInstances: 3')],
+  ['Analytics function scaling is bounded', functions.includes('maxInstances: 3') && functions.includes('enforceAppCheck: true')],
   ['Analytics retention is implemented server-side', functions.includes('RETENTION_DAYS = 90') && functions.includes('exports.pruneAnalytics')],
   ['Public analytics writes are impossible through Firestore rules', rules.includes('match /analyticsDaily/{date}') && rules.includes('allow write: if false')],
   ['Analytics visitor markers are not client-readable', rules.includes('match /analyticsVisitors/{visitorKey}') && rules.includes('allow read, write: if false')],
