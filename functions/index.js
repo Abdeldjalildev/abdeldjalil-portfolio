@@ -69,6 +69,11 @@ exports.recordAnalyticsEvent = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Invalid analytics payload.')
   }
 
+  const allowedKeys = new Set(['event', 'visitorId', 'path', 'projectId', 'serviceId'])
+  if (Object.keys(data).some(key => !allowedKeys.has(key))) {
+    throw new HttpsError('invalid-argument', 'Unexpected analytics field.')
+  }
+
   const eventName = data.event
   const visitorId = data.visitorId
 
