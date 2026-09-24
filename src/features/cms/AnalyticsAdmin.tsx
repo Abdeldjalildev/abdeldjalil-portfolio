@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, getFirestore } from 'firebase/firestore'
+import { getFirebaseApp } from '../../firebase/app.ts'
 import { Heading } from '../../components/ui/Heading.tsx'
 import { Surface } from '../../components/ui/Surface.tsx'
 import { Text } from '../../components/ui/Text.tsx'
 import { useI18n } from '../../i18n/context.ts'
-import { getFirestoreDb } from '../cms/firestore.ts'
 
 type DailyAnalytics = {
   eventCounts?: Record<string, number>
@@ -36,7 +36,7 @@ export default function AnalyticsAdmin() {
     let active = true
     const load = async () => {
       try {
-        const db = getFirestoreDb()
+        const db = getFirestore(getFirebaseApp())
         const snapshots = await Promise.all(Array.from({ length: 14 }, (_, index) => {
           const date = dateKey(index)
           return getDoc(doc(db, 'analyticsDaily', date)).then(snapshot => ({
