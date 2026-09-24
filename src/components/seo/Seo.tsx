@@ -7,7 +7,6 @@ type SeoProps = {
   noindex?: boolean
 }
 
-const SITE_ORIGIN = 'https://abdeldjalildev.github.io'
 const DEFAULT_TITLE = 'Abdeldjalil Portfolio'
 const DEFAULT_DESCRIPTION = 'Abdeldjalil Khalfa — professional frontend development portfolio and selected projects.'
 
@@ -62,7 +61,7 @@ export default function Seo({
       upsertMeta('property', 'og:title', title),
       upsertMeta('property', 'og:description', description),
       upsertMeta('property', 'og:type', 'website'),
-      upsertMeta('property', 'og:url', new URL(path, SITE_ORIGIN).toString()),
+      upsertMeta('property', 'og:url', new URL(path, window.location.origin).toString()),
       upsertMeta('name', 'twitter:card', 'summary'),
       upsertMeta('name', 'twitter:title', title),
       upsertMeta('name', 'twitter:description', description),
