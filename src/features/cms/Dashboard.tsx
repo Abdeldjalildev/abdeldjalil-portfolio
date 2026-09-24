@@ -111,7 +111,7 @@ export default function Dashboard() {
   const statuses = [
     {
       label: t('admin_status_profile'),
-      value: state.profile?.published ? t('cms_published') : t('admin_status_missing'),
+      value: state.profile ? (state.profile.published ? t('cms_published') : t('cms_draft')) : t('admin_status_missing'),
       to: '/admin/profile',
       ok: Boolean(state.profile?.published),
     },
