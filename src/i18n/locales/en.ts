@@ -232,6 +232,7 @@ export const en = {
   home_load_error_title: 'Unable to load the home page',
 
 
+  skip_to_content: 'Skip to content',
   admin_navigation: 'Admin navigation',
   admin_menu: 'Admin menu',
   admin_dashboard_eyebrow: 'Operations',
