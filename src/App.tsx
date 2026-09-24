@@ -1,34 +1,34 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { Suspense } from 'react'
-import { DesignSystemPreview } from './design-system/DesignSystemPreview.tsx'
+import { lazy, Suspense } from 'react'
 import { I18nProvider } from './i18n/I18nProvider.tsx'
 import PublicLayout from './routes/PublicLayout.tsx'
 import AdminLayout from './routes/AdminLayout.tsx'
-import Root from './routes/Root.tsx'
-import type { RootHandle } from './routes/Root.tsx'
 import NotFound from './routes/NotFound.tsx'
 import ErrorFallback from './routes/ErrorFallback.tsx'
-import SignIn from './routes/SignIn.tsx'
 import LoadingFallback from './components/ui/LoadingFallback.tsx'
 import { AdminAccessBoundary } from './routes/AdminAccessBoundary.tsx'
 import { AuthProvider } from './auth/AuthProvider.tsx'
 import { useI18n } from './i18n/context.ts'
-import About from './features/public/About.tsx'
-import Services from './features/public/Services.tsx'
-import Projects from './features/public/Projects.tsx'
-import ProjectDetail from './features/public/ProjectDetail.tsx'
-import Reviews from './features/public/Reviews.tsx'
-import Contact from './features/public/Contact.tsx'
-import ReviewsAdmin from './features/cms/ReviewsAdmin.tsx'
-import ContactLinksAdmin from './features/cms/ContactLinksAdmin.tsx'
-import ProfileAdmin from './features/cms/ProfileAdmin.tsx'
-import ServicesAdmin from './features/cms/ServicesAdmin.tsx'
-import SkillsAdmin from './features/cms/SkillsAdmin.tsx'
-import ProjectsAdmin from './features/cms/ProjectsAdmin.tsx'
-import Dashboard from './features/cms/Dashboard.tsx'
-import SettingsAdmin from './features/cms/SettingsAdmin.tsx'
-import AnalyticsAdmin from './features/cms/AnalyticsAdmin.tsx'
+import type { RootHandle } from './routes/Root.tsx'
 import type { TranslationKey } from './i18n/types.ts'
+
+const Home = lazy(() => import('./features/public/Home.tsx'))
+const About = lazy(() => import('./features/public/About.tsx'))
+const Services = lazy(() => import('./features/public/Services.tsx'))
+const Projects = lazy(() => import('./features/public/Projects.tsx'))
+const ProjectDetail = lazy(() => import('./features/public/ProjectDetail.tsx'))
+const Reviews = lazy(() => import('./features/public/Reviews.tsx'))
+const Contact = lazy(() => import('./features/public/Contact.tsx'))
+const ReviewsAdmin = lazy(() => import('./features/cms/ReviewsAdmin.tsx'))
+const ContactLinksAdmin = lazy(() => import('./features/cms/ContactLinksAdmin.tsx'))
+const ProfileAdmin = lazy(() => import('./features/cms/ProfileAdmin.tsx'))
+const ServicesAdmin = lazy(() => import('./features/cms/ServicesAdmin.tsx'))
+const SkillsAdmin = lazy(() => import('./features/cms/SkillsAdmin.tsx'))
+const ProjectsAdmin = lazy(() => import('./features/cms/ProjectsAdmin.tsx'))
+const Dashboard = lazy(() => import('./features/cms/Dashboard.tsx'))
+const SettingsAdmin = lazy(() => import('./features/cms/SettingsAdmin.tsx'))
+const AnalyticsAdmin = lazy(() => import('./features/cms/AnalyticsAdmin.tsx'))
+const DesignSystemPreview = lazy(() => import('./design-system/DesignSystemPreview.tsx'))
 
 const placeholder = (key: TranslationKey) => {
   function Placeholder() {
@@ -63,7 +63,7 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     errorElement: <ErrorFallback />,
     children: [
-      { index: true, element: <Root /> },
+      { index: true, element: <Home /> },
       {
         path: 'about',
         handle: { title: 'About' } as RootHandle,
