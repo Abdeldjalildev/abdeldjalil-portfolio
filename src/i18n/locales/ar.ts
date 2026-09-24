@@ -247,6 +247,7 @@ export const ar = {
   admin_status_featured: 'المشروع المميز',
   admin_status_reviews: 'مراجعة آراء العملاء',
   admin_status_data: 'البيانات المخزنة',
+  admin_status_settings: 'إعدادات الموقع',
   admin_status_missing: 'يحتاج إلى إعداد',
   admin_status_pending_count: '{count} عنصر قيد الانتظار',
   admin_status_invalid_count: '{count} عنصر غير صالح',
