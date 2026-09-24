@@ -35,6 +35,7 @@ const checks = [
   ['Admin mobile navigation traps focus and Escape', adminLayout.includes("event.key === 'Escape'") && adminLayout.includes("event.key !== 'Tab'")],
   ['Admin mobile navigation locks body scroll', adminLayout.includes("document.body.style.overflow = 'hidden'")],
   ['Skip links exist for public and admin', publicLayout.includes('skip_to_content') && adminLayout.includes('skip_to_content')],
+  ['Footer icons use valid SVG containers', footer.includes('<svg {...common}>') && footer.includes("'aria-hidden': true")],
   ['Interactive targets are strengthened', read('src/components/shell/LocaleSwitcher.tsx').includes('min-h-11') && read('src/components/shell/PublicHeader.tsx').includes('h-11 w-11') && footer.includes('size-11')],
   ['Staged uploads are server-validated', storage.includes("scope.matches('^project-") && storage.includes('isRasterImage()') && storage.includes('request.resource.size <= 5242880')],
   ['Staged media tests cover invalid types', storageTests.includes('SVG into a project staging path') && storageTests.includes('PDF into an image-only project staging path')],
