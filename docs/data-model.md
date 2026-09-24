@@ -77,3 +77,32 @@ This staging design is required because Storage rules cannot inspect the referen
 Reviews use the moderation states `pending`, `approved`, and `published`. Public queries must constrain reads to `status == 'published'`; approved and pending reviews remain admin-only. A newly created review must start pending. The allowed moderation transitions are pending → approved → published and published → approved for unpublishing; keeping the same status is allowed for content edits. `publishedAt` is server-stamped when a review first becomes published and remains unchanged while it stays published.
 
 Contact links are public only when `published == true`. Their target is validated by type: web/social/custom targets use HTTPS, email uses a bare email or mailto target, phone uses a bare number or tel target, and WhatsApp uses HTTPS or a phone number. The same safety boundary is checked in the Firestore rules and the application validation layer.
+
+
+## Phase 13 — Analytics contract
+
+Analytics is intentionally server-owned. The public client invokes the `recordAnalyticsEvent` callable; it never writes analytics documents directly. The function accepts only the fixed event taxonomy:
+
+- `page_view`
+- `project_view`
+- `project_live_demo_click`
+- `github_click`
+- `contact_click`
+- `social_click`
+- `service_view`
+- `resume_download`
+
+The payload contains only an opaque random visitor identifier plus bounded route/project/service identifiers. No name, email, phone, IP address, user-agent string, authentication token or free-form text is persisted. The visitor identifier is SHA-256 hashed server-side before it is stored.
+
+Aggregates are stored under `analyticsDaily/{YYYY-MM-DD}`. Each daily document contains fixed event counters, a bounded path counter map (maximum 50 distinct paths per day), service/project counters and a daily unique-visitor count. `analyticsVisitors/{day_hash}` stores only the hashed visitor marker, event-name set, bounded daily event count and retention timestamp.
+
+Abuse controls:
+- callable event allowlist and strict payload validation;
+- maximum 100 accepted events per visitor per UTC day;
+- Cloud Functions `maxInstances: 3` cost/scaling ceiling;
+- optional Firebase App Check client integration with reCAPTCHA Enterprise;
+- analytics failures are isolated from public rendering/navigation.
+
+Retention is 90 days. Both aggregate and visitor-marker documents carry `expiresAt`; the scheduled `pruneAnalytics` function removes expired documents daily. This cleanup requires the Cloud Scheduler capability used by scheduled Cloud Functions at deployment time.
+
+Admin analytics reads are allowed only for the trusted Phase 04 `admin` claim. Public and non-admin analytics reads/writes remain denied.
