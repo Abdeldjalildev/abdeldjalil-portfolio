@@ -21,6 +21,7 @@ const en = read('src/i18n/locales/en.ts')
 const ar = read('src/i18n/locales/ar.ts')
 
 const checks = [
+  ['Functions runtime package declares Node 20', functionPackage.includes('"node": "20"') && functionPackage.includes('firebase-functions')],
   ['Analytics callable is registered', firebase.includes('"functions"') && firebase.includes('"source": "functions"')],
   ['Analytics function has fixed event allowlist', functions.includes('const EVENTS = new Set') && functions.includes('resume_download')],
   ['Analytics payload rejects arbitrary objects', functions.includes('if (!isPlainObject(data))') && functions.includes("Unsupported analytics event.")],
