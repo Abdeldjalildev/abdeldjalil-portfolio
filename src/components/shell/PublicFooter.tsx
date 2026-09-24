@@ -104,7 +104,7 @@ function SocialLink({ link, locale }: { link: ContactLink; locale: Locale }): JS
     <a
       href={href}
       aria-label={linkLabel(link, locale)}
-      className="flex size-9 items-center justify-center rounded-md border border-border text-foreground-muted transition-standard hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className="flex size-11 items-center justify-center rounded-md border border-border text-foreground-muted transition-standard hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       target={isExternal ? '_blank' : undefined}
       rel={isExternal ? 'noopener noreferrer' : undefined}
     >
