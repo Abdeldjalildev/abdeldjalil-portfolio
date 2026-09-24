@@ -3,6 +3,16 @@ import type { TFunction, TranslationKey } from './types.ts'
 
 export const LOCALE_STORAGE_KEY = 'abdeldjalil_portfolio_locale'
 
+export function hasPersistedLocale(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
+    return stored === 'en' || stored === 'ar'
+  } catch {
+    return false
+  }
+}
+
 export function readPersistedLocale(defaultLocale: Locale): Locale {
   if (typeof window === 'undefined') return defaultLocale
   try {
