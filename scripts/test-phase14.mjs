@@ -24,6 +24,7 @@ const checks = [
   ['Public feature routes are lazy-loaded', app.includes("const Home = lazy(") && app.includes("const ProjectDetail = lazy(")],
   ['Admin feature routes are lazy-loaded', app.includes("const Dashboard = lazy(") && app.includes("const AnalyticsAdmin = lazy(")],
   ['Dev design-system route is lazy-loaded', app.includes("const DesignSystemPreview = lazy(")],
+  ['SEO uses the current deployment origin', !seo.includes('SITE_ORIGIN') && seo.includes('window.location.origin')],
   ['Public SEO boundary exists', fs.existsSync(new URL('../src/components/seo/Seo.tsx', import.meta.url)) && seo.includes('canonical')],
   ['Public shell applies SEO metadata', publicLayout.includes('<Seo')],
   ['Project detail uses centralized SEO', projectDetail.includes('<Seo') && !projectDetail.includes('document.querySelector(\'meta[name="description"]\')')],
