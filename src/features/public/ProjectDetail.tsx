@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n/context.ts'
 import { Heading } from '../../components/ui/Heading.tsx'
 import { Surface } from '../../components/ui/Surface.tsx'
 import { Text } from '../../components/ui/Text.tsx'
+import Seo from '../../components/seo/Seo.tsx'
 import { ProjectDetails } from './ProjectDetails.tsx'
 import {
   getProjectSeoDescription,
@@ -50,21 +51,7 @@ export default function ProjectDetail() {
     if (!project) return
     trackEvent('project_view', { projectId: project.id, path: `/projects/${project.slug}` })
 
-    const previousTitle = document.title
-    const title = getProjectSeoTitle(project, locale)
-    const description = getProjectSeoDescription(project, locale)
-    const descriptionMeta = document.querySelector('meta[name="description"]')
-    const previousDescription = descriptionMeta?.getAttribute('content') ?? null
-
-    document.title = title
-    descriptionMeta?.setAttribute('content', description)
-
-    return () => {
-      document.title = previousTitle
-      if (descriptionMeta && previousDescription !== null) {
-        descriptionMeta.setAttribute('content', previousDescription)
-      }
-    }
+    return undefined
   }, [project, locale])
 
   if (loading) return <p className="text-body text-foreground-muted">{t('loading_label')}</p>
@@ -91,5 +78,14 @@ export default function ProjectDetail() {
     )
   }
 
-  return <ProjectDetails project={project} />
+  return (
+    <>
+      <Seo
+        title={getProjectSeoTitle(project, locale)}
+        description={getProjectSeoDescription(project, locale)}
+        path={`/projects/${project.slug}`}
+      />
+      <ProjectDetails project={project} />
+    </>
+  )
 }
