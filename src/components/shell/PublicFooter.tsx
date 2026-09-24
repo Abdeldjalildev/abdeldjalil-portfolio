@@ -36,9 +36,8 @@ export function PublicFooter(): ReactNode {
           .filter((link) => link.published)
           .sort((a, b) => a.order - b.order)
         setState({ status: 'ready', links })
-      } catch {
-        // Public data is enhancement, not identity: the footer degrades to its
-        // static content instead of surfacing internal data errors to visitors.
+      } catch (error) {
+        console.warn('Public footer links failed to load.', error)
         setState({ status: 'error' })
       }
     }
