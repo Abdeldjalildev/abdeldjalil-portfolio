@@ -61,7 +61,7 @@ export function PublicHeader(): JSX.Element {
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
-                className="inline-flex items-center justify-center rounded-md border border-border px-2 py-1.5 text-foreground-muted transition-standard hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-border px-2 py-1.5 text-foreground-muted transition-standard hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 aria-label={t('menu_open')}
                 aria-controls="mobile-menu-panel"
                 aria-expanded={mobileOpen}
