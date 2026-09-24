@@ -58,6 +58,13 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    if (!mobileOpen) return
     const panel = mobileMenuRef.current
     panel?.querySelector<HTMLElement>('a[href], button:not([disabled])')?.focus()
     const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
