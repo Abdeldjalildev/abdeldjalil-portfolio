@@ -9,8 +9,9 @@ import type { TranslationKey } from '../../i18n/types.ts'
 export const PUBLIC_NAVIGATION: ReadonlyArray<{
   key: TranslationKey
   to: string
+  end?: boolean
 }> = [
-  { key: 'nav_home', to: '/' },
+  { key: 'nav_home', to: '/', end: true },
   { key: 'nav_about', to: '/about' },
   { key: 'nav_services', to: '/services' },
   { key: 'nav_projects', to: '/projects' },
