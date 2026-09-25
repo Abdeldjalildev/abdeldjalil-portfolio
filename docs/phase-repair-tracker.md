@@ -615,6 +615,23 @@ No local Node test, Firestore Emulator run, Storage Emulator run, index deployme
 
 **Phase 05 remains NOT CLOSED.** This repair pass does not alter the owner-controlled phase ledger.
 
+
+
+### Repair execution note — 2026-09-25
+
+During the repository repair execution, `firestore.rules` was found with a malformed duplicated/truncated tail after the canonical closing braces. The canonical Phase 05 rules block was restored from the intact first ruleset, preserving the repaired list budgets and server-side contact-target validation.
+
+Repository-level recheck after the repair:
+- exactly one `rules_version = '2';` declaration;
+- exactly one Firestore `/databases/{database}/documents` rules block;
+- technologies aggregate budget: **1,829**;
+- gallery-path aggregate budget: **6,155**;
+- canonical `contactLinks` validation includes `isContactTarget(...)`;
+- explicit catch-all deny remains present.
+
+Repair commit: `9987e204c88214ec0aa5faae1821fec0a4b0c120`
+
+No local/emulator execution was performed. The phase remains **NOT CLOSED**, and no phase advancement was performed.
 **I did not advance to the next phase.**
 
 
