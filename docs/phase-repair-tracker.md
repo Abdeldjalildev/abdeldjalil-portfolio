@@ -479,3 +479,120 @@ Two hardening findings were identified:
 No code was changed during this audit because both findings belong to the Phase 04 repair pass rather than being trivial isolated syntax/unused-code corrections.
 
 **Phase 04 is not CLOSED.**
+
+# Phase 05 — DATA MODEL, SCHEMAS, INDEXES & STORAGE CONTRACT
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 05 contract
+- `src/data/types.ts`
+- `src/data/enums.ts`
+- `src/data/paths.ts`
+- `src/data/schema/core.ts`
+- `src/data/schema/schemas.ts`
+- `src/data/schema/index.ts`
+- `firestore.rules`
+- `storage.rules`
+- `firestore.indexes.json`
+- `docs/data-model.md`
+- `scripts/test-schema.ts`
+- `scripts/test-rules.mjs`
+- current package scripts and phase-evidence availability
+
+No local execution, Emulator Suite run, schema test, rules test, index deployment validation, or production Firebase verification was performed in this audit.
+
+## Phase 05 direct findings
+
+### P05-01 — Schema/rules maximum-length contract mismatch
+
+This is the main confirmed Phase 05 contract defect.
+
+The runtime schema allows:
+- `projects.technologies`: up to 30 strings × 60 characters each.
+- `projects.galleryPaths`: up to 12 paths × 512 characters each.
+
+The Firestore rules enforce these lists through `join()` plus an aggregate joined-string limit:
+- technologies: `maxJoinedLength = 1800`
+- gallery paths: `maxJoinedLength = 6144`
+
+The separators added by `join()` mean a schema-valid maximum-size list can exceed the rules aggregate budget. For example:
+- technologies at 30×60 characters require 1,829 joined characters with 29 commas, so the rules can reject a value accepted by the schema.
+- gallery paths at 12×512 characters require 6,155 joined characters with 11 separators, so the rules can reject a value accepted by the schema.
+
+This directly violates the documented intent that the runtime schema and rules should describe the same structural contract.
+
+**Disposition:** confirmed Phase 05 blocker-level contract mismatch. Fix in the Phase 05 repair pass. Do not solve by weakening the rules or by silently lowering schema limits; first reconcile the canonical intended limits and then make both layers/test evidence agree.
+
+### P05-02 — Timestamp parser is structurally under-constrained
+
+`src/data/schema/core.ts` checks that `seconds` and `nanoseconds` are integers, but it does not enforce the valid Firestore timestamp nanosecond range (0–999,999,999) or a meaningful seconds range.
+
+This means the application-level parser can accept structurally malformed timestamp-shaped objects that are not valid Firestore Timestamp values.
+
+This does not create a direct Firestore authorization bypass because Firestore rules require actual timestamp equality against `request.time` for writes. It is nevertheless a runtime schema correctness gap at the declared trust boundary.
+
+**Disposition:** confirmed schema hardening defect. Repair in Phase 05; add explicit rejection cases to the schema test.
+
+### P05-03 — Phase 05 has no dedicated phase report or `test:phase05` harness
+
+The repository contains `scripts/test-schema.ts` and the broader `test:rules` harness, but no dedicated `docs/phase-05-report.md` and no `test:phase05` package script.
+
+This is an evidence/closure gap, not proof that the implementation itself is wrong.
+
+**Disposition:** record only; do not fabricate historical Gate 4–6 evidence.
+
+### P05-04 — Rules-language limitation for list element typing is explicitly documented
+
+`isStringList()` and `isMediaPathList()` use aggregate `join()` checks because Firestore rules cannot perform the same per-element validation as the runtime schema. `scripts/test-rules.mjs` deliberately records a non-string technology element as a documented limitation rather than falsely treating it as a security PASS.
+
+This is acceptable as a declared division of responsibility for an admin-only write boundary, provided the application schema is always used by CMS writers and the security boundary does not depend on element typing for authorization.
+
+**Disposition:** no direct change during audit. Preserve the explicit limitation and ensure Phase 05 documentation does not imply the rules independently validate every list element.
+
+### P05-05 — Firestore indexes file is present and aligned with the documented ordered queries
+
+The previously tracked missing-index-file concern is no longer applicable to the current repository state: `firestore.indexes.json` exists and contains the six documented composite indexes plus field overrides for analytics maps.
+
+**Disposition:** close/remove CP-01 from the active repair queue if it remains listed as an unresolved finding.
+
+## Phase 05 cross-phase findings
+
+### P05-CP01 — Contact-link server validation documentation currently overstates the rules boundary
+
+`docs/data-model.md` states that contact target safety is checked in both Firestore rules and the application validation layer. The current `contactLinks.valid()` rule validates the allowed type and string shape but does not call the defined `isContactTarget()` helper.
+
+The application schema does reject obvious unsafe schemes, but the server rules do not currently enforce the per-type target contract described in the documentation.
+
+This is primarily owned by the later Phase 10 contact-link contract, but the mismatch originates in the canonical Phase 05 rules/data contract and must be reconciled before final closure.
+
+**Disposition:** record cross-phase; do not make the Phase 10-specific repair during this Phase 05 audit.
+
+### P05-CP02 — Analytics collections are represented in indexes/docs but not yet in the Phase 05 canonical collection map
+
+The current `COLLECTIONS`/document schema map intentionally covers the v1 CMS documents only, while analytics is server-owned and implemented later. The indexes file and data-model document already describe `analyticsDaily` and `analyticsVisitors`.
+
+This is not necessarily a Phase 05 defect because the AGENTS Phase 05 objective predates the later server-owned analytics design. It should remain explicitly phase-attributed so Phase 13 can own the analytics data contract.
+
+**Disposition:** no change.
+
+### P05-CP03 — Featured-project invariant is later hardened by Phase 08
+
+The canonical Phase 05 model defines `settings/main.featuredProjectId`; current rules now enforce existence/publication and protect the currently featured project from deletion/unpublishing. These later hardenings must not be mistaken for original Phase 05 closure evidence.
+
+**Disposition:** preserve phase attribution.
+
+## Phase 05 conclusion
+
+Two confirmed implementation/schema defects were found:
+1. Schema/rules aggregate-length mismatch for maximum-size technology/gallery lists.
+2. Timestamp parser accepts malformed timestamp-shaped values.
+
+One evidence gap exists:
+- no dedicated Phase 05 report or phase-specific harness.
+
+The index-file finding previously tracked globally is resolved in the current repository.
+
+**Phase 05 is not CLOSED.**
