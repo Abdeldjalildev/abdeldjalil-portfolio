@@ -94,14 +94,20 @@ export default function ProjectsAdmin() {
     }
     setUploading(true); setError('')
     try {
+      const selectedFiles = Array.from(files)
       const next = [...form.galleryPaths]
+      if (kind === 'gallery' && next.length + selectedFiles.length > 12) {
+        throw new Error(t('cms_project_gallery_limit'))
+      }
+
+      const stagedPaths: string[] = []
       let thumbnail = form.thumbnailPath
-      for (const file of Array.from(files)) {
+      for (const file of kind === 'thumbnail' ? selectedFiles.slice(0, 1) : selectedFiles) {
         const result = await uploadProjectMedia(form.slug, kind, file)
+        stagedPaths.push(result.path)
         if (kind === 'thumbnail') thumbnail = result.path
         else next.push(result.path)
       }
-      if (next.length > 12) throw new Error(t('cms_project_gallery_limit'))
       setForm({ ...form, thumbnailPath: thumbnail, galleryPaths: next })
     } catch (cause) {
       setError(getErrorMessage(cause, t('cms_upload_error')))
