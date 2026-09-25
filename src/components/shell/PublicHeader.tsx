@@ -35,10 +35,11 @@ export function PublicHeader(): JSX.Element {
               className="hidden items-center gap-2 md:flex"
               aria-label={t('nav_main')}
             >
-              {PUBLIC_NAVIGATION.map(({ key, to }) => (
+              {PUBLIC_NAVIGATION.map(({ key, to, end }) => (
                 <NavLink
                   key={to}
                   to={to}
+                  end={end}
                   className={({ isActive }) =>
                     [
                       'rounded-md px-3 py-1.5 text-sm font-medium transition-standard',
