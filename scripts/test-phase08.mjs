@@ -24,6 +24,8 @@ for (const field of ['title','slug','summary','description','caseStudy','technol
 assert(paths.includes('projectThumbnailObjectPath') && paths.includes('projectGalleryObjectPath'), 'project storage path helpers are missing')
 assert(data.includes('projectInputSchema') && data.includes('runTransaction'), 'project writes do not use canonical schema + transactions')
 assert(data.includes('uploadProjectMedia') && data.includes('moveStorageObject'), 'project media pipeline is incomplete')
+assert(data.includes('rollbackMovedMedia') && data.includes('moved: string[]'), 'project media moves must track completed Storage moves for rollback')
+assert(data.includes('await rollbackMovedMedia(project.id, moved, true)') && data.includes('await rollbackMovedMedia(project.id, moved, false)'), 'publish/unpublish media moves must roll back all completed moves when a later move fails')
 assert(admin.includes("next.length + selectedFiles.length > 12"), 'gallery capacity must be validated before staging uploads')
 assert(admin.includes('for (const path of stagedPaths)'), 'failed project uploads must clean newly staged media')
 assert(data.includes('isEqual(project.updatedAt)'), 'project deletion must enforce optimistic concurrency')
