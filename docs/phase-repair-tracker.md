@@ -937,6 +937,13 @@ One existing cross-phase finding is confirmed again: the featured-project unpubl
 - `scripts/test-phase08.mjs` now asserts the repaired gallery pre-check, staged-upload cleanup, transactional deletion, exact concurrency guard, and featured-unpublish lifecycle.
 - `docs/phase-08-report.md` records the repair pass and its static-only evidence.
 
+### P08-R5 — Make multi-object media moves failure-atomic — COMPLETED
+- `moveMediaPaths()` now accepts a shared list of successfully moved objects so a later failure cannot lose track of earlier successful moves.
+- `rollbackMovedMedia()` reverses every completed move in reverse order for both publish and unpublish flows.
+- `publishProject()` and `unpublishProject()` now wrap the complete multi-object Storage move sequence in the rollback boundary, closing the previously identified partial-move window.
+- Firestore authorization, featured-project rules, Storage limits and the existing media paths were not weakened or changed.
+- `scripts/test-phase08.mjs` now asserts the move-tracking and rollback contract.
+
 ### Repair verification boundary
 Fresh GitHub re-inspection confirmed the intended source/harness contracts. No local build, lint, TypeScript, Emulator Suite, Storage runtime, browser, or production execution was performed.
 
