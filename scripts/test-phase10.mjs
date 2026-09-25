@@ -28,7 +28,7 @@ assert(publicContact.includes('noopener noreferrer') && publicContact.includes('
 assert(adminReviews.includes('changeReviewStatus') && adminReviews.includes('deleteReview'), 'review moderation controls missing')
 assert(adminContacts.includes('validateContactTarget') && adminContacts.includes('deleteContactLink'), 'contact validation/admin controls missing')
 assert(rules.includes('validTransition()') && rules.includes("status == 'pending'") && rules.includes("status == 'approved'") && rules.includes("status == 'published'"), 'review transition rules missing')
-assert(rules.includes('isContactTarget') && rules.includes("request.resource.data.type"), 'contact target rule validation missing')
+assert(/match \/contactLinks\/\{linkId\}[\s\S]*?function valid\(\) \{[\s\S]*?isContactTarget\(request\.resource\.data\.type, request\.resource\.data\.value\)/.test(rules), 'contact target rule validation is not wired into contactLinks valid()')
 assert(en.includes('reviews_average') && en.includes('contact_title') && ar.includes('reviews_average') && ar.includes('contact_title'), 'Phase 10 translations missing')
 assert(pkg.scripts['test:phase10'] === 'node scripts/test-phase10.mjs', 'Phase 10 static test not registered')
 assert(report.includes('I did not advance to the next phase.'), 'Phase 10 report isolation statement missing')
