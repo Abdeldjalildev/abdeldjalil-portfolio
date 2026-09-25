@@ -61,7 +61,7 @@ export async function changeReviewStatus(id: string, status: ReviewStatus, expec
     if (!snapshot.exists()) throw new Error('REVIEW_NOT_FOUND')
     const current = validate(reviewSchema, snapshot.data(), reference.path)
     if (!current.ok) throw new Error('INVALID_STORED_REVIEW')
-    if (current.value.updatedAt.seconds !== expectedUpdatedAt.seconds) throw new Error('CONCURRENT_REVIEW_EDIT')
+    if (!current.value.updatedAt.isEqual(expectedUpdatedAt)) throw new Error('CONCURRENT_REVIEW_EDIT')
     const allowed = status === current.value.status ||
       (current.value.status === 'pending' && status === 'approved') ||
       (current.value.status === 'approved' && status === 'published') ||
