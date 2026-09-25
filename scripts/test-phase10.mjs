@@ -22,6 +22,8 @@ assert(app.includes("path: 'reviews'") && app.includes('<Reviews />'), 'public r
 assert(app.includes("path: 'contact'") && app.includes('<Contact />'), 'public contact route missing')
 assert(app.includes('<ReviewsAdmin />') && app.includes('<ContactLinksAdmin />'), 'admin review/contact routes missing')
 assert(reviews.includes("where('status', '==', 'published')") && reviews.includes("orderBy('order')"), 'published review query missing')
+assert(reviews.includes('isEqual(expectedUpdatedAt)') && !reviews.includes('updatedAt.seconds'), 'review concurrency must use exact Firestore Timestamp equality')
+assert(contacts.includes('isEqual(expectedUpdatedAt)') && !contacts.includes('updatedAt.seconds'), 'contact-link concurrency must use exact Firestore Timestamp equality')
 assert(contacts.includes("where('published', '==', true)") && contacts.includes("orderBy('order')"), 'published contact query missing')
 assert(publicReviews.includes('average') && publicReviews.includes('rating') && publicReviews.includes('listReviews(false)'), 'public review aggregate/query missing')
 assert(publicContact.includes('noopener noreferrer') && publicContact.includes('listContactLinks(false)'), 'public contact link handling missing')
