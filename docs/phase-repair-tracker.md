@@ -913,6 +913,35 @@ One existing cross-phase finding is confirmed again: the featured-project unpubl
 **Phase 08 is not CLOSED.**
 
 
+# Phase 08 — Repair Pass
+
+**Repair status: COMPLETED for the confirmed Phase 08 production-code findings.**
+
+### P08-R1 — Pre-validate gallery cardinality and clean failed staging
+- `ProjectsAdmin.upload()` now rejects a gallery selection that would exceed the canonical 12-item limit **before** any upload begins.
+- Newly staged objects are tracked and deleted if a later upload in the same batch fails.
+- The 12-item schema/rules contract was not weakened.
+
+### P08-R2 — Make project deletion Firestore-authoritative before Storage cleanup
+- `deleteProject()` now deletes the Firestore document inside a transaction first.
+- The transaction validates exact `updatedAt` equality with `Timestamp.isEqual()`.
+- Storage media is deleted only after the authoritative Firestore transaction commits.
+- This preserves the Firestore featured-project delete denial and prevents media destruction before a denied delete.
+
+### P08-R3 — Resolve featured-project unpublish lifecycle
+- `unpublishProject()` detects whether the project is currently featured and clears the featured reference before attempting the publication-state change.
+- If the subsequent save fails, it performs a best-effort restore of the featured reference after rolling media back.
+- Server-side Firestore rules remain authoritative; no rule bypass was introduced.
+
+### P08-R4 — Static verification guard
+- `scripts/test-phase08.mjs` now asserts the repaired gallery pre-check, staged-upload cleanup, transactional deletion, exact concurrency guard, and featured-unpublish lifecycle.
+- `docs/phase-08-report.md` records the repair pass and its static-only evidence.
+
+### Repair verification boundary
+Fresh GitHub re-inspection confirmed the intended source/harness contracts. No local build, lint, TypeScript, Emulator Suite, Storage runtime, browser, or production execution was performed.
+
+**Phase 08 remains NOT CLOSED.** Runtime verification and owner acceptance are still required by AGENTS.md.
+
 # Phase 09 — PUBLIC PROJECTS & CASE STUDIES
 
 ## Audit status
