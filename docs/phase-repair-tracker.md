@@ -1053,3 +1053,92 @@ The deep audit found one confirmed direct production hardening defect: seconds-o
 It also found one destructive-operation concurrency hardening consideration, evidence/runtime limitations, and confirmed that the contact-target server validation is already active.
 
 Phase 10 is not CLOSED.
+
+
+# Phase 11 — HOME, CONVERSION FLOW & FEATURED PROJECT
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 11 contract
+- `src/features/public/Home.tsx`
+- `src/features/public/projectPresentation.ts`
+- `src/features/cms/projects.ts`
+- `src/features/cms/reviews.ts`
+- `src/features/cms/contactLinks.ts`
+- `src/data/index.ts`
+- `src/data/publicSettings.ts`
+- `src/features/public/Reviews.tsx`
+- `src/features/public/Contact.tsx`
+- `src/features/public/Projects.tsx`
+- `src/App.tsx`
+- `firestore.rules`
+- `scripts/test-phase11.mjs`
+- `docs/phase-11-report.md`
+- current Phase 11 repair/integration tracker
+
+No local execution, build, lint, browser, responsive/accessibility, Firebase Emulator, or real Firestore/Storage runtime verification was performed.
+
+## Phase 11 direct findings
+
+### P11-01 — WhatsApp shortcut normalization contains an incorrect regular expression
+
+`Home.tsx` normalizes a non-HTTPS WhatsApp value with:
+
+`link.value.replace(/\\D/g, '')`
+
+The intended operation is to remove non-digit characters, but the current pattern matches a literal backslash followed by `D` rather than the JavaScript non-digit character class. As a result, a plain WhatsApp number containing spaces, `+`, hyphens or parentheses can be converted into an invalid `wa.me` target.
+
+This is a concrete Phase 11 conversion/contact-shortcut defect. The existing ContactLink server validation remains authoritative; this is a client-side target-normalization defect in the Home shortcut.
+
+**Disposition:** confirmed simple isolated Phase 11 defect. Fix during the Phase 11 repair pass by using the correct non-digit regex. Do not alter the ContactLink data contract.
+
+### P11-02 — Home data loading is all-or-nothing rather than section-resilient
+
+The Home page loads profile, services, projects, featured-project settings, reviews and contact links through one `Promise.all()`. If any single request rejects, the whole Home enters the top-level error state and none of the otherwise available sections render.
+
+The Phase 11 contract explicitly calls for fallback behavior and verification against partial/empty data. Static inspection confirms empty-state handling once all requests resolve, but it does not establish graceful partial-data behavior when one backend read fails.
+
+**Disposition:** confirmed resilience gap relative to the Phase 11 Gate 2/4 fallback objective, but not an authorization/security defect. Repair should be considered only after defining whether partial rendering is required for Home. Do not introduce independent retry/caching behavior without an explicit contract.
+
+### P11-03 — Phase 11 report/harness is not final execution evidence
+
+`docs/phase-11-report.md` correctly records Gate 4 as blocked pending local execution and Gate 6 as blocked pending evidence/owner acceptance. `scripts/test-phase11.mjs` is a static contract harness and does not execute the Home against real Firestore/Storage or browser rendering.
+
+Therefore the current repository supports static contract inspection but not final runtime closure evidence.
+
+**Disposition:** evidence gap only. Preserve the blocked status and complete runtime evidence during the dedicated testing/closure stage.
+
+## Phase 11 cross-phase findings
+
+### P11-CP01 — Home's featured-project selection correctly depends on the published project result set
+
+`Home.tsx` resolves the configured featured ID only against `listProjects(true)` results. This preserves the public publication boundary and does not create a second featured-project source.
+
+**Disposition:** no defect. Preserve this dependency during Phase 08/12 repair.
+
+### P11-CP02 — Home inherits Phase 05/07/08/10 query/index/rules contracts
+
+Home consumes the existing public profile, services, projects, reviews and contact-link data-access functions. No parallel Home-specific data model or public write path was introduced.
+
+**Disposition:** no defect; integration dependency only.
+
+### P11-CP03 — Contact shortcut normalization is duplicated between Home and the Contact feature
+
+Home contains its own `contactHref()` normalization rather than reusing a shared canonical target-normalization helper. This is not itself a functional defect, but it increases the chance that Home and Contact diverge.
+
+The concrete WhatsApp regex defect in P11-01 demonstrates that this duplication already has observable consequences.
+
+**Owning area:** Phase 11 repair, with Phase 10 contact-link contract dependency. Avoid broad refactoring unless the repair can remain isolated and contract-preserving.
+
+## Phase 11 conclusion
+
+The deep audit found:
+1. **one confirmed direct functional defect** in WhatsApp target normalization;
+2. **one resilience/contract gap** around all-or-nothing Home loading;
+3. **one evidence/runtime limitation**;
+4. no confirmed featured-project publication bypass, public write path, or parallel data model.
+
+**Phase 11 is not CLOSED.**
