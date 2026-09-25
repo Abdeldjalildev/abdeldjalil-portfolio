@@ -206,7 +206,13 @@ export function timestamp(): Parser<Timestamp> {
     if (typeof nanoseconds !== 'number' || !Number.isInteger(nanoseconds)) {
       return fail(issues, path, 'expected a Firestore Timestamp with integer "nanoseconds"')
     }
-        return value as unknown as Timestamp
+    if (nanoseconds < 0 || nanoseconds > 999_999_999) {
+      return fail(issues, path, 'nanoseconds must be between 0 and 999999999')
+    }
+    if (seconds < -62_135_596_800 || seconds > 253_402_300_799) {
+      return fail(issues, path, 'seconds are outside the supported Firestore Timestamp range')
+    }
+    return value as unknown as Timestamp
   }
 }
 
