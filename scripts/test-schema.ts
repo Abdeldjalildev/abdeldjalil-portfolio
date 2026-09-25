@@ -159,6 +159,30 @@ test('schemas reject structural and security-sensitive malformed values', () => 
   const badTimestamp = { ...validProfile(), createdAt: { seconds: 'now', nanoseconds: 0 } }
   assert.equal(validate(profileSchema, badTimestamp, 'profile').ok, false)
 
+  const badNanoseconds = {
+    ...validProfile(),
+    createdAt: { seconds: 0, nanoseconds: 1_000_000_000 },
+  }
+  assert.equal(validate(profileSchema, badNanoseconds, 'profile').ok, false)
+
+  const badTimestampSeconds = {
+    ...validProfile(),
+    createdAt: { seconds: 253_402_300_800, nanoseconds: 0 },
+  }
+  assert.equal(validate(profileSchema, badTimestampSeconds, 'profile').ok, false)
+
+  const maxTechnologyList = {
+    ...validProject(),
+    technologies: Array.from({ length: 30 }, () => 'T'.repeat(60)),
+  }
+  assert.equal(validate(projectSchema, maxTechnologyList, 'project').ok, true)
+
+  const maxGalleryList = {
+    ...validProject(),
+    galleryPaths: Array.from({ length: 12 }, () => 'g'.repeat(512)),
+  }
+  assert.equal(validate(projectSchema, maxGalleryList, 'project').ok, true)
+
   const badContact = { ...validContactLink(), value: 'javascript:alert(1)' }
   assert.equal(validate(contactLinkSchema, badContact, 'contact').ok, false)
 })
