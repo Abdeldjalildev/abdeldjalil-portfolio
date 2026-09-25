@@ -1374,3 +1374,301 @@ The deep audit found **four confirmed direct release/evidence defects**:
 It also confirmed that runtime/deployed release readiness remains unproven and that previously identified Phase 09/12/13/14 integration issues must be resolved before a true final release verification can pass.
 
 **Phase 15 is not CLOSED.**
+
+
+# FINAL CROSS-PHASE DEEP AUDIT — GROUPED REPAIR BASIS
+
+## Audit status
+
+**Final repository-wide deep audit completed.**
+
+This pass was performed after the phase-by-phase audits of Phases 01–15. The audit was deliberately integration-focused rather than another isolated phase review.
+
+Inspected and cross-checked:
+- `AGENTS.md` master contract, six-gate model, phase isolation rules, closure definition, evidence requirements, and owner-controlled status ledger;
+- this tracker and all findings already recorded in it;
+- current repository tree and production configuration;
+- canonical schemas/types/paths, Firestore rules, Storage rules and indexes;
+- authentication/authorization boundaries;
+- CMS data writers and public readers;
+- project media publication/staging lifecycle;
+- reviews/contact/settings/featured-project workflows;
+- analytics callable function and admin reader;
+- routing, SEO, i18n, public/admin shell and phase verification harnesses;
+- Phase 07–15 reports and their static verification scripts;
+- known later-phase changes that can invalidate historical phase harness assumptions.
+
+No local build, lint, typecheck, emulator, browser, deployed Firebase, or production-runtime execution was performed in this final static audit. Therefore runtime-only claims remain evidence blockers and are not converted into code defects merely because they are unverified.
+
+## Important audit conclusion
+
+The previously recorded findings were re-checked against the current repository. The confirmed defects below are **not all equal in severity**:
+
+- some are **verification/evidence drift** and do not damage the application at runtime;
+- some are **data-contract/security-boundary defects** that can cause legitimate writes to fail or allow data outside the intended semantic contract;
+- some are **lifecycle/consistency defects** that can leave Firestore and Storage temporarily or permanently out of sync;
+- some are **cross-cutting product/SEO/analytics correctness defects**.
+
+The repair plan must therefore follow dependency order and must not treat the tracker as a list of independent edits.
+
+---
+
+# GROUP 1 — CANONICAL DATA CONTRACT, FIRESTORE RULES & CMS VALIDATION
+
+### G1-01 — Schema/rules aggregate-length mismatch is confirmed
+
+The application schema validates list cardinality and individual element lengths, while Firestore rules validate some lists through joined aggregate strings. Exact maximum-length payloads can therefore pass the application schema but fail the rules.
+
+Confirmed affected contract areas include project technologies and gallery/media-path lists.
+
+**Impact:** a valid CMS payload according to the canonical application schema can be rejected by the authoritative Firestore security layer.
+
+**Proposed safe repair:** define one canonical aggregate-budget contract and make both schema and rules enforce the same effective boundary. Preserve existing maximum item counts and security restrictions; do not weaken the rules. Add boundary cases to the shared schema/rules verification so the maximum accepted payload is identical in both layers.
+
+**Owning area:** Phase 05.
+
+### G1-02 — Contact-link per-type target validation is not enforced by the Firestore write rule
+
+The client schema restricts contact values to safe broad forms (HTTPS, mailto/email, tel/phone), and the CMS calls `validateContactTarget()`. However, the active Firestore `contactLinks` rule validates the `type` and `value` shape but does not invoke the per-type relationship check.
+
+Therefore an authorized writer can bypass the client and create semantically mismatched combinations such as a contact type whose value belongs to another allowed target class.
+
+This is not a public `javascript:` injection path because the broad schema already excludes unsafe schemes, but it is a real server-side contract gap.
+
+**Proposed safe repair:** move the same type/value relationship invariant into the Firestore rule path, while preserving the existing allowed target forms for email, phone, WhatsApp and HTTPS social/custom links.
+
+**Owning area:** Phase 10.
+
+### G1-03 — Review/contact optimistic-concurrency checks are lower precision than the rest of the CMS
+
+`reviews.ts` and `contactLinks.ts` compare `updatedAt.seconds` only, while other CMS writers use Firestore Timestamp equality.
+
+Two writes occurring within the same second can therefore evade the intended client-side optimistic-concurrency conflict detection.
+
+**Proposed safe repair:** use exact Firestore Timestamp equality (`isEqual()`) consistently with Profile/Services/Skills/Projects/Settings. Keep Firestore transactions and server timestamps unchanged.
+
+**Owning area:** Phase 10.
+
+### G1-04 — Phase 07 media fields have a weaker operational contract than the Phase 08 project media pipeline
+
+Profile, Services and Skills expose Storage-path fields and Storage rules, but the Phase 07 CMS does not provide a corresponding end-to-end upload/replace/cleanup workflow comparable to Projects.
+
+This means an admin can edit the reference field but does not have an equivalent canonical media-management path inside those CMS editors.
+
+**Proposed safe repair:** add a shared, narrowly scoped media workflow for Phase 07 entities using the already-defined Storage paths, limits and admin-only write boundary. Reuse the existing schema/path contracts; do not create a second media architecture.
+
+**Owning area:** Phase 07.
+
+---
+
+# GROUP 2 — PROJECT MEDIA, PUBLICATION & FEATURED-PROJECT LIFECYCLE
+
+### G2-01 — Featured-project lifecycle mismatch is confirmed
+
+Firestore rules prevent a project from being unpublished while it remains the selected `settings/main.featuredProjectId`. The Projects admin UI nevertheless exposes a direct unpublish path.
+
+The result can be a legitimate admin action that reaches a rule denial instead of guiding the administrator through the required lifecycle.
+
+**Proposed safe repair:** make the UI lifecycle-aware: when the current project is featured, require clearing/reassigning the featured reference before unpublishing, or disable the unpublish action with an explicit explanation. Do not weaken the rule.
+
+**Owning areas:** Phase 08 + Phase 12.
+
+### G2-02 — Staged project-media cardinality validation can leave orphaned draft objects
+
+Project uploads are staged in Storage before the complete project payload is validated. A selection that later fails the gallery cardinality/schema contract can therefore leave already-uploaded staging objects behind.
+
+**Proposed safe repair:** validate the complete intended selection before uploading where possible, and add best-effort cleanup for staged objects whenever a batch-level validation/write step fails. Preserve the existing draft/public separation and Storage security rules.
+
+**Owning area:** Phase 08.
+
+### G2-03 — Project media promotion is not failure-atomic across multiple Storage moves
+
+`publishProject()` and `unpublishProject()` call `moveMediaPaths()` before entering their rollback-protected Firestore write block. If a later Storage move fails after earlier moves succeeded, the function can exit before the rollback section and leave a partially moved media set.
+
+This is a genuine lifecycle-consistency defect, distinct from the already-recorded memory characteristic.
+
+**Proposed safe repair:** make the move operation itself transactional at the application-orchestration level: record each successful move and roll back all completed moves if a later move fails, before propagating the original error. Keep Firestore writes and security rules unchanged.
+
+**Owning area:** Phase 08.
+
+### G2-04 — Project media promotion buffers entire objects in memory
+
+The promotion helper uses `getBytes()` followed by `uploadBytes()`, so each promoted object is fully buffered in application memory. Current individual file limits reduce the risk, but a multi-image publish can multiply memory pressure.
+
+**Proposed safe repair:** replace the full-buffer copy with a bounded/streaming-capable transfer strategy supported by the chosen Firebase Storage architecture, or otherwise process media sequentially with explicit memory-safe limits. Do not raise Storage limits merely to accommodate the current implementation.
+
+**Owning areas:** Phase 08 / Phase 14.
+
+---
+
+# GROUP 3 — ANALYTICS CORRECTNESS, SECURITY & RETENTION
+
+### G3-01 — Analytics admin read contract is currently broken
+
+`AnalyticsAdmin` directly reads `analyticsDaily/{date}`, but the active Firestore rules have no corresponding admin-read match. The catch-all deny therefore blocks the dashboard.
+
+The Phase 13 harness/data-model expect an analyticsDaily rule that is not actually present.
+
+**Proposed safe repair:** add an explicit `analyticsDaily/{date}` rule allowing reads only to the trusted `admin: true` claim, while keeping client writes denied. Preserve the existing callable/App Check ingestion path and deny-by-default behavior.
+
+**Owning area:** Phase 13.
+
+### G3-02 — Project-view analytics can double-count on locale changes
+
+`ProjectDetail` records `project_view` with an effect dependent on both the loaded project and locale. Switching EN↔AR therefore re-runs the effect for the same project visit.
+
+**Proposed safe repair:** make the event effect depend on project identity/slug only, or introduce an explicit visit/event deduplication contract. The minimal safe change is to remove locale from the dependency because the event does not semantically depend on language.
+
+**Owning area:** Phase 13.
+
+### G3-03 — Analytics retention cleanup is bounded per scheduled invocation
+
+The scheduled cleanup deletes at most 100 expired documents per collection per run. If expired analytics documents accumulate beyond that batch size, retention can lag behind the stated 90-day target.
+
+**Proposed safe repair:** continue bounded batches until no expired documents remain within a single invocation, or use a retention mechanism whose operational guarantees match the documented policy. Keep each operation bounded enough for the existing function timeout/memory limits.
+
+**Owning area:** Phase 13.
+
+### G3-04 — Persistent first-party visitor identifier is a documented privacy-contract decision, not an accidental implementation detail
+
+The browser stores a persistent analytics visitor identifier in localStorage and the server hashes it before storage. This is technically coherent with the current analytics design, but it is still a persistent pseudonymous visitor marker.
+
+**Proposed safe repair:** do not silently remove it. During the Phase 13 repair pass, explicitly document the retention/purpose boundary and ensure the privacy description matches the actual behavior. If the product contract requires less persistence, change the identifier lifetime deliberately rather than treating this as a random refactor.
+
+**Owning area:** Phase 13 / product contract.
+
+---
+
+# GROUP 4 — VERIFICATION, PHASE EVIDENCE & HISTORICAL-CONTRACT DRIFT
+
+### G4-01 — Phase 01–06 formal reports are missing while Phase 15 expects them
+
+The current repository does not contain `docs/phase-01-report.md` through `docs/phase-06-report.md`, while the Phase 15 harness expects reports for all earlier phases.
+
+This is a real evidence-contract defect, not proof that the implementations themselves are wrong.
+
+**Proposed safe repair:** preserve truthful historical status and explicitly define how Phases 01–06 are represented in the final release evidence. Do not fabricate reports and do not weaken the release check merely to make it pass.
+
+**Owning area:** Phase 15 evidence strategy.
+
+### G4-02 — Phase 15 Storage assertion is stale relative to the hardened Storage rules
+
+The Phase 15 harness searches for the historical string form `allow write: if isAdmin()`, while the current hardened Storage rules deliberately use explicit `allow create`, `allow update`, and `allow delete` rules.
+
+The security implementation is stronger/more explicit; the harness is producing a false negative.
+
+**Proposed safe repair:** rewrite the harness assertion around the actual security contract rather than a historical string. Require admin-only create/update/delete, intended public reads, and deny-by-default coverage.
+
+**Owning area:** Phase 15.
+
+### G4-03 — Phase 15 verification inventory does not reconcile Phase 05/06 evidence
+
+The current package has shared schema/rules commands and dedicated phase scripts from Phase 07 onward, but no `test:phase05` or `test:phase06` command. The final release contract does not clearly explain how those phases are verified.
+
+**Proposed safe repair:** document the actual verification source for Phases 05/06 (shared suites/manual evidence where applicable) and make the Phase 15 release checklist reflect that truth. Do not invent tests solely to satisfy a filename expectation.
+
+**Owning area:** Phase 15.
+
+### G4-04 — Phase 09 harness is stale relative to the centralized Phase 14 SEO architecture
+
+The Phase 09 static test expects direct `document.title`/meta manipulation in ProjectDetail, while Phase 14 intentionally moved SEO into the shared `Seo` component.
+
+**Proposed safe repair:** update the Phase 09 verification contract to assert centralized SEO usage and project-specific SEO inputs rather than the obsolete implementation detail. Do not revert the Phase 14 SEO architecture.
+
+**Owning areas:** Phase 09 + Phase 14.
+
+### G4-05 — Phase 12 harness rejects a legitimate Phase 13 analytics integration
+
+The Phase 12 test contains a negative assertion against analytics in the admin layout, but Phase 13 intentionally added the analytics route/navigation.
+
+**Proposed safe repair:** make the Phase 12 harness assert the Phase 12 baseline without prohibiting legitimate later-phase additions, or define a historical snapshot contract that is explicitly separate from the current integration test.
+
+**Owning areas:** Phase 12 + Phase 13.
+
+### G4-06 — Phase 15 report contains an evidence statement contradicted by the current tree
+
+The Phase 15 report states that Phase 01–15 reports are present, while Phase 01–06 reports are absent.
+
+**Proposed safe repair:** correct the report to describe the actual evidence state. Do not manufacture missing historical reports.
+
+**Owning area:** Phase 15.
+
+### G4-07 — Several early phases have implementation evidence but no dedicated current report/harness
+
+Phases 01–06 do not have the same dedicated report/test-script artifacts as later phases. This is an evidence gap, not automatically an implementation defect.
+
+**Proposed safe repair:** resolve through the final evidence strategy rather than retroactively fabricating phase closure. Preserve the owner-controlled status ledger.
+
+**Owning area:** Phase 15, with historical phase attribution preserved.
+
+---
+
+# GROUP 5 — AUTHENTICATION STATE, ROUTING/SEO & CROSS-CUTTING HARDENING
+
+### G5-01 — Auth manual claim refresh has asymmetric failure handling
+
+The manual `AuthProvider.refetch()` path can reject when forced token-claim retrieval fails, unlike the deny-by-default handling used by the initial auth-state path.
+
+This is a client-state robustness defect, not a demonstrated server authorization bypass.
+
+**Proposed safe repair:** make manual refresh converge on the same safe failure state used by the initial auth flow, while preserving the server-side `admin: true` authorization contract.
+
+**Owning area:** Phase 04.
+
+### G5-02 — Auth state has a stale-result race around asynchronous claim loading
+
+The auth-state callback performs asynchronous claim loading. A later auth-state transition can occur before the earlier claim request resolves, allowing a late result to update client state for an older user/session.
+
+Server-side rules remain authoritative, so this is not currently classified as a privilege escalation, but it is a real client-state consistency risk.
+
+**Proposed safe repair:** use a monotonically increasing auth-operation/session token or equivalent cancellation guard so only the latest auth state may commit its loaded claims.
+
+**Owning area:** Phase 04.
+
+### G5-03 — Dynamic project URLs are missing from the static sitemap
+
+The current sitemap covers fixed routes but cannot enumerate CMS-generated project slugs.
+
+**Proposed safe repair:** introduce a production-safe sitemap generation strategy that reads only published projects and produces the same canonical origin/slug contract used by project SEO. Do not expose unpublished/admin routes.
+
+**Owning areas:** Phase 09 / Phase 14 / Phase 15.
+
+### G5-04 — Phase 02 design-system preview contains an isolated verification-surface organization defect
+
+The temporary Design System Preview nests the surfaces/depth section inside the colour-token section.
+
+**Proposed safe repair:** move that section to its own top-level preview section. No production styling or component contract needs to change.
+
+**Owning area:** Phase 02.
+
+---
+
+# FINDINGS DELIBERATELY NOT CLASSIFIED AS CONFIRMED CODE DEFECTS
+
+The final sweep also checked several areas where static evidence is insufficient. These remain verification items rather than invented bugs:
+
+1. Firebase/Hosting deep-link behavior in the deployed environment.
+2. Real Google sign-in, claim refresh and revocation behavior.
+3. Firestore/Storage emulator execution of the full rules suite.
+4. Production App Check enforcement in Firebase Console.
+5. Actual browser accessibility, Arabic shaping, responsive layout and reduced-motion rendering.
+6. Production environment-variable correctness.
+7. Real production deployment and Functions callable behavior.
+8. Exact WCAG contrast measurements in rendered output.
+
+These require the dedicated local/runtime testing stage defined by `AGENTS.md`.
+
+---
+
+# RECOMMENDED REPAIR DEPENDENCY GRAPH
+
+The previous phase order remains valid, but the final grouped audit makes the dependencies explicit:
+
+1. **Group 1 — Data contract/rules:** Phase 05 first, then Phase 10 contract repair.
+2. **Group 2 — Project media lifecycle:** Phase 08 before any release verification.
+3. **Group 3 — Analytics:** Phase 13 after its Firestore contract is corrected.
+4. **Group 4 — Verification drift/evidence:** reconcile Phase 09/12/15 harnesses after the underlying contracts are stable.
+5. **Group 5 — Auth/SEO/hardening:** Phase 04, then Phase 02/09/14/15 cross-cutting items.
+6. **Final runtime stage:** only after repository repairs are complete, execute the local/emulator/browser/deployment evidence required by `AGENTS.md`.
+
+**Important:** this final section is a repair basis, not a declaration that any phase is CLOSED. No phase ledger status was changed during this audit.
