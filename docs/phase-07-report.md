@@ -91,6 +91,27 @@ These remain part of the later local verification/closure pass exactly as reques
 - Cross-cutting production hardening (Phase 14)
 - Release readiness (Phase 15)
 
+## Deep repair pass — Phase 07
+
+### P07-R1 — Firestore services rule/schema mismatch — FIXED
+
+A concrete cross-file defect was confirmed during the repair pass: the services/{serviceId} Firestore rule validated the fields type and value through isContactTarget(...), but those fields are not part of the canonical Phase 05/Phase 07 service document schema. As a result, a correctly shaped Phase 07 service document could not satisfy the rule's valid() predicate because the referenced fields were absent.
+
+Repair applied:
+- removed the unrelated isContactTarget(...) condition from services/{serviceId};
+- preserved the canonical service field allowlist and all existing admin-only/timestamp/publication constraints;
+- strengthened scripts/test-phase07.mjs to extract the service rule block and assert that contact-target validation is not applied to service documents.
+
+This repair is isolated to the Phase 07/Firestore contract boundary. The contact-target validation remains owned by contactLinks/{linkId} and Phase 10.
+
+### Repair verification
+
+GitHub source re-inspection confirmed:
+- services/{serviceId} now contains only the Phase 07 service fields in its structural validation;
+- isContactTarget(...) is absent from the service rule block;
+- the Phase 07 static harness contains a regression assertion for this exact contract.
+
+No local/runtime command was executed or claimed.
 ## Gate assessment
 
 | Gate | Current status | Evidence |
