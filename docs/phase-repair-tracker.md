@@ -524,7 +524,7 @@ The separators added by `join()` mean a schema-valid maximum-size list can excee
 
 This directly violates the documented intent that the runtime schema and rules should describe the same structural contract.
 
-**Disposition:** confirmed Phase 05 blocker-level contract mismatch. Fix in the Phase 05 repair pass. Do not solve by weakening the rules or by silently lowering schema limits; first reconcile the canonical intended limits and then make both layers/test evidence agree.
+**Disposition:** fixed in the Phase 05 repair pass. Firestore rule aggregate budgets now account for the separators introduced by `join()`: technologies 1,829 and gallery paths 6,155. Boundary-acceptance tests were added to `scripts/test-schema.ts`. Runtime Emulator verification remains pending.
 
 ### P05-02 — Timestamp parser is structurally under-constrained
 
@@ -534,7 +534,7 @@ This means the application-level parser can accept structurally malformed timest
 
 This does not create a direct Firestore authorization bypass because Firestore rules require actual timestamp equality against `request.time` for writes. It is nevertheless a runtime schema correctness gap at the declared trust boundary.
 
-**Disposition:** confirmed schema hardening defect. Repair in Phase 05; add explicit rejection cases to the schema test.
+**Disposition:** fixed in the Phase 05 repair pass. The parser now enforces the Firestore Timestamp nanosecond range (0–999,999,999) and the documented Firestore seconds range, with rejection tests added. Runtime verification remains pending.
 
 ### P05-03 — Phase 05 has no dedicated phase report or `test:phase05` harness
 
@@ -586,16 +586,16 @@ The canonical Phase 05 model defines `settings/main.featuredProjectId`; current 
 
 ## Phase 05 conclusion
 
-Two confirmed implementation/schema defects were found:
-1. Schema/rules aggregate-length mismatch for maximum-size technology/gallery lists.
-2. Timestamp parser accepts malformed timestamp-shaped values.
+Two confirmed implementation/schema defects were found and repaired:
+1. Schema/rules aggregate-length mismatch for maximum-size technology/gallery lists — repaired.
+2. Timestamp parser accepted malformed timestamp-shaped values — repaired.
 
 One evidence gap exists:
 - no dedicated Phase 05 report or phase-specific harness.
 
 The index-file finding previously tracked globally is resolved in the current repository.
 
-**Phase 05 is not CLOSED.**
+**Phase 05 is not CLOSED.** The repair pass is complete for the two confirmed code/schema defects, but Gate 4–6 runtime/evidence requirements remain pending.
 
 
 # Phase 06 — PUBLIC SHELL, NAVIGATION, FOOTER & I18N/RTL
