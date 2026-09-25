@@ -48,10 +48,12 @@ assert(rules.includes('match /profile/main'), 'profile/main rule is missing')
 assert(rules.includes('match /services/{serviceId}'), 'services rule is missing')
 assert(rules.includes('match /skills/{skillId}'), 'skills rule is missing')
 assert(rules.includes('allow create: if isAdmin()'), 'admin-only create rule is missing')
-const servicesRule = rules.match(/match \/services\/\\{serviceId\\} \{([\\s\\S]*?)\\n    \}/)
-assert(servicesRule, 'services rule block is missing or malformed')
-assert(servicesRule && servicesRule[1].includes("keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',"), 'services rule does not use the Phase 07 service field contract')
-assert(servicesRule && !servicesRule[1].includes('isContactTarget('), 'services rule incorrectly applies contact-link target validation to service documents')
+const servicesStart = rules.indexOf('match /services/{serviceId} {')
+const skillsStart = rules.indexOf('match /skills/{skillId} {')
+const servicesRule = servicesStart >= 0 && skillsStart > servicesStart ? rules.slice(servicesStart, skillsStart) : ''
+assert(Boolean(servicesRule), 'services rule block is missing or malformed')
+assert(servicesRule.includes("keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',"), 'services rule does not use the Phase 07 service field contract')
+assert(!servicesRule.includes('isContactTarget('), 'services rule incorrectly applies contact-link target validation to service documents')
 
 if (failures.length) {
   console.error('Phase 07 static checks FAILED:')
