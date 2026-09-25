@@ -93,6 +93,7 @@ export default function ProjectsAdmin() {
       return
     }
     setUploading(true); setError('')
+    const stagedPaths: string[] = []
     try {
       const selectedFiles = Array.from(files)
       const next = [...form.galleryPaths]
@@ -103,11 +104,15 @@ export default function ProjectsAdmin() {
       let thumbnail = form.thumbnailPath
       for (const file of kind === 'thumbnail' ? selectedFiles.slice(0, 1) : selectedFiles) {
         const result = await uploadProjectMedia(form.slug, kind, file)
+        stagedPaths.push(result.path)
         if (kind === 'thumbnail') thumbnail = result.path
         else next.push(result.path)
       }
       setForm({ ...form, thumbnailPath: thumbnail, galleryPaths: next })
     } catch (cause) {
+      for (const path of stagedPaths) {
+        try { await deleteProjectMedia(path) } catch { /* preserve the original upload error */ }
+      }
       setError(getErrorMessage(cause, t('cms_upload_error')))
     } finally { setUploading(false) }
   }
