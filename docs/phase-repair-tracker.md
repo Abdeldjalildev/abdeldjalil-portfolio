@@ -278,3 +278,101 @@ No confirmed production logic/security/data-contract defect was found in the Pha
 The main actionable Phase 02 issue found is the isolated organization of the temporary Design System Preview; the evidence/harness gap is recorded separately.
 
 **Phase 02 is not CLOSED.**
+
+# Phase 03 — APPLICATION ARCHITECTURE, ROUTING, LAYOUTS & ERROR MODEL
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 03 contract
+- `src/App.tsx`
+- `src/routes/Root.tsx`
+- `src/routes/PublicLayout.tsx`
+- `src/routes/AdminLayout.tsx`
+- `src/routes/AdminAccessBoundary.tsx` (later-phase integration, not attributed to Phase 03)
+- `src/routes/ErrorFallback.tsx`
+- `src/routes/NotFound.tsx`
+- `src/components/ui/LoadingFallback.tsx`
+- `tsconfig.app.json`
+- current route/error/loading integration in the application
+- current phase-report/test-script availability
+
+No local execution, build, lint, browser, deep-navigation, refresh, mobile or runtime error verification was performed in this audit.
+
+## Phase 03 direct findings
+
+### P03-01 — Current repository has no dedicated Phase 03 report or verification harness
+
+The current repository has phase reports/test scripts beginning later in the project history, but no `docs/phase-03-report.md` and no `test:phase03` script.
+
+This creates an evidence gap against the Phase 03 six-gate contract, especially Gate 4/5. It does not by itself prove the router implementation is incorrect.
+
+**Disposition:** record only. Do not fabricate historical evidence or weaken later verification.
+
+### P03-02 — Unused router placeholder helper in `src/App.tsx`
+
+`App.tsx` contained a `placeholder()` helper plus `useI18n` and `TranslationKey` imports that were no longer used by the current route tree.
+
+The project explicitly enables `noUnusedLocals: true` in `tsconfig.app.json`, so this was a genuine isolated compile/typecheck risk.
+
+**Action taken during this audit:** removed the dead helper and its now-unused imports. No route behavior, architecture boundary, dependency, or later-phase contract was changed.
+
+Commit: `d5c2b5e283de06f556fea43b42929e24752607e7`
+
+### P03-03 — `Root.tsx` is currently a dead architectural artifact
+
+`src/routes/Root.tsx` exports `RootHandle` and a `Root` component, but the active router in `App.tsx` does not use the `Root` component; it imports only the `RootHandle` type.
+
+This is not a functional defect by itself, and deleting/restructuring it would cross into architectural cleanup without a demonstrated need.
+
+**Disposition:** record only. Do not remove or redesign it during this audit.
+
+### P03-04 — Route handles are currently duplicated/dead metadata
+
+The router defines `handle: { title: ... }` metadata using hardcoded English strings, while the active AdminLayout navigation/header resolves translated labels from `TranslationKey` values and PublicLayout derives titles separately from pathname/i18n.
+
+No current code inspected in this audit requires the `RootHandle.title` strings for navigation or SEO.
+
+This creates a duplicated route-label contract and a potential future drift point, but it is not safe to refactor without defining the intended route metadata consumer.
+
+**Disposition:** architecture ambiguity; record for later integration review, no change now.
+
+## Phase 03 cross-phase findings
+
+### P03-CP01 — Current App router contains later-phase feature routes
+
+The Phase 03 contract says the initial implementation should establish the routing/layout skeleton with no feature pages. The current `App.tsx` contains later public CMS/project/review/contact routes and admin feature routes.
+
+These are later-phase additions and must not be treated as Phase 03 implementation evidence. They are also not evidence that Phase 03 itself was scoped incorrectly.
+
+**Disposition:** preserve phase attribution; no rollback.
+
+### P03-CP02 — Admin route protection belongs to Phase 04, not Phase 03
+
+The current `/admin` route is wrapped by `AdminAccessBoundary`, which is a later authentication/authorization integration. This is correct as a current-system integration, but it must not be counted as Phase 03 security evidence.
+
+**Disposition:** preserve phase attribution; Phase 04 owns authentication/authorization correctness.
+
+### P03-CP03 — Analytics/SEO logic now lives in the Phase 03/06 public shell
+
+`PublicLayout.tsx` currently contains later analytics tracking and SEO integration. These are later-phase additions and are not attributable to the original Phase 03 shell contract.
+
+The previously tracked Phase 13 analytics concerns remain owned by Phase 13.
+
+**Disposition:** no rollback during Phase 03 audit.
+
+### P03-CP04 — Runtime route behavior remains unproven
+
+Static inspection establishes the intended route tree, nested layouts, generic route error element, 404 route, and Suspense loading boundary. It cannot prove browser refresh/deep-link behavior under the deployed hosting rewrite, lazy-chunk failure behavior, unknown-route behavior, or mobile navigation behavior.
+
+**Disposition:** verify during the dedicated testing stage; do not claim Gate 4 PASS from static inspection.
+
+## Phase 03 conclusion
+
+One simple isolated defect was found and fixed: the dead `placeholder()` helper/imports in `App.tsx`.
+
+No confirmed routing, layout, error-model, security-boundary, or data-contract defect requiring structural change was found during this static audit.
+
+**Phase 03 is not CLOSED.**
