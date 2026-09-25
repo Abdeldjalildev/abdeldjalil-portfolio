@@ -1683,3 +1683,83 @@ The previous phase order remains valid, but the final grouped audit makes the de
 4. **P10-R4 — Cross-phase integration check.** Verify repaired Phase 10 contracts against Phase 05 schemas/rules and Phase 12 admin workflows.
 
 **Rule:** each repair stage must be implemented, re-inspected within its own scope, and only then marked `COMPLETED`. No local/runtime tests are claimed here.
+
+
+# Phase 11 — Deep Audit Findings
+
+## Scope and evidence
+Repository-level static audit of Phase 11 against AGENTS.md, the current Home implementation, its verification harness, and the Phase 07–10 public CMS contracts. No local build, lint, typecheck, emulator, browser, or production-runtime execution was performed. Therefore runtime-only claims remain unverified.
+
+## Findings
+
+### P11-01 — WhatsApp number normalization regex was over-escaped — FIXED
+**Severity:** low / isolated functional defect.
+
+Home contact-link normalization used `replace(/\\D/g, '')`, which does not remove non-digit characters from a phone number. For a validated WhatsApp value such as `+213 555 12 34 56`, the generated `wa.me` target could retain spaces/formatting instead of producing a canonical digit-only path.
+
+**Repair:** corrected the regex to `replace(/\D/g, '')` in `src/features/public/Home.tsx`.
+
+**Boundary:** this repair changes only the local WhatsApp target normalization. It does not alter Firestore validation, contact-link publication rules, or the Phase 10 contact contract.
+
+### P11-02 — Phase 11 static harness does not verify WhatsApp target normalization
+The current `scripts/test-phase11.mjs` checks that external contact links are hardened, but it does not assert the exact WhatsApp normalization behavior.
+
+**Classification:** verification gap, not a second production defect.
+
+**Recommended repair:** add a narrow static assertion for the canonical digit-stripping expression or, preferably, a focused testable helper contract if the project later introduces executable unit coverage. Do not broaden the Phase 11 harness into a general contact-link test suite.
+
+### P11-03 — Home correctness depends on Phase 07–10 query contracts
+The Home implementation correctly calls:
+- `listServices(true)`
+- `listProjects(true)`
+- `listReviews(false)`
+- `listContactLinks(false)`
+
+The latter two are correct under the current API contract because those functions use an `admin` boolean, where `false` means the public published-only query.
+
+**Classification:** PASS by current source inspection; no change required.
+
+### P11-04 — Featured-project behavior is correctly publication-constrained
+Home resolves the configured `featuredProjectId` only against `data.projects`, which comes from `listProjects(true)`. Therefore an unpublished project cannot be rendered as the featured public project through this path.
+
+**Classification:** PASS by static inspection. Runtime verification remains pending.
+
+### P11-05 — Show More is presentation-only
+`showMore` is local React state and only changes the visible slice of already-loaded published projects. No persistence or new data contract is introduced.
+
+**Classification:** PASS by static inspection.
+
+### P11-06 — Partial failure handling is all-or-nothing at the Home aggregate level
+The six Home data sources are loaded through one `Promise.all`. If any one request rejects, the entire Home enters the top-level error state instead of rendering independently available sections.
+
+**Classification:** design/UX observation, not a confirmed Phase 11 defect. The Phase 11 contract explicitly requires top-level loading/error behavior, and the current implementation satisfies that. Changing it would be a broader resilience/product decision and is out of scope for this audit.
+
+### P11-07 — Runtime evidence remains blocked
+The repository cannot prove through static inspection:
+- actual Firestore query/index execution;
+- browser rendering/responsive behavior;
+- EN/AR visual correctness;
+- keyboard/accessibility behavior;
+- real CTA navigation;
+- actual WhatsApp navigation;
+- production performance.
+
+**Classification:** verification blocker under AGENTS.md, not an implementation defect.
+
+## Cross-phase integration
+- Phase 08 featured invariant remains authoritative; Home does not bypass it.
+- Phase 10 published review/contact query contracts are consumed as designed.
+- Phase 12 dashboard/settings and Phase 13 analytics remain out of Phase 11 scope.
+- Phase 14 centralized SEO remains outside Home's Phase 11 implementation contract.
+
+## Gate assessment
+- Gate 1 — PASS (static contract inspection)
+- Gate 2 — PASS (static architecture inspection)
+- Gate 3 — PASS (implementation exists and one isolated defect was repaired)
+- Gate 4 — BLOCKED (local/runtime evidence not executed)
+- Gate 5 — PARTIAL (static hardening reviewed; runtime hardening unverified)
+- Gate 6 — BLOCKED (runtime evidence and owner acceptance pending)
+
+**Phase 11 remains NOT CLOSED.**
+
+**I did not advance the phase status or mark Phase 11 CLOSED.**
