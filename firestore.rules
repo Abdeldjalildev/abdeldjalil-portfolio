@@ -280,6 +280,330 @@ service cloud.firestore {
      */
     match /services/{serviceId} {
       function valid() {
+        return serviceId.matches('^[a-z0-9]+(-[a-z0-9]+)*
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * skills/{skillId} - technology / skill catalogue.
+     *
+     * `name` is a single string: technology names are proper nouns and are not
+     * translated. `group` is a closed enum, so its label is localized in UI
+     * translation files (Phase 06) and never duplicated into CMS data - keeping
+     * UI translation and CMS content separate as required.
+     *
+     * No proficiency percentage is modelled. The product contract has no such
+     * requirement, and a self-assigned percentage would be unverifiable data.
+     */
+    match /skills/{skillId} {
+      function valid() {
+        return keysAre(['name', 'group', 'iconPath', 'order', 'published',
+                        'createdAt', 'updatedAt'])
+          && isText(request.resource.data.name, 60)
+          && request.resource.data.group in ['frontend', 'backend', 'database',
+                 'devops', 'tooling', 'design', 'other']
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * reviews/{reviewId} - client reviews.
+     * Workflow: pending -> approved -> published.
+     *
+     * PUBLIC VISIBILITY EQUALS `status == 'published'`. `approved` is an internal
+     * moderation state and is NOT public, so pending and approved reviews are
+     * equally unreadable by the public. Unapproved reviews can never appear.
+     *
+     * A strict forward-only transition is deliberately NOT enforced, because the
+     * CMS must be able to unpublish a review. The enforced invariants are the
+     * ones that matter: publishedAt is null unless published, is stamped with the
+     * server time at the transition into published, and is then immutable while
+     * the review remains published (so publication time cannot be backdated).
+     */
+    match /reviews/{reviewId} {
+      function valid() {
+        return keysAre(['reviewerName', 'reviewerRole', 'rating', 'content',
+                        'avatarPath', 'relatedServiceId', 'relatedProjectId',
+                        'status', 'order', 'publishedAt', 'createdAt', 'updatedAt'])
+          && isText(request.resource.data.reviewerName, 120)
+          && isLocalizedOrNull(request.resource.data.reviewerRole, 160)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isLocalized(request.resource.data.content, 4000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && (request.resource.data.relatedServiceId == null
+              || isSlug(request.resource.data.relatedServiceId))
+          && (request.resource.data.relatedProjectId == null
+              || isSlug(request.resource.data.relatedProjectId))
+          && request.resource.data.status in ['pending', 'approved', 'published']
+          && isOrder(request.resource.data.order);
+      }
+
+      function publishedAtOkOnCreate() {
+        return request.resource.data.status == 'published'
+          ? request.resource.data.publishedAt == request.time
+          : request.resource.data.publishedAt == null;
+      }
+
+      function publishedAtOkOnUpdate() {
+        return request.resource.data.status != 'published'
+          ? request.resource.data.publishedAt == null
+          : (resource.data.status == 'published'
+              ? request.resource.data.publishedAt == resource.data.publishedAt
+              : request.resource.data.publishedAt == request.time);
+      }
+
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
+        && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * contactLinks/{linkId} - public social and contact links.
+     *
+     * Every field is public by nature, so there is no private contact data in
+     * this collection. Unpublished entries are readable only by admins and are
+     * not rendered publicly (absent/unpublished entries do not render).
+     *
+     * `value` is validated per-type by the application schema, not here: an email
+     * link is a mailto: target and a phone link is a tel: target, so a blanket
+     * https-only rule would be wrong. Rules enforce type and shape; the schema
+     * enforces the per-type format.
+     */
+    match /contactLinks/{linkId} {
+      function valid() {
+        return keysAre(['type', 'label', 'value', 'published', 'order',
+                        'createdAt', 'updatedAt'])
+          && request.resource.data.type in ['email', 'phone', 'whatsapp', 'github',
+                 'linkedin', 'instagram', 'facebook', 'x', 'telegram', 'youtube',
+                 'behance', 'dribbble', 'custom']
+          && isLocalized(request.resource.data.label, 80)
+          && isText(request.resource.data.value, 2048)
+          && isContactTarget(request.resource.data.type, request.resource.data.value)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================== deny by default
+    // Explicit deny-by-default. Anything not matched above - including any
+    // future collection such as an analytics store - has no allow rule and can
+    // never be read or written by any client. This block documents the intent
+    // rather than relying on absence of rules alone.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+)
+            || value.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+
+
+    /**
+     * List of technology labels.
+     *
+     * Rules cannot iterate a list element-by-element (there is no predicate form
+     * of `removeAll`/`filter`). What IS enforced: the list type, its length, the
+     * aggregate character budget, and that no entry is empty. `join()` also fails
+     * on a nested map, so a list of objects cannot pass. Per-element string
+     * typing is enforced by src/data/schema, which is the documented split of
+     * responsibility between rules and schemas.
+     */
+    function isStringList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join(',').size() <= maxJoinedLength
+                && v.join(',').matches('^[^,]+(,[^,]+)*$')));
+    }
+
+    /**
+     * List of Storage paths. The joined form is checked against the same strict
+     * path pattern as isMediaPath, so a traversal segment anywhere in the list
+     * fails the match.
+     */
+    function isMediaPathList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join('/').size() <= maxJoinedLength
+                && v.join('/')
+                     .matches('^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$')));
+    }
+
+    /**
+     * List of { label, url } external links.
+     *
+     * DECLARED LIMITATION: Rules cannot validate a list of maps element by
+     * element, so only the count is bounded here. The element shape is enforced
+     * by src/data/schema and by the fact that only already-authorized admins can
+     * write this field at all - it is not a privilege-escalation surface.
+     */
+    function isLinkList(v, maxItems) {
+      return v is list && v.size() <= maxItems;
+    }
+
+    /** Allowed field names, exactly. Prevents silent schema drift. */
+    function keysAre(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    /** createdAt is server-set and immutable; updatedAt is server-set. */
+    function timestampsOkOnCreate() {
+      return request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function timestampsOkOnUpdate() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ============================================================= singletons
+    /**
+     * profile/main - the portfolio owner's public profile (singleton).
+     * Publicly readable only once published. Any other document under /profile
+     * is intentionally unmatched and therefore denied by the catch-all.
+     */
+    match /profile/main {
+      function valid() {
+        return keysAre(['fullName', 'headline', 'bio', 'avatarPath', 'resumePath',
+                        'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.fullName, 120)
+          && isLocalized(request.resource.data.headline, 160)
+          && isLocalized(request.resource.data.bio, 20000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && isMediaPath(request.resource.data.resumePath)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      // The public site cannot exist without profile/main, so deletion is denied
+      // even for admins rather than leaving an orphaned site state.
+      allow delete: if false;
+    }
+
+    /**
+     * settings/main - public site configuration (singleton).
+     *
+     * PUBLIC READ IS DELIBERATE: Firestore rules cannot filter individual fields
+     * on read, so anything stored here is world-readable. By contract this
+     * document holds only public-safe values. Any future private or secret
+     * setting MUST NOT be added here - it needs its own document with an
+     * admin-only read rule.
+     *
+     * featuredProjectId is the single source of truth for "the featured project".
+     */
+    match /settings/main {
+      function valid() {
+        return keysAre(['siteTitle', 'siteDescription', 'defaultLocale',
+                        'featuredProjectId', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.siteTitle, 160)
+          && isLocalized(request.resource.data.siteDescription, 320)
+          && request.resource.data.defaultLocale in ['en', 'ar']
+          && (request.resource.data.featuredProjectId == null
+              || (isSlug(request.resource.data.featuredProjectId)
+                  && exists(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId))
+                  && get(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId)).data.published == true));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if false;
+    }
+
+    // ============================================================ collections
+    /**
+     * projects/{projectId} - public portfolio projects.
+     *
+     * INVARIANT: the document id IS the slug, and the slug is immutable after
+     * creation. Phase 09 resolves /projects/:slug as a direct document lookup,
+     * and a published URL can never silently change meaning.
+     *
+     * The "exactly one featured project" requirement is deliberately NOT modelled
+     * as a `featured: boolean` on each project. Firestore rules cannot enforce a
+     * cross-document uniqueness constraint, so such a flag would merely pretend
+     * to guarantee the invariant. `settings/main.featuredProjectId` is the single
+     * source of truth: one field holds at most one value, so the invariant holds
+     * structurally and a change is atomic inside a single document write.
+     * (Cross-document checks - that the referenced project exists and is
+     * published - cannot be expressed in rules and are DECLARED as a
+     * server-authoritative/CMS responsibility; see docs/data-model.md.)
+     */
+    match /projects/{projectId} {
+      function valid() {
+        return projectId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'caseStudy',
+                      'technologies', 'category', 'thumbnailPath', 'galleryPaths',
+                      'liveUrl', 'repoUrl', 'links', 'seo', 'published', 'order',
+                      'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == projectId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isLocalizedOrNull(request.resource.data.caseStudy, 40000)
+          && isStringList(request.resource.data.technologies, 30, 1800)
+          && (request.resource.data.category == null
+              || isSlug(request.resource.data.category))
+          && isMediaPath(request.resource.data.thumbnailPath)
+          && isMediaPathList(request.resource.data.galleryPaths, 12, 6144)
+          && isExternalUrl(request.resource.data.liveUrl)
+          && isExternalUrl(request.resource.data.repoUrl)
+          && isLinkList(request.resource.data.links, 10)
+          && request.resource.data.seo is map
+          && request.resource.data.seo.keys().hasOnly(['title', 'description'])
+          && request.resource.data.seo.keys().hasAll(['title', 'description'])
+          && isLocalizedOrNull(request.resource.data.seo.title, 160)
+          && isLocalizedOrNull(request.resource.data.seo.description, 320)
+          && request.resource.data.published is bool
+          && isOrder(request.resource.data.order);
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      // slug is immutable: it is the document id and the public URL segment.
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug
+        && (request.resource.data.published == true
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
+      allow delete: if isAdmin()
+        && (!exists(/databases/$(database)/documents/settings/main)
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId);
+    }
+
+    /**
+     * services/{serviceId} - services offered. Document id IS the slug.
+     */
+    match /services/{serviceId} {
+      function valid() {
         return serviceId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
           && keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',
                       'published', 'createdAt', 'updatedAt'])
@@ -290,8 +614,1504 @@ service cloud.firestore {
           && isLocalized(request.resource.data.description, 20000)
           && isMediaPath(request.resource.data.iconPath)
           && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * skills/{skillId} - technology / skill catalogue.
+     *
+     * `name` is a single string: technology names are proper nouns and are not
+     * translated. `group` is a closed enum, so its label is localized in UI
+     * translation files (Phase 06) and never duplicated into CMS data - keeping
+     * UI translation and CMS content separate as required.
+     *
+     * No proficiency percentage is modelled. The product contract has no such
+     * requirement, and a self-assigned percentage would be unverifiable data.
+     */
+    match /skills/{skillId} {
+      function valid() {
+        return keysAre(['name', 'group', 'iconPath', 'order', 'published',
+                        'createdAt', 'updatedAt'])
+          && isText(request.resource.data.name, 60)
+          && request.resource.data.group in ['frontend', 'backend', 'database',
+                 'devops', 'tooling', 'design', 'other']
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * reviews/{reviewId} - client reviews.
+     * Workflow: pending -> approved -> published.
+     *
+     * PUBLIC VISIBILITY EQUALS `status == 'published'`. `approved` is an internal
+     * moderation state and is NOT public, so pending and approved reviews are
+     * equally unreadable by the public. Unapproved reviews can never appear.
+     *
+     * A strict forward-only transition is deliberately NOT enforced, because the
+     * CMS must be able to unpublish a review. The enforced invariants are the
+     * ones that matter: publishedAt is null unless published, is stamped with the
+     * server time at the transition into published, and is then immutable while
+     * the review remains published (so publication time cannot be backdated).
+     */
+    match /reviews/{reviewId} {
+      function valid() {
+        return keysAre(['reviewerName', 'reviewerRole', 'rating', 'content',
+                        'avatarPath', 'relatedServiceId', 'relatedProjectId',
+                        'status', 'order', 'publishedAt', 'createdAt', 'updatedAt'])
+          && isText(request.resource.data.reviewerName, 120)
+          && isLocalizedOrNull(request.resource.data.reviewerRole, 160)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isLocalized(request.resource.data.content, 4000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && (request.resource.data.relatedServiceId == null
+              || isSlug(request.resource.data.relatedServiceId))
+          && (request.resource.data.relatedProjectId == null
+              || isSlug(request.resource.data.relatedProjectId))
+          && request.resource.data.status in ['pending', 'approved', 'published']
+          && isOrder(request.resource.data.order);
+      }
+
+      function publishedAtOkOnCreate() {
+        return request.resource.data.status == 'published'
+          ? request.resource.data.publishedAt == request.time
+          : request.resource.data.publishedAt == null;
+      }
+
+      function publishedAtOkOnUpdate() {
+        return request.resource.data.status != 'published'
+          ? request.resource.data.publishedAt == null
+          : (resource.data.status == 'published'
+              ? request.resource.data.publishedAt == resource.data.publishedAt
+              : request.resource.data.publishedAt == request.time);
+      }
+
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
+        && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * contactLinks/{linkId} - public social and contact links.
+     *
+     * Every field is public by nature, so there is no private contact data in
+     * this collection. Unpublished entries are readable only by admins and are
+     * not rendered publicly (absent/unpublished entries do not render).
+     *
+     * `value` is validated per-type by the application schema, not here: an email
+     * link is a mailto: target and a phone link is a tel: target, so a blanket
+     * https-only rule would be wrong. Rules enforce type and shape; the schema
+     * enforces the per-type format.
+     */
+    match /contactLinks/{linkId} {
+      function valid() {
+        return keysAre(['type', 'label', 'value', 'published', 'order',
+                        'createdAt', 'updatedAt'])
+          && request.resource.data.type in ['email', 'phone', 'whatsapp', 'github',
+                 'linkedin', 'instagram', 'facebook', 'x', 'telegram', 'youtube',
+                 'behance', 'dribbble', 'custom']
+          && isLocalized(request.resource.data.label, 80)
+          && isText(request.resource.data.value, 2048)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================== deny by default
+    // Explicit deny-by-default. Anything not matched above - including any
+    // future collection such as an analytics store - has no allow rule and can
+    // never be read or written by any client. This block documents the intent
+    // rather than relying on absence of rules alone.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+))
+        : type == 'phone'
+          ? (value.matches('^tel:\\+?[0-9][0-9\\s-]{4,19}
+
+    /**
+     * List of technology labels.
+     *
+     * Rules cannot iterate a list element-by-element (there is no predicate form
+     * of `removeAll`/`filter`). What IS enforced: the list type, its length, the
+     * aggregate character budget, and that no entry is empty. `join()` also fails
+     * on a nested map, so a list of objects cannot pass. Per-element string
+     * typing is enforced by src/data/schema, which is the documented split of
+     * responsibility between rules and schemas.
+     */
+    function isStringList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join(',').size() <= maxJoinedLength
+                && v.join(',').matches('^[^,]+(,[^,]+)*$')));
+    }
+
+    /**
+     * List of Storage paths. The joined form is checked against the same strict
+     * path pattern as isMediaPath, so a traversal segment anywhere in the list
+     * fails the match.
+     */
+    function isMediaPathList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join('/').size() <= maxJoinedLength
+                && v.join('/')
+                     .matches('^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$')));
+    }
+
+    /**
+     * List of { label, url } external links.
+     *
+     * DECLARED LIMITATION: Rules cannot validate a list of maps element by
+     * element, so only the count is bounded here. The element shape is enforced
+     * by src/data/schema and by the fact that only already-authorized admins can
+     * write this field at all - it is not a privilege-escalation surface.
+     */
+    function isLinkList(v, maxItems) {
+      return v is list && v.size() <= maxItems;
+    }
+
+    /** Allowed field names, exactly. Prevents silent schema drift. */
+    function keysAre(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    /** createdAt is server-set and immutable; updatedAt is server-set. */
+    function timestampsOkOnCreate() {
+      return request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function timestampsOkOnUpdate() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ============================================================= singletons
+    /**
+     * profile/main - the portfolio owner's public profile (singleton).
+     * Publicly readable only once published. Any other document under /profile
+     * is intentionally unmatched and therefore denied by the catch-all.
+     */
+    match /profile/main {
+      function valid() {
+        return keysAre(['fullName', 'headline', 'bio', 'avatarPath', 'resumePath',
+                        'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.fullName, 120)
+          && isLocalized(request.resource.data.headline, 160)
+          && isLocalized(request.resource.data.bio, 20000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && isMediaPath(request.resource.data.resumePath)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      // The public site cannot exist without profile/main, so deletion is denied
+      // even for admins rather than leaving an orphaned site state.
+      allow delete: if false;
+    }
+
+    /**
+     * settings/main - public site configuration (singleton).
+     *
+     * PUBLIC READ IS DELIBERATE: Firestore rules cannot filter individual fields
+     * on read, so anything stored here is world-readable. By contract this
+     * document holds only public-safe values. Any future private or secret
+     * setting MUST NOT be added here - it needs its own document with an
+     * admin-only read rule.
+     *
+     * featuredProjectId is the single source of truth for "the featured project".
+     */
+    match /settings/main {
+      function valid() {
+        return keysAre(['siteTitle', 'siteDescription', 'defaultLocale',
+                        'featuredProjectId', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.siteTitle, 160)
+          && isLocalized(request.resource.data.siteDescription, 320)
+          && request.resource.data.defaultLocale in ['en', 'ar']
+          && (request.resource.data.featuredProjectId == null
+              || (isSlug(request.resource.data.featuredProjectId)
+                  && exists(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId))
+                  && get(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId)).data.published == true));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if false;
+    }
+
+    // ============================================================ collections
+    /**
+     * projects/{projectId} - public portfolio projects.
+     *
+     * INVARIANT: the document id IS the slug, and the slug is immutable after
+     * creation. Phase 09 resolves /projects/:slug as a direct document lookup,
+     * and a published URL can never silently change meaning.
+     *
+     * The "exactly one featured project" requirement is deliberately NOT modelled
+     * as a `featured: boolean` on each project. Firestore rules cannot enforce a
+     * cross-document uniqueness constraint, so such a flag would merely pretend
+     * to guarantee the invariant. `settings/main.featuredProjectId` is the single
+     * source of truth: one field holds at most one value, so the invariant holds
+     * structurally and a change is atomic inside a single document write.
+     * (Cross-document checks - that the referenced project exists and is
+     * published - cannot be expressed in rules and are DECLARED as a
+     * server-authoritative/CMS responsibility; see docs/data-model.md.)
+     */
+    match /projects/{projectId} {
+      function valid() {
+        return projectId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'caseStudy',
+                      'technologies', 'category', 'thumbnailPath', 'galleryPaths',
+                      'liveUrl', 'repoUrl', 'links', 'seo', 'published', 'order',
+                      'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == projectId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isLocalizedOrNull(request.resource.data.caseStudy, 40000)
+          && isStringList(request.resource.data.technologies, 30, 1800)
+          && (request.resource.data.category == null
+              || isSlug(request.resource.data.category))
+          && isMediaPath(request.resource.data.thumbnailPath)
+          && isMediaPathList(request.resource.data.galleryPaths, 12, 6144)
+          && isExternalUrl(request.resource.data.liveUrl)
+          && isExternalUrl(request.resource.data.repoUrl)
+          && isLinkList(request.resource.data.links, 10)
+          && request.resource.data.seo is map
+          && request.resource.data.seo.keys().hasOnly(['title', 'description'])
+          && request.resource.data.seo.keys().hasAll(['title', 'description'])
+          && isLocalizedOrNull(request.resource.data.seo.title, 160)
+          && isLocalizedOrNull(request.resource.data.seo.description, 320)
           && request.resource.data.published is bool
-          && isContactTarget(request.resource.data.type, request.resource.data.value);
+          && isOrder(request.resource.data.order);
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      // slug is immutable: it is the document id and the public URL segment.
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug
+        && (request.resource.data.published == true
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
+      allow delete: if isAdmin()
+        && (!exists(/databases/$(database)/documents/settings/main)
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId);
+    }
+
+    /**
+     * services/{serviceId} - services offered. Document id IS the slug.
+     */
+    match /services/{serviceId} {
+      function valid() {
+        return serviceId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',
+                      'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == serviceId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * skills/{skillId} - technology / skill catalogue.
+     *
+     * `name` is a single string: technology names are proper nouns and are not
+     * translated. `group` is a closed enum, so its label is localized in UI
+     * translation files (Phase 06) and never duplicated into CMS data - keeping
+     * UI translation and CMS content separate as required.
+     *
+     * No proficiency percentage is modelled. The product contract has no such
+     * requirement, and a self-assigned percentage would be unverifiable data.
+     */
+    match /skills/{skillId} {
+      function valid() {
+        return keysAre(['name', 'group', 'iconPath', 'order', 'published',
+                        'createdAt', 'updatedAt'])
+          && isText(request.resource.data.name, 60)
+          && request.resource.data.group in ['frontend', 'backend', 'database',
+                 'devops', 'tooling', 'design', 'other']
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * reviews/{reviewId} - client reviews.
+     * Workflow: pending -> approved -> published.
+     *
+     * PUBLIC VISIBILITY EQUALS `status == 'published'`. `approved` is an internal
+     * moderation state and is NOT public, so pending and approved reviews are
+     * equally unreadable by the public. Unapproved reviews can never appear.
+     *
+     * A strict forward-only transition is deliberately NOT enforced, because the
+     * CMS must be able to unpublish a review. The enforced invariants are the
+     * ones that matter: publishedAt is null unless published, is stamped with the
+     * server time at the transition into published, and is then immutable while
+     * the review remains published (so publication time cannot be backdated).
+     */
+    match /reviews/{reviewId} {
+      function valid() {
+        return keysAre(['reviewerName', 'reviewerRole', 'rating', 'content',
+                        'avatarPath', 'relatedServiceId', 'relatedProjectId',
+                        'status', 'order', 'publishedAt', 'createdAt', 'updatedAt'])
+          && isText(request.resource.data.reviewerName, 120)
+          && isLocalizedOrNull(request.resource.data.reviewerRole, 160)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isLocalized(request.resource.data.content, 4000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && (request.resource.data.relatedServiceId == null
+              || isSlug(request.resource.data.relatedServiceId))
+          && (request.resource.data.relatedProjectId == null
+              || isSlug(request.resource.data.relatedProjectId))
+          && request.resource.data.status in ['pending', 'approved', 'published']
+          && isOrder(request.resource.data.order);
+      }
+
+      function publishedAtOkOnCreate() {
+        return request.resource.data.status == 'published'
+          ? request.resource.data.publishedAt == request.time
+          : request.resource.data.publishedAt == null;
+      }
+
+      function publishedAtOkOnUpdate() {
+        return request.resource.data.status != 'published'
+          ? request.resource.data.publishedAt == null
+          : (resource.data.status == 'published'
+              ? request.resource.data.publishedAt == resource.data.publishedAt
+              : request.resource.data.publishedAt == request.time);
+      }
+
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
+        && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * contactLinks/{linkId} - public social and contact links.
+     *
+     * Every field is public by nature, so there is no private contact data in
+     * this collection. Unpublished entries are readable only by admins and are
+     * not rendered publicly (absent/unpublished entries do not render).
+     *
+     * `value` is validated per-type by the application schema, not here: an email
+     * link is a mailto: target and a phone link is a tel: target, so a blanket
+     * https-only rule would be wrong. Rules enforce type and shape; the schema
+     * enforces the per-type format.
+     */
+    match /contactLinks/{linkId} {
+      function valid() {
+        return keysAre(['type', 'label', 'value', 'published', 'order',
+                        'createdAt', 'updatedAt'])
+          && request.resource.data.type in ['email', 'phone', 'whatsapp', 'github',
+                 'linkedin', 'instagram', 'facebook', 'x', 'telegram', 'youtube',
+                 'behance', 'dribbble', 'custom']
+          && isLocalized(request.resource.data.label, 80)
+          && isText(request.resource.data.value, 2048)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================== deny by default
+    // Explicit deny-by-default. Anything not matched above - including any
+    // future collection such as an analytics store - has no allow rule and can
+    // never be read or written by any client. This block documents the intent
+    // rather than relying on absence of rules alone.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+)
+              || value.matches('^\\+?[0-9][0-9\\s-]{4,19}
+
+    /**
+     * List of technology labels.
+     *
+     * Rules cannot iterate a list element-by-element (there is no predicate form
+     * of `removeAll`/`filter`). What IS enforced: the list type, its length, the
+     * aggregate character budget, and that no entry is empty. `join()` also fails
+     * on a nested map, so a list of objects cannot pass. Per-element string
+     * typing is enforced by src/data/schema, which is the documented split of
+     * responsibility between rules and schemas.
+     */
+    function isStringList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join(',').size() <= maxJoinedLength
+                && v.join(',').matches('^[^,]+(,[^,]+)*$')));
+    }
+
+    /**
+     * List of Storage paths. The joined form is checked against the same strict
+     * path pattern as isMediaPath, so a traversal segment anywhere in the list
+     * fails the match.
+     */
+    function isMediaPathList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join('/').size() <= maxJoinedLength
+                && v.join('/')
+                     .matches('^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$')));
+    }
+
+    /**
+     * List of { label, url } external links.
+     *
+     * DECLARED LIMITATION: Rules cannot validate a list of maps element by
+     * element, so only the count is bounded here. The element shape is enforced
+     * by src/data/schema and by the fact that only already-authorized admins can
+     * write this field at all - it is not a privilege-escalation surface.
+     */
+    function isLinkList(v, maxItems) {
+      return v is list && v.size() <= maxItems;
+    }
+
+    /** Allowed field names, exactly. Prevents silent schema drift. */
+    function keysAre(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    /** createdAt is server-set and immutable; updatedAt is server-set. */
+    function timestampsOkOnCreate() {
+      return request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function timestampsOkOnUpdate() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ============================================================= singletons
+    /**
+     * profile/main - the portfolio owner's public profile (singleton).
+     * Publicly readable only once published. Any other document under /profile
+     * is intentionally unmatched and therefore denied by the catch-all.
+     */
+    match /profile/main {
+      function valid() {
+        return keysAre(['fullName', 'headline', 'bio', 'avatarPath', 'resumePath',
+                        'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.fullName, 120)
+          && isLocalized(request.resource.data.headline, 160)
+          && isLocalized(request.resource.data.bio, 20000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && isMediaPath(request.resource.data.resumePath)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      // The public site cannot exist without profile/main, so deletion is denied
+      // even for admins rather than leaving an orphaned site state.
+      allow delete: if false;
+    }
+
+    /**
+     * settings/main - public site configuration (singleton).
+     *
+     * PUBLIC READ IS DELIBERATE: Firestore rules cannot filter individual fields
+     * on read, so anything stored here is world-readable. By contract this
+     * document holds only public-safe values. Any future private or secret
+     * setting MUST NOT be added here - it needs its own document with an
+     * admin-only read rule.
+     *
+     * featuredProjectId is the single source of truth for "the featured project".
+     */
+    match /settings/main {
+      function valid() {
+        return keysAre(['siteTitle', 'siteDescription', 'defaultLocale',
+                        'featuredProjectId', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.siteTitle, 160)
+          && isLocalized(request.resource.data.siteDescription, 320)
+          && request.resource.data.defaultLocale in ['en', 'ar']
+          && (request.resource.data.featuredProjectId == null
+              || (isSlug(request.resource.data.featuredProjectId)
+                  && exists(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId))
+                  && get(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId)).data.published == true));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if false;
+    }
+
+    // ============================================================ collections
+    /**
+     * projects/{projectId} - public portfolio projects.
+     *
+     * INVARIANT: the document id IS the slug, and the slug is immutable after
+     * creation. Phase 09 resolves /projects/:slug as a direct document lookup,
+     * and a published URL can never silently change meaning.
+     *
+     * The "exactly one featured project" requirement is deliberately NOT modelled
+     * as a `featured: boolean` on each project. Firestore rules cannot enforce a
+     * cross-document uniqueness constraint, so such a flag would merely pretend
+     * to guarantee the invariant. `settings/main.featuredProjectId` is the single
+     * source of truth: one field holds at most one value, so the invariant holds
+     * structurally and a change is atomic inside a single document write.
+     * (Cross-document checks - that the referenced project exists and is
+     * published - cannot be expressed in rules and are DECLARED as a
+     * server-authoritative/CMS responsibility; see docs/data-model.md.)
+     */
+    match /projects/{projectId} {
+      function valid() {
+        return projectId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'caseStudy',
+                      'technologies', 'category', 'thumbnailPath', 'galleryPaths',
+                      'liveUrl', 'repoUrl', 'links', 'seo', 'published', 'order',
+                      'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == projectId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isLocalizedOrNull(request.resource.data.caseStudy, 40000)
+          && isStringList(request.resource.data.technologies, 30, 1800)
+          && (request.resource.data.category == null
+              || isSlug(request.resource.data.category))
+          && isMediaPath(request.resource.data.thumbnailPath)
+          && isMediaPathList(request.resource.data.galleryPaths, 12, 6144)
+          && isExternalUrl(request.resource.data.liveUrl)
+          && isExternalUrl(request.resource.data.repoUrl)
+          && isLinkList(request.resource.data.links, 10)
+          && request.resource.data.seo is map
+          && request.resource.data.seo.keys().hasOnly(['title', 'description'])
+          && request.resource.data.seo.keys().hasAll(['title', 'description'])
+          && isLocalizedOrNull(request.resource.data.seo.title, 160)
+          && isLocalizedOrNull(request.resource.data.seo.description, 320)
+          && request.resource.data.published is bool
+          && isOrder(request.resource.data.order);
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      // slug is immutable: it is the document id and the public URL segment.
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug
+        && (request.resource.data.published == true
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
+      allow delete: if isAdmin()
+        && (!exists(/databases/$(database)/documents/settings/main)
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId);
+    }
+
+    /**
+     * services/{serviceId} - services offered. Document id IS the slug.
+     */
+    match /services/{serviceId} {
+      function valid() {
+        return serviceId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',
+                      'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == serviceId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * skills/{skillId} - technology / skill catalogue.
+     *
+     * `name` is a single string: technology names are proper nouns and are not
+     * translated. `group` is a closed enum, so its label is localized in UI
+     * translation files (Phase 06) and never duplicated into CMS data - keeping
+     * UI translation and CMS content separate as required.
+     *
+     * No proficiency percentage is modelled. The product contract has no such
+     * requirement, and a self-assigned percentage would be unverifiable data.
+     */
+    match /skills/{skillId} {
+      function valid() {
+        return keysAre(['name', 'group', 'iconPath', 'order', 'published',
+                        'createdAt', 'updatedAt'])
+          && isText(request.resource.data.name, 60)
+          && request.resource.data.group in ['frontend', 'backend', 'database',
+                 'devops', 'tooling', 'design', 'other']
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * reviews/{reviewId} - client reviews.
+     * Workflow: pending -> approved -> published.
+     *
+     * PUBLIC VISIBILITY EQUALS `status == 'published'`. `approved` is an internal
+     * moderation state and is NOT public, so pending and approved reviews are
+     * equally unreadable by the public. Unapproved reviews can never appear.
+     *
+     * A strict forward-only transition is deliberately NOT enforced, because the
+     * CMS must be able to unpublish a review. The enforced invariants are the
+     * ones that matter: publishedAt is null unless published, is stamped with the
+     * server time at the transition into published, and is then immutable while
+     * the review remains published (so publication time cannot be backdated).
+     */
+    match /reviews/{reviewId} {
+      function valid() {
+        return keysAre(['reviewerName', 'reviewerRole', 'rating', 'content',
+                        'avatarPath', 'relatedServiceId', 'relatedProjectId',
+                        'status', 'order', 'publishedAt', 'createdAt', 'updatedAt'])
+          && isText(request.resource.data.reviewerName, 120)
+          && isLocalizedOrNull(request.resource.data.reviewerRole, 160)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isLocalized(request.resource.data.content, 4000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && (request.resource.data.relatedServiceId == null
+              || isSlug(request.resource.data.relatedServiceId))
+          && (request.resource.data.relatedProjectId == null
+              || isSlug(request.resource.data.relatedProjectId))
+          && request.resource.data.status in ['pending', 'approved', 'published']
+          && isOrder(request.resource.data.order);
+      }
+
+      function publishedAtOkOnCreate() {
+        return request.resource.data.status == 'published'
+          ? request.resource.data.publishedAt == request.time
+          : request.resource.data.publishedAt == null;
+      }
+
+      function publishedAtOkOnUpdate() {
+        return request.resource.data.status != 'published'
+          ? request.resource.data.publishedAt == null
+          : (resource.data.status == 'published'
+              ? request.resource.data.publishedAt == resource.data.publishedAt
+              : request.resource.data.publishedAt == request.time);
+      }
+
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
+        && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * contactLinks/{linkId} - public social and contact links.
+     *
+     * Every field is public by nature, so there is no private contact data in
+     * this collection. Unpublished entries are readable only by admins and are
+     * not rendered publicly (absent/unpublished entries do not render).
+     *
+     * `value` is validated per-type by the application schema, not here: an email
+     * link is a mailto: target and a phone link is a tel: target, so a blanket
+     * https-only rule would be wrong. Rules enforce type and shape; the schema
+     * enforces the per-type format.
+     */
+    match /contactLinks/{linkId} {
+      function valid() {
+        return keysAre(['type', 'label', 'value', 'published', 'order',
+                        'createdAt', 'updatedAt'])
+          && request.resource.data.type in ['email', 'phone', 'whatsapp', 'github',
+                 'linkedin', 'instagram', 'facebook', 'x', 'telegram', 'youtube',
+                 'behance', 'dribbble', 'custom']
+          && isLocalized(request.resource.data.label, 80)
+          && isText(request.resource.data.value, 2048)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================== deny by default
+    // Explicit deny-by-default. Anything not matched above - including any
+    // future collection such as an analytics store - has no allow rule and can
+    // never be read or written by any client. This block documents the intent
+    // rather than relying on absence of rules alone.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+))
+          : type == 'whatsapp'
+            ? (value.matches('^https://.+')
+                || value.matches('^\\+?[0-9][0-9\\s-]{4,19}
+
+    /**
+     * List of technology labels.
+     *
+     * Rules cannot iterate a list element-by-element (there is no predicate form
+     * of `removeAll`/`filter`). What IS enforced: the list type, its length, the
+     * aggregate character budget, and that no entry is empty. `join()` also fails
+     * on a nested map, so a list of objects cannot pass. Per-element string
+     * typing is enforced by src/data/schema, which is the documented split of
+     * responsibility between rules and schemas.
+     */
+    function isStringList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join(',').size() <= maxJoinedLength
+                && v.join(',').matches('^[^,]+(,[^,]+)*$')));
+    }
+
+    /**
+     * List of Storage paths. The joined form is checked against the same strict
+     * path pattern as isMediaPath, so a traversal segment anywhere in the list
+     * fails the match.
+     */
+    function isMediaPathList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join('/').size() <= maxJoinedLength
+                && v.join('/')
+                     .matches('^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$')));
+    }
+
+    /**
+     * List of { label, url } external links.
+     *
+     * DECLARED LIMITATION: Rules cannot validate a list of maps element by
+     * element, so only the count is bounded here. The element shape is enforced
+     * by src/data/schema and by the fact that only already-authorized admins can
+     * write this field at all - it is not a privilege-escalation surface.
+     */
+    function isLinkList(v, maxItems) {
+      return v is list && v.size() <= maxItems;
+    }
+
+    /** Allowed field names, exactly. Prevents silent schema drift. */
+    function keysAre(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    /** createdAt is server-set and immutable; updatedAt is server-set. */
+    function timestampsOkOnCreate() {
+      return request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function timestampsOkOnUpdate() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ============================================================= singletons
+    /**
+     * profile/main - the portfolio owner's public profile (singleton).
+     * Publicly readable only once published. Any other document under /profile
+     * is intentionally unmatched and therefore denied by the catch-all.
+     */
+    match /profile/main {
+      function valid() {
+        return keysAre(['fullName', 'headline', 'bio', 'avatarPath', 'resumePath',
+                        'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.fullName, 120)
+          && isLocalized(request.resource.data.headline, 160)
+          && isLocalized(request.resource.data.bio, 20000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && isMediaPath(request.resource.data.resumePath)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      // The public site cannot exist without profile/main, so deletion is denied
+      // even for admins rather than leaving an orphaned site state.
+      allow delete: if false;
+    }
+
+    /**
+     * settings/main - public site configuration (singleton).
+     *
+     * PUBLIC READ IS DELIBERATE: Firestore rules cannot filter individual fields
+     * on read, so anything stored here is world-readable. By contract this
+     * document holds only public-safe values. Any future private or secret
+     * setting MUST NOT be added here - it needs its own document with an
+     * admin-only read rule.
+     *
+     * featuredProjectId is the single source of truth for "the featured project".
+     */
+    match /settings/main {
+      function valid() {
+        return keysAre(['siteTitle', 'siteDescription', 'defaultLocale',
+                        'featuredProjectId', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.siteTitle, 160)
+          && isLocalized(request.resource.data.siteDescription, 320)
+          && request.resource.data.defaultLocale in ['en', 'ar']
+          && (request.resource.data.featuredProjectId == null
+              || (isSlug(request.resource.data.featuredProjectId)
+                  && exists(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId))
+                  && get(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId)).data.published == true));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if false;
+    }
+
+    // ============================================================ collections
+    /**
+     * projects/{projectId} - public portfolio projects.
+     *
+     * INVARIANT: the document id IS the slug, and the slug is immutable after
+     * creation. Phase 09 resolves /projects/:slug as a direct document lookup,
+     * and a published URL can never silently change meaning.
+     *
+     * The "exactly one featured project" requirement is deliberately NOT modelled
+     * as a `featured: boolean` on each project. Firestore rules cannot enforce a
+     * cross-document uniqueness constraint, so such a flag would merely pretend
+     * to guarantee the invariant. `settings/main.featuredProjectId` is the single
+     * source of truth: one field holds at most one value, so the invariant holds
+     * structurally and a change is atomic inside a single document write.
+     * (Cross-document checks - that the referenced project exists and is
+     * published - cannot be expressed in rules and are DECLARED as a
+     * server-authoritative/CMS responsibility; see docs/data-model.md.)
+     */
+    match /projects/{projectId} {
+      function valid() {
+        return projectId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'caseStudy',
+                      'technologies', 'category', 'thumbnailPath', 'galleryPaths',
+                      'liveUrl', 'repoUrl', 'links', 'seo', 'published', 'order',
+                      'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == projectId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isLocalizedOrNull(request.resource.data.caseStudy, 40000)
+          && isStringList(request.resource.data.technologies, 30, 1800)
+          && (request.resource.data.category == null
+              || isSlug(request.resource.data.category))
+          && isMediaPath(request.resource.data.thumbnailPath)
+          && isMediaPathList(request.resource.data.galleryPaths, 12, 6144)
+          && isExternalUrl(request.resource.data.liveUrl)
+          && isExternalUrl(request.resource.data.repoUrl)
+          && isLinkList(request.resource.data.links, 10)
+          && request.resource.data.seo is map
+          && request.resource.data.seo.keys().hasOnly(['title', 'description'])
+          && request.resource.data.seo.keys().hasAll(['title', 'description'])
+          && isLocalizedOrNull(request.resource.data.seo.title, 160)
+          && isLocalizedOrNull(request.resource.data.seo.description, 320)
+          && request.resource.data.published is bool
+          && isOrder(request.resource.data.order);
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      // slug is immutable: it is the document id and the public URL segment.
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug
+        && (request.resource.data.published == true
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
+      allow delete: if isAdmin()
+        && (!exists(/databases/$(database)/documents/settings/main)
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId);
+    }
+
+    /**
+     * services/{serviceId} - services offered. Document id IS the slug.
+     */
+    match /services/{serviceId} {
+      function valid() {
+        return serviceId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',
+                      'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == serviceId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * skills/{skillId} - technology / skill catalogue.
+     *
+     * `name` is a single string: technology names are proper nouns and are not
+     * translated. `group` is a closed enum, so its label is localized in UI
+     * translation files (Phase 06) and never duplicated into CMS data - keeping
+     * UI translation and CMS content separate as required.
+     *
+     * No proficiency percentage is modelled. The product contract has no such
+     * requirement, and a self-assigned percentage would be unverifiable data.
+     */
+    match /skills/{skillId} {
+      function valid() {
+        return keysAre(['name', 'group', 'iconPath', 'order', 'published',
+                        'createdAt', 'updatedAt'])
+          && isText(request.resource.data.name, 60)
+          && request.resource.data.group in ['frontend', 'backend', 'database',
+                 'devops', 'tooling', 'design', 'other']
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * reviews/{reviewId} - client reviews.
+     * Workflow: pending -> approved -> published.
+     *
+     * PUBLIC VISIBILITY EQUALS `status == 'published'`. `approved` is an internal
+     * moderation state and is NOT public, so pending and approved reviews are
+     * equally unreadable by the public. Unapproved reviews can never appear.
+     *
+     * A strict forward-only transition is deliberately NOT enforced, because the
+     * CMS must be able to unpublish a review. The enforced invariants are the
+     * ones that matter: publishedAt is null unless published, is stamped with the
+     * server time at the transition into published, and is then immutable while
+     * the review remains published (so publication time cannot be backdated).
+     */
+    match /reviews/{reviewId} {
+      function valid() {
+        return keysAre(['reviewerName', 'reviewerRole', 'rating', 'content',
+                        'avatarPath', 'relatedServiceId', 'relatedProjectId',
+                        'status', 'order', 'publishedAt', 'createdAt', 'updatedAt'])
+          && isText(request.resource.data.reviewerName, 120)
+          && isLocalizedOrNull(request.resource.data.reviewerRole, 160)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isLocalized(request.resource.data.content, 4000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && (request.resource.data.relatedServiceId == null
+              || isSlug(request.resource.data.relatedServiceId))
+          && (request.resource.data.relatedProjectId == null
+              || isSlug(request.resource.data.relatedProjectId))
+          && request.resource.data.status in ['pending', 'approved', 'published']
+          && isOrder(request.resource.data.order);
+      }
+
+      function publishedAtOkOnCreate() {
+        return request.resource.data.status == 'published'
+          ? request.resource.data.publishedAt == request.time
+          : request.resource.data.publishedAt == null;
+      }
+
+      function publishedAtOkOnUpdate() {
+        return request.resource.data.status != 'published'
+          ? request.resource.data.publishedAt == null
+          : (resource.data.status == 'published'
+              ? request.resource.data.publishedAt == resource.data.publishedAt
+              : request.resource.data.publishedAt == request.time);
+      }
+
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
+        && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * contactLinks/{linkId} - public social and contact links.
+     *
+     * Every field is public by nature, so there is no private contact data in
+     * this collection. Unpublished entries are readable only by admins and are
+     * not rendered publicly (absent/unpublished entries do not render).
+     *
+     * `value` is validated per-type by the application schema, not here: an email
+     * link is a mailto: target and a phone link is a tel: target, so a blanket
+     * https-only rule would be wrong. Rules enforce type and shape; the schema
+     * enforces the per-type format.
+     */
+    match /contactLinks/{linkId} {
+      function valid() {
+        return keysAre(['type', 'label', 'value', 'published', 'order',
+                        'createdAt', 'updatedAt'])
+          && request.resource.data.type in ['email', 'phone', 'whatsapp', 'github',
+                 'linkedin', 'instagram', 'facebook', 'x', 'telegram', 'youtube',
+                 'behance', 'dribbble', 'custom']
+          && isLocalized(request.resource.data.label, 80)
+          && isText(request.resource.data.value, 2048)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================== deny by default
+    // Explicit deny-by-default. Anything not matched above - including any
+    // future collection such as an analytics store - has no allow rule and can
+    // never be read or written by any client. This block documents the intent
+    // rather than relying on absence of rules alone.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+))
+            : value.matches('^https://.+');
+    }
+
+    /**
+     * List of technology labels.
+     *
+     * Rules cannot iterate a list element-by-element (there is no predicate form
+     * of `removeAll`/`filter`). What IS enforced: the list type, its length, the
+     * aggregate character budget, and that no entry is empty. `join()` also fails
+     * on a nested map, so a list of objects cannot pass. Per-element string
+     * typing is enforced by src/data/schema, which is the documented split of
+     * responsibility between rules and schemas.
+     */
+    function isStringList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join(',').size() <= maxJoinedLength
+                && v.join(',').matches('^[^,]+(,[^,]+)*$')));
+    }
+
+    /**
+     * List of Storage paths. The joined form is checked against the same strict
+     * path pattern as isMediaPath, so a traversal segment anywhere in the list
+     * fails the match.
+     */
+    function isMediaPathList(v, maxItems, maxJoinedLength) {
+      return v is list && v.size() <= maxItems
+        && (v.size() == 0
+            || (v.join('/').size() <= maxJoinedLength
+                && v.join('/')
+                     .matches('^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$')));
+    }
+
+    /**
+     * List of { label, url } external links.
+     *
+     * DECLARED LIMITATION: Rules cannot validate a list of maps element by
+     * element, so only the count is bounded here. The element shape is enforced
+     * by src/data/schema and by the fact that only already-authorized admins can
+     * write this field at all - it is not a privilege-escalation surface.
+     */
+    function isLinkList(v, maxItems) {
+      return v is list && v.size() <= maxItems;
+    }
+
+    /** Allowed field names, exactly. Prevents silent schema drift. */
+    function keysAre(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    /** createdAt is server-set and immutable; updatedAt is server-set. */
+    function timestampsOkOnCreate() {
+      return request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function timestampsOkOnUpdate() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ============================================================= singletons
+    /**
+     * profile/main - the portfolio owner's public profile (singleton).
+     * Publicly readable only once published. Any other document under /profile
+     * is intentionally unmatched and therefore denied by the catch-all.
+     */
+    match /profile/main {
+      function valid() {
+        return keysAre(['fullName', 'headline', 'bio', 'avatarPath', 'resumePath',
+                        'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.fullName, 120)
+          && isLocalized(request.resource.data.headline, 160)
+          && isLocalized(request.resource.data.bio, 20000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && isMediaPath(request.resource.data.resumePath)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      // The public site cannot exist without profile/main, so deletion is denied
+      // even for admins rather than leaving an orphaned site state.
+      allow delete: if false;
+    }
+
+    /**
+     * settings/main - public site configuration (singleton).
+     *
+     * PUBLIC READ IS DELIBERATE: Firestore rules cannot filter individual fields
+     * on read, so anything stored here is world-readable. By contract this
+     * document holds only public-safe values. Any future private or secret
+     * setting MUST NOT be added here - it needs its own document with an
+     * admin-only read rule.
+     *
+     * featuredProjectId is the single source of truth for "the featured project".
+     */
+    match /settings/main {
+      function valid() {
+        return keysAre(['siteTitle', 'siteDescription', 'defaultLocale',
+                        'featuredProjectId', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.siteTitle, 160)
+          && isLocalized(request.resource.data.siteDescription, 320)
+          && request.resource.data.defaultLocale in ['en', 'ar']
+          && (request.resource.data.featuredProjectId == null
+              || (isSlug(request.resource.data.featuredProjectId)
+                  && exists(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId))
+                  && get(/databases/$(database)/documents/projects/$(request.resource.data.featuredProjectId)).data.published == true));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if false;
+    }
+
+    // ============================================================ collections
+    /**
+     * projects/{projectId} - public portfolio projects.
+     *
+     * INVARIANT: the document id IS the slug, and the slug is immutable after
+     * creation. Phase 09 resolves /projects/:slug as a direct document lookup,
+     * and a published URL can never silently change meaning.
+     *
+     * The "exactly one featured project" requirement is deliberately NOT modelled
+     * as a `featured: boolean` on each project. Firestore rules cannot enforce a
+     * cross-document uniqueness constraint, so such a flag would merely pretend
+     * to guarantee the invariant. `settings/main.featuredProjectId` is the single
+     * source of truth: one field holds at most one value, so the invariant holds
+     * structurally and a change is atomic inside a single document write.
+     * (Cross-document checks - that the referenced project exists and is
+     * published - cannot be expressed in rules and are DECLARED as a
+     * server-authoritative/CMS responsibility; see docs/data-model.md.)
+     */
+    match /projects/{projectId} {
+      function valid() {
+        return projectId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'caseStudy',
+                      'technologies', 'category', 'thumbnailPath', 'galleryPaths',
+                      'liveUrl', 'repoUrl', 'links', 'seo', 'published', 'order',
+                      'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == projectId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isLocalizedOrNull(request.resource.data.caseStudy, 40000)
+          && isStringList(request.resource.data.technologies, 30, 1800)
+          && (request.resource.data.category == null
+              || isSlug(request.resource.data.category))
+          && isMediaPath(request.resource.data.thumbnailPath)
+          && isMediaPathList(request.resource.data.galleryPaths, 12, 6144)
+          && isExternalUrl(request.resource.data.liveUrl)
+          && isExternalUrl(request.resource.data.repoUrl)
+          && isLinkList(request.resource.data.links, 10)
+          && request.resource.data.seo is map
+          && request.resource.data.seo.keys().hasOnly(['title', 'description'])
+          && request.resource.data.seo.keys().hasAll(['title', 'description'])
+          && isLocalizedOrNull(request.resource.data.seo.title, 160)
+          && isLocalizedOrNull(request.resource.data.seo.description, 320)
+          && request.resource.data.published is bool
+          && isOrder(request.resource.data.order);
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      // slug is immutable: it is the document id and the public URL segment.
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug
+        && (request.resource.data.published == true
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != request.resource.data.slug);
+      allow delete: if isAdmin()
+        && (!exists(/databases/$(database)/documents/settings/main)
+            || get(/databases/$(database)/documents/settings/main).data.featuredProjectId != projectId);
+    }
+
+    /**
+     * services/{serviceId} - services offered. Document id IS the slug.
+     */
+    match /services/{serviceId} {
+      function valid() {
+        return serviceId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+          && keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',
+                      'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == serviceId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate()
+        && request.resource.data.slug == resource.data.slug;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * skills/{skillId} - technology / skill catalogue.
+     *
+     * `name` is a single string: technology names are proper nouns and are not
+     * translated. `group` is a closed enum, so its label is localized in UI
+     * translation files (Phase 06) and never duplicated into CMS data - keeping
+     * UI translation and CMS content separate as required.
+     *
+     * No proficiency percentage is modelled. The product contract has no such
+     * requirement, and a self-assigned percentage would be unverifiable data.
+     */
+    match /skills/{skillId} {
+      function valid() {
+        return keysAre(['name', 'group', 'iconPath', 'order', 'published',
+                        'createdAt', 'updatedAt'])
+          && isText(request.resource.data.name, 60)
+          && request.resource.data.group in ['frontend', 'backend', 'database',
+                 'devops', 'tooling', 'design', 'other']
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * reviews/{reviewId} - client reviews.
+     * Workflow: pending -> approved -> published.
+     *
+     * PUBLIC VISIBILITY EQUALS `status == 'published'`. `approved` is an internal
+     * moderation state and is NOT public, so pending and approved reviews are
+     * equally unreadable by the public. Unapproved reviews can never appear.
+     *
+     * A strict forward-only transition is deliberately NOT enforced, because the
+     * CMS must be able to unpublish a review. The enforced invariants are the
+     * ones that matter: publishedAt is null unless published, is stamped with the
+     * server time at the transition into published, and is then immutable while
+     * the review remains published (so publication time cannot be backdated).
+     */
+    match /reviews/{reviewId} {
+      function valid() {
+        return keysAre(['reviewerName', 'reviewerRole', 'rating', 'content',
+                        'avatarPath', 'relatedServiceId', 'relatedProjectId',
+                        'status', 'order', 'publishedAt', 'createdAt', 'updatedAt'])
+          && isText(request.resource.data.reviewerName, 120)
+          && isLocalizedOrNull(request.resource.data.reviewerRole, 160)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isLocalized(request.resource.data.content, 4000)
+          && isMediaPath(request.resource.data.avatarPath)
+          && (request.resource.data.relatedServiceId == null
+              || isSlug(request.resource.data.relatedServiceId))
+          && (request.resource.data.relatedProjectId == null
+              || isSlug(request.resource.data.relatedProjectId))
+          && request.resource.data.status in ['pending', 'approved', 'published']
+          && isOrder(request.resource.data.order);
+      }
+
+      function publishedAtOkOnCreate() {
+        return request.resource.data.status == 'published'
+          ? request.resource.data.publishedAt == request.time
+          : request.resource.data.publishedAt == null;
+      }
+
+      function publishedAtOkOnUpdate() {
+        return request.resource.data.status != 'published'
+          ? request.resource.data.publishedAt == null
+          : (resource.data.status == 'published'
+              ? request.resource.data.publishedAt == resource.data.publishedAt
+              : request.resource.data.publishedAt == request.time);
+      }
+
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (resource.data.status == 'pending' && request.resource.data.status == 'approved')
+          || (resource.data.status == 'approved' && request.resource.data.status == 'published')
+          || (resource.data.status == 'published' && request.resource.data.status == 'approved');
+      }
+
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && valid() && request.resource.data.status == 'pending'
+        && publishedAtOkOnCreate() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && validTransition() && publishedAtOkOnUpdate()
+        && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * contactLinks/{linkId} - public social and contact links.
+     *
+     * Every field is public by nature, so there is no private contact data in
+     * this collection. Unpublished entries are readable only by admins and are
+     * not rendered publicly (absent/unpublished entries do not render).
+     *
+     * `value` is validated per-type by the application schema, not here: an email
+     * link is a mailto: target and a phone link is a tel: target, so a blanket
+     * https-only rule would be wrong. Rules enforce type and shape; the schema
+     * enforces the per-type format.
+     */
+    match /contactLinks/{linkId} {
+      function valid() {
+        return keysAre(['type', 'label', 'value', 'published', 'order',
+                        'createdAt', 'updatedAt'])
+          && request.resource.data.type in ['email', 'phone', 'whatsapp', 'github',
+                 'linkedin', 'instagram', 'facebook', 'x', 'telegram', 'youtube',
+                 'behance', 'dribbble', 'custom']
+          && isLocalized(request.resource.data.label, 80)
+          && isText(request.resource.data.value, 2048)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
+      }
+
+      allow read: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && valid() && timestampsOkOnCreate();
+      allow update: if isAdmin() && valid() && timestampsOkOnUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================== deny by default
+    // Explicit deny-by-default. Anything not matched above - including any
+    // future collection such as an analytics store - has no allow rule and can
+    // never be read or written by any client. This block documents the intent
+    // rather than relying on absence of rules alone.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+)
+          && keysAre(['title', 'slug', 'summary', 'description', 'iconPath', 'order',
+                      'published', 'createdAt', 'updatedAt'])
+          && isLocalized(request.resource.data.title, 120)
+          && isSlug(request.resource.data.slug)
+          && request.resource.data.slug == serviceId
+          && isLocalized(request.resource.data.summary, 320)
+          && isLocalized(request.resource.data.description, 20000)
+          && isMediaPath(request.resource.data.iconPath)
+          && isOrder(request.resource.data.order)
+          && request.resource.data.published is bool;
       }
 
       allow read: if resource.data.published == true || isAdmin();
