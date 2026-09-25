@@ -25,6 +25,7 @@ const checks = [
   ['Public CTA targets exist', home.includes('to="/projects"') && home.includes('to="/contact"')],
   ['Published-only reviews and contacts', home.includes('listReviews(false)') && home.includes('listContactLinks(false)')],
   ['External contact links are hardened', home.includes('noopener noreferrer')],
+  ['WhatsApp targets strip non-digit formatting', home.includes("link.value.replace(/\\D/g, '')")],
   ['EN/AR Home copy exists', en.includes('home_featured_title') && ar.includes('home_featured_title')],
   ['Root remains public', app.includes("path: '/'") && app.includes('<Root />')],
   ['No Phase 12 code in Home', !home.includes('/admin/') && !home.includes('Dashboard')],
