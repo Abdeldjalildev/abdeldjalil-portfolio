@@ -376,3 +376,106 @@ One simple isolated defect was found and fixed: the dead `placeholder()` helper/
 No confirmed routing, layout, error-model, security-boundary, or data-contract defect requiring structural change was found during this static audit.
 
 **Phase 03 is not CLOSED.**
+
+# Phase 04 — AUTHENTICATION, ADMIN IDENTITY & AUTHORIZATION
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 04 contract
+- `src/auth/AuthProvider.tsx`
+- `src/auth/context.ts`
+- `src/auth/types.ts`
+- `src/routes/AdminAccessBoundary.tsx`
+- `src/routes/SignIn.tsx`
+- `src/firebase/app.ts`
+- `scripts/provision-admin.mjs`
+- current Firestore/Storage authorization helpers and privileged-write boundaries
+- current application router integration
+- current package scripts and phase-evidence availability
+
+No local execution, Firebase emulator rules test, real Google sign-in, token-refresh test, claim-revocation test, or browser verification was performed in this audit.
+
+## Phase 04 direct findings
+
+### P04-01 — Phase 04 has no dedicated report or verification harness in the current repository
+
+The repository currently has no `docs/phase-04-report.md` and no `test:phase04` script.
+
+This is an evidence gap against the six-gate Phase 04 contract, especially the authenticated/unauthenticated/unauthorized and claim-refresh verification required by Gate 4, plus the denied-case evidence required by Gates 5/6.
+
+**Disposition:** record only. Do not fabricate evidence or add a synthetic PASS.
+
+### P04-02 — `AuthProvider.refetch()` does not handle claim-read failure
+
+`refetch()` awaits `loadClaims(user, true)` without a `try/catch`.
+
+The initial `onAuthStateChanged` path deliberately uses deny-by-default handling when token claims cannot be read. The manual `Refresh access` path does not have the same failure handling: if `getIdTokenResult(true)` rejects, the returned promise rejects and the current auth state is left unchanged.
+
+This is not a direct privilege-escalation path because the client cannot create the trusted custom claim and Firestore/Storage authorization remains server-side. It is, however, an inconsistency in the authentication failure/recovery contract and can leave stale UI state after a failed forced refresh.
+
+**Disposition:** confirmed hardening defect. Record for repair; do not patch during this audit because the requested workflow is audit-first and the fix should be made in the Phase 04 repair pass.
+
+### P04-03 — Async auth-state callback has a potential stale-result race
+
+`onAuthStateChanged` invokes an async callback that awaits `loadClaims()`. A later auth-state change (including sign-out) can occur before the earlier token-read promise resolves. There is no generation/request guard to prevent a late result from calling `setState({ status: 'authenticated', ... })` after a newer auth state has already been established.
+
+The security boundary remains authoritative in Firestore/Storage rules, so this is primarily a client-state consistency issue rather than a demonstrated privilege-escalation bypass. It can nevertheless produce stale authenticated/admin UI during rapid account/session changes.
+
+**Disposition:** hardening finding. Repair during Phase 04 repair pass with a cancellation/generation guard; do not broaden into unrelated auth refactoring.
+
+### P04-04 — Admin claim provisioning is correctly kept outside the browser
+
+`scripts/provision-admin.mjs` uses Firebase Admin SDK/Application Default Credentials and exposes explicit `status`, `grant`, and `revoke` commands. No browser route, localStorage value, or client field can assign the trusted claim.
+
+The script also revokes refresh tokens on admin removal. The repository documents the remaining limitation that an already-issued ID token can remain valid until expiry; this is consistent with Firebase custom-claim/token semantics and must be covered by runtime verification rather than treated as an immediate client-state revocation mechanism.
+
+**Disposition:** no code change.
+
+### P04-05 — Authorization model is deny-by-default and server-authoritative in current rules
+
+Current Firestore and Storage rules use `request.auth.token.admin == true` as the trusted admin boundary. Public reads are separately constrained by publication state, and unmatched paths fall through to explicit deny rules.
+
+This is an important current-system integration of Phase 04, but the actual allow/deny behavior still requires emulator/runtime evidence. Static inspection cannot claim the rules execute correctly in Firebase.
+
+**Disposition:** no code change during Phase 04 audit; verify with denied-case tests later.
+
+## Phase 04 cross-phase findings
+
+### P04-CP01 — Current privileged CMS behavior depends on the Phase 05+ rules contract
+
+The Phase 04 admin identity is consumed by later Firestore/Storage rules and CMS features. Any repair to the claim shape or admin boundary must therefore preserve the exact `admin: true` contract used by those rules.
+
+**Disposition:** dependency constraint; do not alter claim naming/type casually.
+
+### P04-CP02 — Phase 13 App Check is additional protection, not a replacement for Phase 04 authorization
+
+The current application also initializes App Check and the analytics callable enforces it, but App Check does not replace Firebase Auth custom-claim authorization for admin CMS operations.
+
+**Disposition:** preserve phase attribution; no change.
+
+### P04-CP03 — Real claim-refresh/revocation behavior remains unverified
+
+Static code shows:
+- forced token refresh after sign-in;
+- a manual `Refresh access` action;
+- server-side claim provisioning;
+- refresh-token revocation on admin removal.
+
+It does not prove the live Firebase token actually changes, that a newly granted claim becomes visible without a fresh sign-in, or that revoked sessions lose access as expected after token expiry/refresh.
+
+**Disposition:** runtime verification required.
+
+## Phase 04 conclusion
+
+No confirmed browser-side self-promotion, client-side authorization bypass, or insecure admin-claim assignment path was found.
+
+Two hardening findings were identified:
+1. `refetch()` lacks deny-by-default error handling.
+2. The async auth-state listener has a potential stale-result race.
+
+No code was changed during this audit because both findings belong to the Phase 04 repair pass rather than being trivial isolated syntax/unused-code corrections.
+
+**Phase 04 is not CLOSED.**
