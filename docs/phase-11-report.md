@@ -120,6 +120,23 @@ A repository-level audit was performed before Phase 12 work. One concrete Phase 
 
 No Phase 11 contract, publication boundary, featured-project invariant, or scope boundary was changed during this repair.
 
+
+## Deep repair pass — Phase 11
+
+### P11-R1 — Add a narrow static guard for WhatsApp target normalization — COMPLETED
+
+The deep audit confirmed that the production Home implementation now uses the correct digit-stripping expression when converting validated WhatsApp values into `wa.me` targets. The existing Phase 11 harness did not explicitly guard this contract.
+
+Repair applied:
+- `scripts/test-phase11.mjs` now asserts the canonical non-digit stripping expression used by `Home.tsx`.
+- The guard is intentionally narrow and remains scoped to Phase 11 contact-target normalization; it does not duplicate the Phase 10 Firestore validation suite.
+- No production behavior, Firestore rule, schema, dependency, or navigation contract was changed.
+
+Repository verification:
+- repair commit: `8dcb5a22e347d6012c908993cb4c6f85739dc4e0`
+- no local/runtime command was executed or claimed.
+
+
 ## Gate 6 — Closure/evidence
 
 **BLOCKED / pending local verification and owner acceptance.**
