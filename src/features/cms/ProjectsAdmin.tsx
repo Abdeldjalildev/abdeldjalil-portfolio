@@ -100,11 +100,9 @@ export default function ProjectsAdmin() {
         throw new Error(t('cms_project_gallery_limit'))
       }
 
-      const stagedPaths: string[] = []
       let thumbnail = form.thumbnailPath
       for (const file of kind === 'thumbnail' ? selectedFiles.slice(0, 1) : selectedFiles) {
         const result = await uploadProjectMedia(form.slug, kind, file)
-        stagedPaths.push(result.path)
         if (kind === 'thumbnail') thumbnail = result.path
         else next.push(result.path)
       }
