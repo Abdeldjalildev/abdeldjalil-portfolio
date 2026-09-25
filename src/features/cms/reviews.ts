@@ -33,7 +33,7 @@ export async function saveReview(id: string, input: ReviewInput, expectedUpdated
     }
     const current = validate(reviewSchema, snapshot.data(), reference.path)
     if (!current.ok) throw new Error('INVALID_STORED_REVIEW')
-    if (expectedUpdatedAt && current.value.updatedAt.seconds !== expectedUpdatedAt.seconds) throw new Error('CONCURRENT_REVIEW_EDIT')
+    if (expectedUpdatedAt && !current.value.updatedAt.isEqual(expectedUpdatedAt)) throw new Error('CONCURRENT_REVIEW_EDIT')
     if (input.status !== current.value.status) {
       const allowed = (current.value.status === 'pending' && input.status === 'approved') ||
         (current.value.status === 'approved' && input.status === 'published') ||
