@@ -101,6 +101,21 @@ Implemented hardening visible in the code:
 
 Runtime performance/accessibility/SEO validation remains pending local/browser verification.
 
+## Deep repair pass — Phase 09
+
+### P09-R1 — Align the Phase 09 verification harness with centralized SEO ownership — FIXED
+
+The Phase 09 harness previously required `document.title` and `meta[name="description"]` to appear directly inside `ProjectDetail.tsx`. That contract became stale when Phase 14 centralized metadata ownership in `src/components/seo/Seo.tsx`.
+
+Repair applied:
+- `scripts/test-phase09.mjs` now verifies that `ProjectDetail.tsx` renders the shared `<Seo />` component and supplies the localized project SEO helpers.
+- The harness now separately verifies that `Seo.tsx` owns document metadata updates and constructs canonical URLs from the runtime origin.
+- The repair does not weaken SEO verification and does not revert the Phase 14 architecture.
+
+Repository verification:
+- repair commit: `021fff02a07d1f7aa44c904608283586f595fc60`
+- no local/runtime command was executed or claimed.
+
 ## Gate 6 — Closure/evidence
 
 **BLOCKED / pending local verification and owner acceptance.**
