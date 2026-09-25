@@ -61,3 +61,36 @@ Public queries intentionally match their Firestore publication predicates becaus
 AGENTS.md remains unchanged; the phase is not marked CLOSED.
 
 **I did not advance to the next phase.**
+
+## Deep repair pass — Phase 10
+
+### P10-R1 — Exact optimistic-concurrency comparison — FIXED
+
+The Phase 10 data layer now uses exact Firestore Timestamp.isEqual() comparisons for the loaded updatedAt value in:
+- saveReview()
+- changeReviewStatus()
+- saveContactLink()
+
+The previous seconds-only comparison contract is absent from the current implementation. The Phase 10 static harness also contains explicit regression assertions that require isEqual(expectedUpdatedAt) and reject updatedAt.seconds checks.
+
+Relevant repair commits already present in the repository:
+- e2bffeaf83c2eb2cb041645d8996c0d839ca588d
+- 381b7df2a98a947c51e5f0818b297612ce769779
+- ce2bf0d477f6fbc331c1fdd315ec45fe907e0490
+- 78b5427ba3ec9c2bac72810246e181ce84bb32fd
+
+No delete-concurrency semantics were changed during this repair pass. The existing direct-delete behavior remains a documented hardening consideration rather than an unapproved contract change.
+
+### Repair verification boundary
+
+Fresh GitHub re-inspection confirmed:
+- review save/status operations use exact Timestamp equality;
+- contact-link save uses exact Timestamp equality;
+- no seconds-only comparison remains in those paths;
+- the Phase 10 static harness contains regression guards for the exact comparison contract.
+
+No local build, lint, schema test, rules emulator test, browser test, or production Firebase execution was performed or claimed.
+
+**Phase 10 remains NOT CLOSED.**
+
+**I did not advance to the next phase.**
