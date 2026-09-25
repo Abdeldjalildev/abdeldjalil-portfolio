@@ -31,7 +31,7 @@ function contactHref(link: ContactLink): string {
   if (link.type === 'email') return link.value.startsWith('mailto:') ? link.value : `mailto:${link.value}`
   if (link.type === 'phone') return link.value.startsWith('tel:') ? link.value : `tel:${link.value}`
   if (link.type === 'whatsapp' && !link.value.startsWith('https://')) {
-    return `https://wa.me/${link.value.replace(/\\D/g, '')}`
+    return `https://wa.me/${link.value.replace(/\D/g, '')}`
   }
   return link.value
 }
