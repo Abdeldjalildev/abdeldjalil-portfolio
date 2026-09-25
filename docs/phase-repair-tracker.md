@@ -1672,3 +1672,14 @@ The previous phase order remains valid, but the final grouped audit makes the de
 6. **Final runtime stage:** only after repository repairs are complete, execute the local/emulator/browser/deployment evidence required by `AGENTS.md`.
 
 **Important:** this final section is a repair basis, not a declaration that any phase is CLOSED. No phase ledger status was changed during this audit.
+
+
+# Phase 10 — Repair Plan
+
+**Repair order (dependency-aware, one stage at a time):**
+1. **P10-R1 — Enforce contact-target validation in Firestore rules.** Wire the existing `isContactTarget(type, value)` helper into the canonical `contactLinks/{linkId}` write validation path. Strengthen the Phase 10 static harness so it verifies invocation, not merely helper existence. Re-inspect the exact rule block and harness after the change.
+2. **P10-R2 — Harden optimistic-concurrency timestamp equality.** Replace seconds-only comparisons in Reviews and ContactLinks with exact Firestore Timestamp equality, preserving existing concurrency semantics. Re-inspect all affected call sites and types.
+3. **P10-R3 — Re-run the Phase 10 static contract audit.** Verify routes, publication predicates, moderation transitions, server-side target validation, concurrency checks, translations, and isolation.
+4. **P10-R4 — Cross-phase integration check.** Verify repaired Phase 10 contracts against Phase 05 schemas/rules and Phase 12 admin workflows.
+
+**Rule:** each repair stage must be implemented, re-inspected within its own scope, and only then marked `COMPLETED`. No local/runtime tests are claimed here.
