@@ -290,7 +290,8 @@ service cloud.firestore {
           && isLocalized(request.resource.data.description, 20000)
           && isMediaPath(request.resource.data.iconPath)
           && isOrder(request.resource.data.order)
-          && request.resource.data.published is bool;
+          && request.resource.data.published is bool
+          && isContactTarget(request.resource.data.type, request.resource.data.value);
       }
 
       allow read: if resource.data.published == true || isAdmin();
