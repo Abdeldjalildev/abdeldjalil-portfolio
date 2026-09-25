@@ -1878,3 +1878,21 @@ The repository cannot prove through static inspection:
 **Phase 11 remains NOT CLOSED.**
 
 **I did not advance the phase status or mark Phase 11 CLOSED.**
+
+
+# Phase 11 — Repair Pass
+
+**Repair status: COMPLETED for the confirmed Phase 11 implementation/verification finding.**
+
+### P11-R1 — Add a narrow static guard for WhatsApp target normalization — COMPLETED
+- The production Home implementation already contains the corrected digit-stripping expression `replace(/\\D/g, '')`.
+- `scripts/test-phase11.mjs` now explicitly asserts that canonical expression, closing the verification gap identified as P11-02.
+- The guard remains narrowly scoped to Phase 11 and does not duplicate Phase 10 server-side contact validation.
+- `docs/phase-11-report.md` records the repair and its static-only evidence.
+
+### Repair verification boundary
+Fresh repository re-inspection confirmed the Home implementation, Phase 11 harness assertion, and report entry are aligned. No local build, lint, TypeScript, emulator, browser, or production execution was performed.
+
+**Phase 11 remains NOT CLOSED.** Runtime verification and owner acceptance are still required by AGENTS.md.
+
+**I did not advance the phase status or mark Phase 11 CLOSED.**
