@@ -38,7 +38,7 @@ export async function saveContactLink(id: string, input: ContactLinkInput, expec
     }
     const current = validate(contactLinkSchema, snapshot.data(), reference.path)
     if (!current.ok) throw new Error('INVALID_STORED_CONTACT_LINK')
-    if (expectedUpdatedAt && current.value.updatedAt.seconds !== expectedUpdatedAt.seconds) throw new Error('CONCURRENT_CONTACT_EDIT')
+    if (expectedUpdatedAt && !current.value.updatedAt.isEqual(expectedUpdatedAt)) throw new Error('CONCURRENT_CONTACT_EDIT')
     transaction.update(reference, { ...input, updatedAt: serverTimestamp() })
   })
 }
