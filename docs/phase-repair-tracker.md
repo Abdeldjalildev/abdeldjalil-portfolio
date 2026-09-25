@@ -90,17 +90,13 @@ The Phase 01 bootstrap is **not marked CLOSED** because execution evidence has n
 
 These are NOT assigned to Phase 01 and must be repaired in their owning phase.
 
-### CP-01 — Missing current `firebase.indexes.json` while `firebase.json` references it
+### CP-01 — Missing current `firestore.indexes.json` while `firebase.json` references it — RESOLVED
 
-Current `firebase.json` declares:
-
-`firestore.indexes.json`
-
-but the repository currently does not expose that file at the referenced path.
+The repository now contains `firestore.indexes.json` at the referenced path, with the canonical composite indexes and analytics field overrides.
 
 **Owning areas:** Phase 05 / Phase 15 release verification.
 
-**Status:** record; do not repair during Phase 01 audit.
+**Status:** resolved by current repository state; remaining index deployment/runtime verification belongs to the dedicated testing stage.
 
 ### CP-02 — Phase 13 analytics Firestore read contract is incomplete
 
@@ -560,15 +556,11 @@ The previously tracked missing-index-file concern is no longer applicable to the
 
 ## Phase 05 cross-phase findings
 
-### P05-CP01 — Contact-link server validation documentation currently overstates the rules boundary
+### P05-CP01 — Contact-link server validation documentation overstatement — RESOLVED
 
-`docs/data-model.md` states that contact target safety is checked in both Firestore rules and the application validation layer. The current `contactLinks.valid()` rule validates the allowed type and string shape but does not call the defined `isContactTarget()` helper.
+The Phase 10 repair pass wired the existing `isContactTarget(type, value)` helper into the canonical `contactLinks/{linkId}` Firestore write-validation path. The current rules therefore enforce the documented per-type target contract at the server boundary.
 
-The application schema does reject obvious unsafe schemes, but the server rules do not currently enforce the per-type target contract described in the documentation.
-
-This is primarily owned by the later Phase 10 contact-link contract, but the mismatch originates in the canonical Phase 05 rules/data contract and must be reconciled before final closure.
-
-**Disposition:** record cross-phase; do not make the Phase 10-specific repair during this Phase 05 audit.
+**Disposition:** resolved by the Phase 10 repair. No additional Phase 05 code change is required.
 
 ### P05-CP02 — Analytics collections are represented in indexes/docs but not yet in the Phase 05 canonical collection map
 
@@ -596,6 +588,34 @@ One evidence gap exists:
 The index-file finding previously tracked globally is resolved in the current repository.
 
 **Phase 05 is not CLOSED.** The repair pass is complete for the two confirmed code/schema defects, but Gate 4–6 runtime/evidence requirements remain pending.
+
+
+# Phase 05 — Repair Pass
+
+## Repair status
+
+**Phase 05 repair pass verified complete at repository level.**
+
+The repair dependency order identifies Phase 05 as the first structural repair stage. Current repository inspection confirms that both Phase 05 implementation defects recorded by the audit are already repaired in the default branch:
+
+1. **P05-01 — schema/rules aggregate-length mismatch:** Firestore rules now budget for the separators introduced by `join()` (technologies: 1,829; gallery paths: 6,155), matching the maximum schema-valid lists.
+2. **P05-02 — malformed timestamp acceptance:** the runtime timestamp parser now enforces nanoseconds 0–999,999,999 and the supported Firestore seconds range, with rejection cases present in `scripts/test-schema.ts`.
+
+The previously reported missing `firestore.indexes.json` is also resolved, and the Phase 10 contact-target repair has removed the related cross-phase rules/documentation mismatch.
+
+### Verification performed in this repair pass
+- Re-read the canonical Phase 05 schema core and schemas.
+- Re-read `firestore.rules` and confirmed the repaired aggregate budgets.
+- Re-read `scripts/test-schema.ts` and confirmed maximum-boundary acceptance plus malformed-timestamp rejection cases.
+- Confirmed `firestore.indexes.json` exists at the path referenced by `firebase.json`.
+- Reconciled the Phase 05 contact-link boundary with the completed Phase 10 server-side validation repair.
+
+### Verification not performed
+No local Node test, Firestore Emulator run, Storage Emulator run, index deployment, or production Firebase execution was performed. Therefore runtime Gate 4–6 evidence remains pending exactly as required by `AGENTS.md`.
+
+**Phase 05 remains NOT CLOSED.** This repair pass does not alter the owner-controlled phase ledger.
+
+**I did not advance to the next phase.**
 
 
 # Phase 06 — PUBLIC SHELL, NAVIGATION, FOOTER & I18N/RTL
