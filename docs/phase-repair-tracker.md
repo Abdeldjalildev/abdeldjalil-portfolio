@@ -1079,11 +1079,20 @@ This is a discoverability/SEO hardening issue owned by the later Phase 14/15 rel
 
 ## Phase 09 conclusion
 
-The deep audit found **one confirmed direct issue**: the Phase 09 static harness is stale because it still expects the pre-Phase-14 direct SEO implementation.
+The deep audit found **one confirmed direct issue**: the Phase 09 static harness was stale because it still expected the pre-Phase-14 direct SEO implementation.
 
-Additional findings are evidence/runtime limitations and later-phase integration points. No confirmed published-data leakage, broken selection contract, unsafe external-link behavior, or public project authorization defect was found by static inspection.
+### Phase 09 repair pass — COMPLETED
 
-**Phase 09 is not CLOSED.**
+**P09-R1 — Align Phase 09 verification with centralized SEO ownership — FIXED.**
+- `scripts/test-phase09.mjs` now verifies `ProjectDetail.tsx` uses the shared `<Seo />` component and localized project SEO helpers.
+- The harness separately verifies that `src/components/seo/Seo.tsx` owns document metadata updates and runtime-origin canonical URL construction.
+- The Phase 14 centralized SEO architecture was preserved; the verification contract was updated rather than weakened.
+- Repair commit: `021fff02a07d1f7aa44c904608283586f595fc60`.
+- `docs/phase-09-report.md` records the repair.
+
+No local/runtime command was executed or claimed. The remaining Phase 09 findings are evidence/runtime limitations and later-phase integration points.
+
+**Phase 09 remains NOT CLOSED.**
 
 
 # Phase 10 — REVIEWS, SOCIAL PROOF & CONTACT
