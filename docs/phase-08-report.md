@@ -167,6 +167,7 @@ The repository-level deep audit identified four Phase 08 lifecycle/evidence find
 - If a multi-file media upload fails after one or more files have already been staged, the newly staged objects are deleted on the failure path.
 - Project deletion now performs a Firestore transaction first, validates the loaded document's exact `updatedAt` with `Timestamp.isEqual()`, and only then deletes referenced Storage media. This prevents media destruction when the authoritative Firestore delete is denied (for example, because the project is currently featured).
 - Featured-project unpublishing now clears the featured reference before moving media/unpublishing, and attempts to restore the featured reference if the subsequent Firestore save fails.
+- Publish and unpublish media moves now track every successful Storage move and roll back all completed moves if a later move fails, preventing a partial multi-object move from escaping the failure boundary.
 - The Phase 08 static harness now guards the repaired lifecycle contracts.
 
 ### Static re-inspection
