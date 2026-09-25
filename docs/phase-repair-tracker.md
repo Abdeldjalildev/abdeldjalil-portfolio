@@ -203,3 +203,78 @@ The detailed repair sequence will be maintained as each phase is audited:
 Phases 01–04 and 06 remain subject to their own deep audits before the final repair plan is considered complete.
 
 **Important:** This tracker is a finding ledger, not a declaration that any listed phase is closed.
+
+
+# Phase 02 — DESIGN SYSTEM, THEME, TYPOGRAPHY & MOTION
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 02 contract
+- `src/styles/tokens.css`
+- `src/styles/base.css`
+- `src/index.css`
+- all current Phase 02 UI primitives under `src/components/ui/`
+- `src/design-system/DesignSystemPreview.tsx`
+- current application integration points that consume the Phase 02 tokens/primitives
+- package/configuration relevant to Tailwind 4 and the Phase 02 CSS pipeline
+
+No local execution, build, lint, browser, contrast, responsive, Arabic-shaping, or reduced-motion verification was performed.
+
+## Phase 02 direct findings
+
+### P02-01 — Phase 02 has no dedicated report or verification harness in the current repository
+
+The repository currently contains phase reports beginning at Phase 07 and phase test scripts beginning at Phase 07. There is no current `docs/phase-02-report.md` and no `test:phase02` script.
+
+This does not prove the design system is incorrect, but it creates an evidence gap against the six-gate Phase 02 contract, especially Gate 4/5.
+
+**Disposition:** record only. Do not fabricate historical evidence and do not weaken later verification. Phase 15's evidence contract must account for this.
+
+### P02-02 — Design-system preview has an organizational/verification-surface defect
+
+`src/design-system/DesignSystemPreview.tsx` places the "Surfaces, depth and glass" `SectionFrame` inside the "Colour tokens" section's grid container, with a divider between the two portions of that section.
+
+The JSX structure is syntactically structured, but the verification surface is semantically confusing: the surface/depth section is rendered as part of the colour-token section rather than as a separate top-level verification section.
+
+This does not alter production application logic, but it weakens the Phase 02 internal verification surface.
+
+**Disposition:** low-risk Phase 02 correction candidate. It is isolated to the temporary verification page; repair can be made directly without touching downstream logic.
+
+### P02-03 — Phase 02 defines a duration scale but the shared transition utility hard-codes only the base duration
+
+`tokens.css` defines `--duration-fast`, `--duration-base`, and `--duration-slow`, while `transition-standard` always uses `--duration-base`.
+
+This is not necessarily a defect: the contract can intentionally standardize normal transitions on one duration and expose the other durations for explicit animation classes. However, the current comments imply a fixed scale rather than clearly defining when fast/base/slow should be consumed.
+
+**Disposition:** ambiguity to resolve during Phase 02 repair review, not a code change now.
+
+### P02-04 — Phase 02 token contract is coherent, but runtime accessibility/visual claims remain unproven
+
+The source contains semantic color tokens, Arabic typography rules, visible focus styles, logical layout conventions, and global reduced-motion rules. Static inspection cannot establish actual WCAG contrast ratios, font shaping quality, responsive behavior, browser rendering, or reduced-motion behavior.
+
+**Disposition:** record only; verify in the later testing stage.
+
+## Phase 02 cross-phase findings
+
+### P02-CP01 — Later-phase code must be checked for design-token bypasses
+
+Phase 02 explicitly states that later phases should consume tokens and primitives rather than invent raw color/radius/shadow/timing values. A full repository-wide violation inventory should be performed during the Phase 02 repair pass or as a dedicated cross-cutting check.
+
+**Disposition:** open integration check. Do not broadly refactor during this audit.
+
+### P02-CP02 — Phase 14 adds later hardening that must not be mistaken for Phase 02 evidence
+
+Current accessibility, SEO, performance and App Check-related changes belong to later phases. They do not retroactively provide Phase 02 Gate 4/5 evidence.
+
+**Disposition:** preserve phase attribution.
+
+## Phase 02 conclusion
+
+No confirmed production logic/security/data-contract defect was found in the Phase 02 token primitives themselves.
+
+The main actionable Phase 02 issue found is the isolated organization of the temporary Design System Preview; the evidence/harness gap is recorded separately.
+
+**Phase 02 is not CLOSED.**
