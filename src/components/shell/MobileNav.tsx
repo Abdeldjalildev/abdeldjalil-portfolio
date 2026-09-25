@@ -122,7 +122,7 @@ export function MobileNav({ open, onClose }: MobileNavProps): ReactNode {
           </div>
 
           <nav className="flex flex-col gap-1 py-4" aria-label={t('nav_mobile')}>
-            {PUBLIC_NAVIGATION.map(({ key, to }) => (
+            {PUBLIC_NAVIGATION.map(({ key, to, end }) => (
               <NavLink
                 key={to}
                 to={to}
