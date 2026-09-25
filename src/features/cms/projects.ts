@@ -142,8 +142,12 @@ async function moveStorageObject(fromPath: string, toPath: string): Promise<void
   await deleteObject(ref(storage, fromPath))
 }
 
-async function moveMediaPaths(projectId: string, paths: string[], toPublic: boolean): Promise<string[]> {
-  const moved: string[] = []
+async function moveMediaPaths(
+  projectId: string,
+  paths: string[],
+  toPublic: boolean,
+  moved: string[] = [],
+): Promise<string[]> {
   for (const source of paths) {
     const fileName = source.split('/').pop()
     if (!fileName) throw new Error('Invalid media path')
@@ -160,6 +164,21 @@ async function moveMediaPaths(projectId: string, paths: string[], toPublic: bool
     }
   }
   return moved
+}
+
+async function rollbackMovedMedia(projectId: string, movedPaths: string[], fromPublic: boolean): Promise<void> {
+  for (const path of [...movedPaths].reverse()) {
+    const fileName = path.split('/').pop()
+    if (!fileName) continue
+    const isThumbnail = path.includes('/thumbnail/') || path.includes('-thumbnail/')
+    const target = fromPublic
+      ? draftObjectPath(`project-${projectId}-${isThumbnail ? 'thumbnail' : 'gallery'}`, fileName)
+      : (isThumbnail
+          ? projectThumbnailObjectPath(projectId, fileName)
+          : projectGalleryObjectPath(projectId, fileName))
+    if (path === target) continue
+    try { await moveStorageObject(path, target) } catch { /* preserve the original operation error */ }
+  }
 }
 
 async function deleteMedia(paths: string[]): Promise<void> {
@@ -208,23 +227,17 @@ export async function publishProject(
   }
 
   const original = [value.thumbnailPath, ...value.galleryPaths].filter((path): path is string => Boolean(path))
-  const thumbnail = value.thumbnailPath ? await moveMediaPaths(project.id, [value.thumbnailPath], true) : []
-  const gallery = await moveMediaPaths(project.id, value.galleryPaths, true)
-  const promoted: ProjectInput = { ...value, thumbnailPath: thumbnail[0] ?? null, galleryPaths: gallery }
-
+  const moved: string[] = []
+  let promoted: ProjectInput
   try {
+    const thumbnail = value.thumbnailPath ? await moveMediaPaths(project.id, [value.thumbnailPath], true, moved) : []
+    const gallery = await moveMediaPaths(project.id, value.galleryPaths, true, moved)
+    promoted = { ...value, thumbnailPath: thumbnail[0] ?? null, galleryPaths: gallery }
+
     await saveProject(promoted, project.updatedAt)
   } catch (error) {
-    // Best-effort rollback keeps failed writes from leaving promoted objects behind.
-    const promotedPaths = [promoted.thumbnailPath, ...promoted.galleryPaths].filter((path): path is string => Boolean(path))
-    for (const path of promotedPaths) {
-      if (!original.includes(path)) {
-        try {
-          const fileName = path.split('/').pop()
-          if (fileName) await moveStorageObject(path, draftObjectPath(`project-${project.id}-${path.includes('/thumbnail/') ? 'thumbnail' : 'gallery'}`, fileName))
-        } catch { /* preserve the original write error */ }
-      }
-    }
+    // Roll back every successful Storage move, including moves completed before a later move failed.
+    await rollbackMovedMedia(project.id, moved, true)
     throw error
   }
   await cleanupRemovedMedia(project, promoted)
@@ -236,20 +249,18 @@ export async function unpublishProject(project: ProjectRecord, input: ProjectInp
   const wasFeatured = (await getFeaturedProjectId()) === project.id
   if (wasFeatured) await setFeaturedProject(null)
 
-  const staged = await moveMediaPaths(project.id, all, false)
-  const thumbnail = staged.find((path) => path.includes('-thumbnail/')) ?? null
-  const gallery = staged.filter((path) => path.includes('-gallery/'))
-  const next = { ...value, published: false, thumbnailPath: thumbnail, galleryPaths: gallery }
+  const moved: string[] = []
+  let next: ProjectInput
   try {
+    const staged = await moveMediaPaths(project.id, all, false, moved)
+    const thumbnail = staged.find((path) => path.includes('-thumbnail/')) ?? null
+    const gallery = staged.filter((path) => path.includes('-gallery/'))
+    next = { ...value, published: false, thumbnailPath: thumbnail, galleryPaths: gallery }
+
     await saveProject(next, project.updatedAt)
   } catch (error) {
-    const stagedPaths = [next.thumbnailPath, ...next.galleryPaths].filter((path): path is string => Boolean(path))
-    for (const path of stagedPaths) {
-      try {
-        const fileName = path.split('/').pop()
-        if (fileName) await moveStorageObject(path, path.includes('-thumbnail/') ? projectThumbnailObjectPath(project.id, fileName) : projectGalleryObjectPath(project.id, fileName))
-      } catch { /* preserve the original write error */ }
-    }
+    // Roll back every successful Storage move, including moves completed before a later move failed.
+    await rollbackMovedMedia(project.id, moved, false)
     if (wasFeatured) {
       try { await setFeaturedProject(project.id) } catch { /* preserve the original write error */ }
     }
