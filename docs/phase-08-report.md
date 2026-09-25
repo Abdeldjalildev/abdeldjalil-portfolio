@@ -157,6 +157,31 @@ Not claimed as runtime PASS:
 - RTL/keyboard testing
 - real CMS → Firestore → public propagation
 
+## Deep-audit repair pass — Phase 08
+
+The repository-level deep audit identified four Phase 08 lifecycle/evidence findings plus the featured-project unpublish integration mismatch. The implementation repair pass addressed the production-code findings without changing the Phase 05 data contract or weakening the 12-item gallery limit.
+
+### Repairs completed
+
+- Gallery capacity is now checked before any selected gallery file is staged.
+- If a multi-file media upload fails after one or more files have already been staged, the newly staged objects are deleted on the failure path.
+- Project deletion now performs a Firestore transaction first, validates the loaded document's exact `updatedAt` with `Timestamp.isEqual()`, and only then deletes referenced Storage media. This prevents media destruction when the authoritative Firestore delete is denied (for example, because the project is currently featured).
+- Featured-project unpublishing now clears the featured reference before moving media/unpublishing, and attempts to restore the featured reference if the subsequent Firestore save fails.
+- The Phase 08 static harness now guards the repaired lifecycle contracts.
+
+### Static re-inspection
+
+Fresh GitHub inspection after the repair confirmed:
+- no remaining `deleteDoc` path in `projects.ts`;
+- transactional project deletion is present;
+- exact `updatedAt.isEqual()` deletion guard is present;
+- featured unpublish lifecycle handling is present;
+- gallery cardinality pre-check is before the upload loop;
+- staged-upload cleanup is present on the failure path;
+- the Phase 08 harness asserts each repaired contract.
+
+No local build, lint, TypeScript, emulator, Storage, browser, or production execution was performed. Therefore these repairs are **static-verified only** and do not close Gate 4/5/6.
+
 ## Gate assessment
 
 | Gate | Status | Evidence |
