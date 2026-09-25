@@ -810,3 +810,91 @@ Open findings are primarily:
 4. delete-concurrency hardening consideration.
 
 **Phase 07 is not CLOSED.**
+
+# Phase 08 — PROJECT CMS & MEDIA PIPELINE
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 08 contract
+- `src/features/cms/projects.ts`
+- `src/features/cms/ProjectsAdmin.tsx`
+- canonical Phase 05 project schema/types/paths
+- `firestore.rules`
+- `storage.rules`
+- `scripts/test-phase08.mjs`
+- `docs/phase-08-report.md`
+- `docs/data-model.md`
+- current Phase 08 package/test wiring
+
+No local execution, build, lint, Emulator Suite rules test, Storage runtime test, browser CMS test, or real Firebase Auth session was performed in this audit.
+
+## Phase 08 direct findings
+
+### P08-01 — Project media can be staged before gallery-cardinality validation
+
+`ProjectsAdmin.upload()` uploads every selected gallery file first and only afterwards checks whether the resulting gallery exceeds the 12-item limit. If the selection pushes the gallery above the limit, the UI reports the validation error but the newly uploaded draft objects have already been created and are not automatically deleted.
+
+This can leave orphaned objects under the admin-only draft area.
+
+**Disposition:** confirmed Phase 08 media-lifecycle defect. Repair in the Phase 08 repair pass by validating the final cardinality before staging, or by deterministically cleaning every newly staged object when validation fails. Do not weaken the 12-item contract.
+
+### P08-02 — Project deletion is not storage/Firestore atomic and can orphan or destroy media before a denied Firestore delete
+
+`deleteProject()` deletes all referenced Storage media before deleting the Firestore project document. The Firestore rules independently deny deletion of the currently featured project. Therefore a stale or concurrently changed featured state can cause the Storage deletion to succeed while the Firestore deletion is rejected, leaving the project document without its media.
+
+The UI normally clears the featured reference before calling `deleteProject()`, but the data-layer operation itself does not establish an atomic precondition and cannot roll back already-deleted Storage objects.
+
+**Disposition:** confirmed Phase 08 lifecycle/data-integrity hardening defect. Repair in Phase 08. The repair must preserve server-authoritative featured enforcement; do not bypass the Firestore rule.
+
+### P08-03 — Delete operation has no optimistic-concurrency guard
+
+`deleteProject()` accepts only the current `ProjectRecord` and performs a direct Firestore `deleteDoc()`. Unlike project saves, it does not compare `updatedAt` in a transaction before deleting.
+
+A stale admin tab can therefore delete a project that another admin has modified since the first tab loaded it, assuming the project is not currently featured.
+
+**Disposition:** confirmed concurrency hardening gap. Repair in Phase 08 or explicitly document deletion as last-write-wins. Given the existing optimistic-concurrency contract for project writes, preserving the same protection for destructive deletion is the safer consistent contract.
+
+### P08-04 — Phase 08 report claims static checks as PASS but does not provide actual execution evidence
+
+The report lists static verification items as PASS and separately states that `npm run test:phase08`, `test:schema`, `test:rules`, build and runtime flows were not executed.
+
+The distinction is mostly clear, but the report does not contain a dedicated command/result transcript and therefore cannot satisfy AGENTS §8 as the final six-gate evidence package.
+
+**Disposition:** evidence gap. Repair the report during the closure/evidence pass; do not invent execution results.
+
+## Phase 08 cross-phase findings
+
+### P08-CP01 — Featured-project lifecycle mismatch remains a UI/data-layer integration issue
+
+Firestore rules prevent the currently featured project from being unpublished while it remains featured. The CMS exposes unpublish through the general save flow without automatically clearing the featured reference first.
+
+The delete UI does clear featured first, but unpublish does not.
+
+**Owning areas:** Phase 08 + Phase 12. Repair should keep the server-side invariant authoritative and make the CMS operation handle the lifecycle coherently.
+
+### P08-CP02 — Full-object media promotion uses `getBytes()` + `uploadBytes()`
+
+Promotion/unpublish movement buffers each entire object in memory. Individual project media is bounded, but repeated gallery operations can increase client memory pressure.
+
+**Owning areas:** Phase 08 / Phase 14 performance hardening. Not a closure blocker by itself at the current file limits.
+
+### P08-CP03 — Project media path classification is string-based
+
+`moveMediaPaths()` infers thumbnail vs gallery from whether the source path contains `/thumbnail/` or `-thumbnail/`. Current canonical paths make this work, but the operation relies on path-shape conventions rather than an explicit media-kind parameter for every move.
+
+**Disposition:** record as a coupling point, not a confirmed defect. Do not refactor without a demonstrated failure.
+
+## Phase 08 conclusion
+
+Four direct findings were recorded:
+1. staged gallery uploads can become orphaned when the final cardinality is invalid;
+2. deletion can remove Storage media before a Firestore delete is denied;
+3. project deletion lacks the existing optimistic-concurrency protection;
+4. the phase report/evidence package is incomplete for final closure.
+
+One existing cross-phase finding is confirmed again: the featured-project unpublish lifecycle is inconsistent between UI/data layer and Firestore rules.
+
+**Phase 08 is not CLOSED.**
