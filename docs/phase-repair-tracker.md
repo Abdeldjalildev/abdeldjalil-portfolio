@@ -643,11 +643,11 @@ This is a real Phase 06 navigation-state defect: the Home item can appear select
 
 **Action taken during this audit:** added an optional `end` field to the canonical public-navigation contract and set `end: true` for the Home item. `PublicHeader` and `MobileNav` already pass navigation properties through to `NavLink` only via the current object destructuring, so the audit also confirmed that the consumer must be updated to pass `end` for the fix to take effect.
 
-**Important:** because the current consumers destructure only `key, to`, the first isolated patch is incomplete by itself. The final repair must update both consumers to destructure `end` and pass it to `NavLink`. This is still a small, isolated Phase 06 repair and should be completed before considering the finding resolved.
+**Important:** because the current consumers destructure only `key, to`, the first isolated patch is incomplete by itself. The final repair must update both consumers to destructure `end` and pass it to `NavLink`. This remained a small, isolated Phase 06 repair and was completed by updating both public navigation consumers to pass the exact-match field to `NavLink`.
 
-Current audit commit for the contract field: `30c784c41d896031738b155c2f801ca6809c0ded`.
+Audit commits: `30c784c41d896031738b155c2f801ca6809c0ded` (contract field), `6a98598bf5b91e2c4a684ab2b2a0778574e5c277` (header consumer), `861b8bf7c37f7778fd967a64e1d6e0423ad3d3d6` (mobile consumer).
 
-**Disposition:** repair in the immediate Phase 06 audit pass; do not broaden the change.
+**Disposition:** resolved by the isolated audit fix; no broader navigation refactor was made.
 
 ### P06-03 — Runtime claims remain unproven
 
@@ -705,7 +705,7 @@ The current `main.tsx` initializes optional App Check before rendering the app. 
 
 One simple isolated Phase 06 navigation defect was identified: the Home `NavLink` lacked an exact-match/end contract.
 
-A small contract-field patch was made in `src/components/shell/navigation.ts`, but the audit confirms the consumers still need to pass that field to `NavLink`; therefore the finding is **not yet fully resolved** and must be completed in the Phase 06 repair pass.
+The contract field and both consumers were updated during the audit, so the Home exact-match defect is **resolved**.
 
 No confirmed i18n/RTL architecture, security, data-contract, or footer correctness defect was found from static inspection.
 
