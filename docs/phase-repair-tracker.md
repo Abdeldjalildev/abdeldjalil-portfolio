@@ -811,6 +811,19 @@ Open findings are primarily:
 
 **Phase 07 is not CLOSED.**
 
+# Phase 07 — Repair Plan
+
+**Repair order:**
+1. **P07-R1 — Reconcile services Firestore rule with the canonical Phase 05/07 service schema — COMPLETED.** Removed the unrelated `isContactTarget(type, value)` check from `services/{serviceId}`. The service rule now validates only the documented service fields and retains admin-only authorization, timestamp constraints, publication reads, slug immutability and ordering/path/localized-content validation.
+2. **P07-R2 — Regression guard — COMPLETED.** Strengthened `scripts/test-phase07.mjs` to isolate the `services/{serviceId}` rule block and assert both the expected service field contract and the absence of contact-link target validation.
+3. **P07-R3 — Static re-inspection — COMPLETED.** Re-read the repaired rule block, Phase 07 harness and report. The cross-file schema/rules mismatch is no longer present in the inspected source.
+
+Remaining Phase 07 items are not implementation blockers suitable for this repair pass: runtime verification remains pending; the media-management question requires owner/product contract clarification; delete-concurrency is a hardening consideration rather than a confirmed Phase 07 contract violation; report closure still requires execution evidence and owner acceptance.
+
+**No local/runtime tests were executed or claimed.**
+
+**Phase 07 repair pass is complete for the confirmed implementation defect. Phase 07 remains NOT CLOSED.**
+
 # Phase 08 — PROJECT CMS & MEDIA PIPELINE
 
 ## Audit status
