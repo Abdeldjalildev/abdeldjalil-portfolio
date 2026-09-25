@@ -1,6 +1,5 @@
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -234,6 +233,9 @@ export async function publishProject(
 export async function unpublishProject(project: ProjectRecord, input: ProjectInput): Promise<void> {
   const value = inputOrThrow(projectInputSchema, input)
   const all = [value.thumbnailPath, ...value.galleryPaths].filter((path): path is string => Boolean(path))
+  const wasFeatured = (await getFeaturedProjectId()) === project.id
+  if (wasFeatured) await setFeaturedProject(null)
+
   const staged = await moveMediaPaths(project.id, all, false)
   const thumbnail = staged.find((path) => path.includes('-thumbnail/')) ?? null
   const gallery = staged.filter((path) => path.includes('-gallery/'))
@@ -248,6 +250,9 @@ export async function unpublishProject(project: ProjectRecord, input: ProjectInp
         if (fileName) await moveStorageObject(path, path.includes('-thumbnail/') ? projectThumbnailObjectPath(project.id, fileName) : projectGalleryObjectPath(project.id, fileName))
       } catch { /* preserve the original write error */ }
     }
+    if (wasFeatured) {
+      try { await setFeaturedProject(project.id) } catch { /* preserve the original write error */ }
+    }
     throw error
   }
 }
@@ -258,8 +263,17 @@ export async function deleteProjectMedia(path: string): Promise<void> {
 
 export async function deleteProject(project: ProjectRecord): Promise<void> {
   const media = [project.thumbnailPath, ...project.galleryPaths].filter((path): path is string => Boolean(path))
+  const refDoc = doc(db, projectPath(project.slug))
+
+  await runTransaction(db, async (transaction) => {
+    const current = await transaction.get(refDoc)
+    if (!current.exists()) throw new CmsConflictError()
+    const currentProject = documentOrThrow(projectSchema, current.data())
+    if (!currentProject.updatedAt.isEqual(project.updatedAt)) throw new CmsConflictError()
+    transaction.delete(refDoc)
+  })
+
   if (media.length) await deleteMedia(media)
-  await deleteDoc(doc(db, projectPath(project.slug)))
 }
 
 export async function setFeaturedProject(projectId: string | null): Promise<void> {
