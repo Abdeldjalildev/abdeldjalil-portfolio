@@ -710,3 +710,103 @@ The contract field and both consumers were updated during the audit, so the Home
 No confirmed i18n/RTL architecture, security, data-contract, or footer correctness defect was found from static inspection.
 
 **Phase 06 is not CLOSED.**
+
+
+# Phase 07 — PROFILE, ABOUT, SERVICES & SKILLS CMS
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 07 contract
+- `src/features/cms/data.ts`
+- `src/features/cms/ProfileAdmin.tsx`
+- `src/features/cms/ServicesAdmin.tsx`
+- `src/features/cms/SkillsAdmin.tsx`
+- `src/features/public/About.tsx`
+- `src/features/public/Services.tsx`
+- `src/data/types.ts`
+- `src/data/paths.ts`
+- `src/data/schema/core.ts`
+- `src/data/schema/schemas.ts`
+- `firestore.rules`
+- `scripts/test-phase07.mjs`
+- `docs/phase-07-report.md`
+- Phase 05 data-model contract
+
+No local execution, build, lint, emulator/rules test, browser CRUD test, or responsive/RTL runtime verification was performed.
+
+## Phase 07 direct findings
+
+### P07-01 — Phase 07 report does not satisfy the full required evidence template
+
+`docs/phase-07-report.md` documents implementation and pending verification, but it does not fully provide all fields required by AGENTS.md §8, notably a concrete commands/results section and a complete inspected/changed-files + dependency-change record in the prescribed phase-report structure.
+
+This is an evidence/documentation gap, not proof of a runtime defect.
+
+**Disposition:** record only. Repair the report/evidence package during the Phase 07 repair/closure pass; do not invent execution results.
+
+### P07-02 — Phase 07 verification harness is static and does not verify the phase's critical runtime contract
+
+`scripts/test-phase07.mjs` checks translation parity, route wiring, schema references, transaction usage, publication filtering, localStorage absence, and rule anchors. It does not execute the schema/rules contract, CRUD operations, concurrency behavior, malformed-document handling, or CMS-to-public propagation.
+
+The report correctly states that `test:phase07` has not been executed in the current environment, so this is an evidence limitation rather than a false PASS.
+
+**Disposition:** record only. Do not weaken or replace the existing checks; supplement with runtime evidence in the dedicated testing stage.
+
+### P07-03 — CMS media fields are raw Storage-path inputs rather than a media-management workflow
+
+The Profile, Services, and Skills admin forms expose `avatarPath`, `resumePath`, and `iconPath` as plain text fields. There is no Phase 07 upload/select/delete workflow comparable to the later Project media pipeline.
+
+This is not automatically a Phase 07 defect because the explicit Phase 07 gate contract requires admin CRUD/public rendering, while the master product contract says media belongs in Storage and Firestore stores references. The current implementation does use Storage-path references and the Storage rules, but it leaves the operator responsible for supplying the path manually.
+
+**Disposition:** contract clarification required. Keep as an open Phase 07 operational gap until the owner confirms whether Phase 07 must provide first-class media management for profile/service/skill assets. Do not invent a new upload architecture during this audit.
+
+### P07-04 — Public malformed-document handling is intentionally fail-soft, but its observability is limited
+
+`listServices()` and `listSkills()` validate each returned document and skip malformed records while incrementing `invalidCount`. The public About/Services pages consume only the valid items and do not surface an invalid-record condition to visitors.
+
+This protects the public UI from rendering malformed Firestore data, but it can also make data corruption invisible to the public-facing operator unless the admin view is used. The admin pages do expose `invalidCount`.
+
+**Disposition:** no direct defect requiring change. Preserve the fail-soft public behavior and verify the admin invalid-count path at runtime.
+
+## Phase 07 cross-phase findings
+
+### P07-CP01 — Profile/service/skill Storage references are only structurally validated
+
+Phase 05 `mediaPath()` validates a generic safe Storage path. Phase 07 fields therefore cannot prove that:
+- a profile avatar points into `profile/avatar/`;
+- a resume points into `profile/resume/`;
+- a service icon points into `services/{id}/icon/`;
+- a skill icon points into `skills/{id}/icon/`.
+
+The Storage rules independently control which objects are readable, so this is not a demonstrated authorization bypass. It is a data-integrity/path-contract question that should be reconciled if first-class media management is required.
+
+**Owning areas:** Phase 05 canonical contract + Phase 07 media workflow.
+
+### P07-CP02 — Phase 07 concurrency protection is stronger for writes than deletes
+
+Profile/service/skill updates use transactions and exact Firestore `Timestamp.isEqual()` checks for optimistic concurrency. Service and skill deletes use direct `deleteDoc()` without a compare-before-delete condition.
+
+This does not necessarily violate the Phase 07 gate contract, which requires CRUD rather than delete concurrency semantics, but it means a stale admin tab can delete a record changed by another admin without an explicit conflict.
+
+**Disposition:** record as hardening consideration; do not redesign deletion semantics without an explicit concurrency contract.
+
+### P07-CP03 — Phase 07 public queries depend on the Phase 05 composite indexes
+
+Published services/skills use `where('published', '==', true) + orderBy('order')`. The documented Phase 05 index set covers these queries.
+
+**Disposition:** no defect. Preserve this dependency during Phase 05 repair.
+
+## Phase 07 conclusion
+
+No confirmed Phase 07 security bypass, publication-filter defect, schema-bypass defect, or broken CRUD contract was found by static inspection.
+
+Open findings are primarily:
+1. evidence/report completeness;
+2. runtime verification still pending;
+3. media-management contract clarification;
+4. delete-concurrency hardening consideration.
+
+**Phase 07 is not CLOSED.**
