@@ -1142,3 +1142,103 @@ The deep audit found:
 4. no confirmed featured-project publication bypass, public write path, or parallel data model.
 
 **Phase 11 is not CLOSED.**
+
+
+# Phase 14 — SECURITY, ACCESSIBILITY, PERFORMANCE, SEO & HARDENING
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 14 contract
+- `src/App.tsx`
+- `src/components/seo/Seo.tsx`
+- `src/routes/PublicLayout.tsx`
+- `src/routes/AdminLayout.tsx`
+- `src/features/public/ProjectDetail.tsx`
+- `src/features/public/ProjectMedia.tsx`
+- `src/components/shell/PublicFooter.tsx`
+- `src/components/shell/PublicHeader.tsx`
+- `src/components/shell/LocaleSwitcher.tsx`
+- `firestore.rules`
+- `storage.rules`
+- `scripts/test-phase14.mjs`
+- `scripts/test-rules.mjs`
+- `docs/phase-14-report.md`
+- `public/robots.txt`
+- `public/sitemap.xml`
+- current package scripts/configuration
+
+No local execution, production build, lint/typecheck, Firebase Emulator rules execution, browser accessibility/performance walkthrough, deployed App Check verification, or dependency vulnerability scan was performed in this audit.
+
+## Phase 14 direct findings
+
+### P14-01 — No unresolved direct Phase 14 production-code defect confirmed by static inspection
+
+The previously identified Phase 14 implementation defects are already repaired in the current repository:
+- stale hardcoded SEO origin was removed;
+- Storage rules were rewritten into the intended deny-by-default/path/content-type/size contract;
+- footer social icons were corrected to valid `<svg>` containers;
+- the Phase 14 static harness covers the current SEO, lazy-loading, accessibility, Storage and analytics-boundary contracts.
+
+No additional isolated production-code defect was found that is both confirmed and safe to patch during this audit without crossing into another phase's contract.
+
+**Disposition:** no Phase 14 production-code change from this audit.
+
+### P14-02 — Phase 14 execution evidence remains blocked
+
+`docs/phase-14-report.md` explicitly records Gate 4 as BLOCKED because the required local/runtime commands and browser/Firebase verification were not executed. This remains consistent with AGENTS §8.
+
+Unexecuted evidence includes:
+- lint/build/typecheck;
+- schema/rules/phase harness execution;
+- browser/mobile accessibility behavior;
+- Lighthouse or real performance measurements;
+- deployed Firebase rules verification;
+- production App Check enforcement verification;
+- dependency vulnerability scanning.
+
+**Disposition:** evidence gap/blocker for formal closure, not a reason to invent PASS results.
+
+### P14-03 — Phase 14 static harness is not a substitute for runtime verification
+
+`scripts/test-phase14.mjs` validates source-level contracts but does not execute Firebase rules, render the UI, measure route bundle behavior, verify focus restoration/keyboard interaction in a browser, or confirm metadata/canonical URLs after navigation.
+
+**Disposition:** expected limitation. Preserve the harness and complete runtime verification in the dedicated testing stage.
+
+## Phase 14 cross-phase findings
+
+### P14-CP01 — Dynamic project URLs remain absent from the committed sitemap
+
+The current sitemap enumerates static public routes but not CMS-generated `/projects/:slug` routes.
+
+This is a real SEO/discoverability completeness gap for published project detail pages, but the fix depends on the final production/deployment strategy for generating or updating the sitemap.
+
+**Owning areas:** Phase 14 + Phase 15, with Phase 09 project-route dependency.
+
+### P14-CP02 — Project-media promotion still buffers full objects in memory
+
+The Phase 08 media promotion path uses full-object `getBytes()`/upload semantics. The current per-object limits reduce the risk, but repeated gallery operations can increase browser memory pressure.
+
+**Owning areas:** Phase 08 / Phase 14. Keep as a performance hardening item; do not refactor during the Phase 14 audit without runtime evidence.
+
+### P14-CP03 — Phase 09 verification harness remains intentionally stale until repaired
+
+Phase 14's centralized SEO implementation is correct as the current architecture, but `scripts/test-phase09.mjs` still expects the historical direct metadata implementation. This is a verification-contract drift owned jointly by Phase 09 and the Phase 14 SEO integration.
+
+**Disposition:** repair the Phase 09 harness later; do not revert centralized SEO.
+
+### P14-CP04 — Storage verification is integrated into the shared rules test rather than a separate Phase 14 runtime script
+
+The Phase 14 harness statically checks Storage-rule anchors and the existing `scripts/test-rules.mjs` contains the denied Storage cases. There is no separate `scripts/test-storage-rules.mjs` in the current repository.
+
+**Disposition:** not a defect. During testing, run the shared rules suite and retain the Phase 14 static harness; do not create a duplicate test runner merely for naming symmetry.
+
+## Phase 14 conclusion
+
+The deep audit found **no unresolved direct production-code defect** in Phase 14.
+
+The remaining Phase 14 blockers are execution evidence and cross-phase hardening items, especially dynamic sitemap coverage and the already-known project-media memory characteristic.
+
+**Phase 14 is not CLOSED.**
