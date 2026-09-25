@@ -898,3 +898,103 @@ Four direct findings were recorded:
 One existing cross-phase finding is confirmed again: the featured-project unpublish lifecycle is inconsistent between UI/data layer and Firestore rules.
 
 **Phase 08 is not CLOSED.**
+
+
+# Phase 09 — PUBLIC PROJECTS & CASE STUDIES
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 09 contract
+- `src/features/public/Projects.tsx`
+- `src/features/public/ProjectDetail.tsx`
+- `src/features/public/ProjectDetails.tsx`
+- `src/features/public/ProjectCard.tsx`
+- `src/features/public/ProjectMedia.tsx`
+- `src/features/public/projectPresentation.ts`
+- `src/features/cms/projects.ts`
+- `src/data/schema/*`
+- `firestore.rules`
+- `src/components/seo/Seo.tsx`
+- `scripts/test-phase09.mjs`
+- `docs/phase-09-report.md`
+- current package scripts
+
+No local execution, build, lint, browser, responsive/accessibility, Firestore emulator, Storage runtime, or real published/unpublished Firebase verification was performed in this audit.
+
+## Phase 09 direct findings
+
+### P09-01 — Phase 09 verification harness is stale against the centralized SEO implementation
+
+`ProjectDetail.tsx` correctly uses the later centralized `<Seo />` component and no longer performs direct `document.title` / `meta[name="description"]` manipulation.
+
+However, `scripts/test-phase09.mjs` still asserts that `ProjectDetail.tsx` itself contains `document.title` and `meta[name="description"]`.
+
+Therefore the current Phase 09 harness is expected to fail even though the current architecture intentionally moved SEO ownership into the Phase 14 shared SEO component.
+
+**Disposition:** confirmed verification-contract drift, not a reason to revert the centralized SEO architecture. Repair the Phase 09 harness so it verifies the current canonical SEO contract (`ProjectDetail.tsx` supplies localized SEO data to `Seo`, and the shared component owns metadata). Do not weaken the check.
+
+### P09-02 — Phase 09 report contains verification limitations but is not a final closure evidence package
+
+`docs/phase-09-report.md` explicitly states that runtime/build/lint/schema/rules/browser verification was not executed and that Gate 6 is blocked pending local verification and owner acceptance.
+
+This is honest, but it does not provide actual execution evidence required by AGENTS §8.
+
+**Disposition:** evidence gap only. Keep the report's blocked status and complete the evidence package during the dedicated testing/closure pass; do not invent results.
+
+### P09-03 — Runtime public-project contract remains unverified
+
+Static code supports:
+- published-only collection loading;
+- deterministic first-project fallback;
+- URL-backed selection via `?project=<slug>`;
+- published-only deep-link lookup;
+- non-disclosing missing/unpublished behavior;
+- localized project presentation;
+- Storage download URLs;
+- hardened external links.
+
+But static inspection cannot prove:
+- real Firestore publication filtering;
+- unpublished-project non-disclosure under rules;
+- actual Storage delivery;
+- gallery failure/loading behavior in the browser;
+- responsive/keyboard/RTL behavior;
+- deep-link refresh under Firebase Hosting;
+- actual metadata behavior after navigation.
+
+**Disposition:** runtime verification required; no production code change during this audit.
+
+## Phase 09 cross-phase findings
+
+### P09-CP01 — SEO ownership moved to Phase 14 and must remain attributed correctly
+
+The current `ProjectDetail.tsx` delegates metadata to the shared `Seo` component introduced by later hardening. This is a valid current integration, but the Phase 09 harness/report must not require the historical implementation mechanism.
+
+**Owning areas:** Phase 09 verification harness + Phase 14 SEO architecture.
+
+### P09-CP02 — Project-view analytics can duplicate on locale changes
+
+`ProjectDetail.tsx` tracks `project_view` with an effect dependency on both `project` and `locale`. Changing EN ↔ AR after the same project has loaded can therefore emit another project-view event.
+
+This belongs to the Phase 13 analytics semantics rather than the Phase 09 project presentation contract.
+
+**Owning area:** Phase 13. Preserve attribution; do not patch analytics during the Phase 09 audit.
+
+### P09-CP03 — Dynamic project routes are not represented in the static sitemap
+
+The current sitemap is static, while public project detail routes are dynamic `/projects/:slug` paths.
+
+This is a discoverability/SEO hardening issue owned by the later Phase 14/15 release work, not a confirmed Phase 09 rendering/security defect.
+
+**Owning areas:** Phase 14/15.
+
+## Phase 09 conclusion
+
+The deep audit found **one confirmed direct issue**: the Phase 09 static harness is stale because it still expects the pre-Phase-14 direct SEO implementation.
+
+Additional findings are evidence/runtime limitations and later-phase integration points. No confirmed published-data leakage, broken selection contract, unsafe external-link behavior, or public project authorization defect was found by static inspection.
+
+**Phase 09 is not CLOSED.**
