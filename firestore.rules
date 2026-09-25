@@ -246,11 +246,11 @@ service cloud.firestore {
           && isLocalized(request.resource.data.summary, 320)
           && isLocalized(request.resource.data.description, 20000)
           && isLocalizedOrNull(request.resource.data.caseStudy, 40000)
-          && isStringList(request.resource.data.technologies, 30, 1800)
+          && isStringList(request.resource.data.technologies, 30, 1829)
           && (request.resource.data.category == null
               || isSlug(request.resource.data.category))
           && isMediaPath(request.resource.data.thumbnailPath)
-          && isMediaPathList(request.resource.data.galleryPaths, 12, 6144)
+          && isMediaPathList(request.resource.data.galleryPaths, 12, 6155)
           && isExternalUrl(request.resource.data.liveUrl)
           && isExternalUrl(request.resource.data.repoUrl)
           && isLinkList(request.resource.data.links, 10)
