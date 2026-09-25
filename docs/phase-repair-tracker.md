@@ -1242,3 +1242,135 @@ The deep audit found **no unresolved direct production-code defect** in Phase 14
 The remaining Phase 14 blockers are execution evidence and cross-phase hardening items, especially dynamic sitemap coverage and the already-known project-media memory characteristic.
 
 **Phase 14 is not CLOSED.**
+
+
+# Phase 15 — FINAL PRODUCTION VERIFICATION & RELEASE READINESS
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 15 contract and release/closure requirements
+- `firebase.json`
+- `package.json`
+- `README.md`
+- `scripts/test-phase15.mjs`
+- `docs/phase-15-report.md`
+- `functions/index.js`
+- `functions/package.json`
+- `src/App.tsx`
+- `src/main.tsx`
+- `src/firebase/appCheck.ts`
+- `firestore.rules`
+- `storage.rules`
+- `firestore.indexes.json`
+- `public/robots.txt`
+- `public/sitemap.xml`
+
+No local execution, production build, lint/typecheck, Firebase Emulator, browser, deployed App Check, or real deployment verification was performed.
+
+## Phase 15 direct findings
+
+### P15-01 — Phase 15 harness requires Phase 01–06 reports that do not exist
+
+`scripts/test-phase15.mjs` explicitly loops over phase 01 through phase 14 and requires every corresponding `docs/phase-XX-report.md` to exist.
+
+The current repository contains the later phase reports but does not contain `docs/phase-01-report.md` through `docs/phase-06-report.md`.
+
+Therefore the Phase 15 static harness is currently expected to fail its own report-completeness check.
+
+This is the previously recorded CP-05, now confirmed directly during the Phase 15 audit.
+
+**Disposition:** confirmed Phase 15 evidence-contract defect. Do not fabricate the missing historical reports and do not weaken the harness. Repair the release-evidence contract deliberately during the Phase 15 repair pass, preserving truthful evidence.
+
+### P15-02 — Phase 15 Storage-rule assertion does not match the actual hardened rule structure
+
+The Phase 15 harness asserts:
+
+`storage.includes('allow write: if isAdmin()')`
+
+The current `storage.rules` intentionally uses explicit `allow create`, `allow update`, and `allow delete` statements rather than a generic `allow write` statement.
+
+The hardened Storage rules therefore satisfy the intended security model, but the Phase 15 harness is checking for a historical/string-specific implementation form that is not present.
+
+This is a false-negative verification defect in the Phase 15 harness, not evidence that Storage security is broken.
+
+**Disposition:** confirmed harness drift. Repair the assertion to validate the actual canonical Storage contract (admin-only create/update/delete plus the intended public-read boundaries and deny-by-default behavior), without weakening security checks.
+
+### P15-03 — Phase 15 release command inventory omits the Phase 05 and Phase 06 verification contracts
+
+The Phase 15 report describes the release inventory as covering the complete verification suite, and `scripts/test-phase15.mjs` checks for phase07 through phase14 scripts plus schema/rules, but the current `package.json` has no `test:phase05` or `test:phase06` command.
+
+There may be legitimate historical reasons for those phases not having dedicated harnesses, but the current release contract does not explicitly reconcile that gap.
+
+**Disposition:** confirmed evidence/verification-contract gap. Do not invent phase05/06 tests solely to satisfy a list. During Phase 15 repair, explicitly define which earlier phase contracts are verified by shared suites/manual evidence and ensure the release checklist reflects that truth.
+
+### P15-04 — Phase 15 repository configuration is internally coherent for Hosting/Functions, but runtime release readiness remains unproven
+
+The current configuration consistently wires:
+- Hosting to `dist` with SPA fallback;
+- Firestore rules/indexes;
+- Storage rules;
+- Functions source;
+- Node 20 Functions runtime;
+- App Check bootstrap and callable enforcement;
+- robots/sitemap production metadata.
+
+However, none of this static configuration proves the deployed Firebase project has the expected rules/indexes, App Check enforcement, callable behavior, deep-link hosting behavior, or production environment values.
+
+**Disposition:** runtime evidence blocker, not a static defect. Preserve the current blocked status.
+
+### P15-05 — Phase 15 report overstates Gate 1 evidence regarding report availability
+
+`docs/phase-15-report.md` states that “Phase reports 01–15 are present after this implementation,” while the current repository does not contain the Phase 01–06 reports.
+
+This is inconsistent with the repository's actual evidence state and with P15-01.
+
+**Disposition:** confirmed evidence-documentation inconsistency. Correct the report during the Phase 15 repair pass; do not manufacture missing evidence.
+
+## Phase 15 cross-phase findings
+
+### P15-CP01 — Missing Phase 01–06 evidence affects final release evidence, not necessarily those implementations
+
+The absence of historical Phase 01–06 reports does not by itself prove those phases' implementations are incorrect. It means their formal evidence package is incomplete.
+
+**Owning area:** Phase 15 evidence strategy, with Phase 01–06 historical attribution preserved.
+
+### P15-CP02 — Phase 09/12 harness drift must be resolved before a true full-suite claim
+
+The current release inventory includes Phase 09 and Phase 12 tests, but earlier audits already confirmed:
+- Phase 09 harness expects pre-Phase-14 direct SEO metadata;
+- Phase 12 harness rejects the later legitimate analytics navigation added by Phase 13.
+
+Therefore a future Phase 15 full-suite run cannot be interpreted as release evidence until these known verification-contract drifts are repaired or explicitly reconciled.
+
+**Owning areas:** Phase 09/14 and Phase 12/13, coordinated by Phase 15 release verification.
+
+### P15-CP03 — Phase 13 analytics read-rule defect remains a release blocker
+
+The current analytics admin reads `analyticsDaily/{date}`, while Firestore rules still lack the corresponding admin read match.
+
+This is not a Phase 15 implementation defect, but it prevents the claimed admin analytics journey from being proven release-ready.
+
+**Owning area:** Phase 13.
+
+### P15-CP04 — Dynamic project sitemap coverage remains open
+
+The static sitemap does not enumerate CMS-generated project detail URLs.
+
+This remains a release-hardening item owned by Phase 14/15 and depends on the final production sitemap strategy.
+
+**Owning areas:** Phase 14/15.
+
+## Phase 15 conclusion
+
+The deep audit found **four confirmed direct release/evidence defects**:
+1. missing Phase 01–06 reports required by the Phase 15 harness;
+2. a false-negative Storage assertion in the Phase 15 harness;
+3. an unreconciled verification inventory gap for Phase 05/06;
+4. a Phase 15 report statement that incorrectly says reports 01–15 are present.
+
+It also confirmed that runtime/deployed release readiness remains unproven and that previously identified Phase 09/12/13/14 integration issues must be resolved before a true final release verification can pass.
+
+**Phase 15 is not CLOSED.**
