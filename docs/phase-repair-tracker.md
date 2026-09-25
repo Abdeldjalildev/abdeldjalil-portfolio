@@ -998,3 +998,58 @@ The deep audit found **one confirmed direct issue**: the Phase 09 static harness
 Additional findings are evidence/runtime limitations and later-phase integration points. No confirmed published-data leakage, broken selection contract, unsafe external-link behavior, or public project authorization defect was found by static inspection.
 
 **Phase 09 is not CLOSED.**
+
+
+# Phase 10 — REVIEWS, SOCIAL PROOF & CONTACT
+
+## Deep-audit findings
+
+### P10-01 — Review/contact optimistic-concurrency comparison is seconds-only
+
+saveReview(), changeReviewStatus(), and saveContactLink() compare updatedAt.seconds only. Firestore Timestamp values also carry nanoseconds, so two writes within the same second can have different timestamps while the current checks treat them as equal.
+
+Disposition: confirmed Phase 10 concurrency hardening defect. Repair the comparison to use exact Firestore Timestamp equality (for example Timestamp.isEqual()) without weakening the existing optimistic-concurrency requirement.
+
+### P10-02 — Review/contact deletes have no optimistic-concurrency guard
+
+deleteReview() and deleteContactLink() call deleteDoc() directly and do not compare the loaded updatedAt before deletion. A stale admin tab can therefore delete a record modified after it was loaded.
+
+Disposition: hardening consideration. Consider applying the same destructive-operation protection during the repair pass. Do not silently redefine delete semantics during the audit.
+
+### P10-03 — Phase 10 report is an honest blocked report, not a final evidence package
+
+docs/phase-10-report.md explicitly says local lint/build/schema/rules/phase tests and browser/runtime verification were not executed, and Gate 6 is BLOCKED pending runtime verification and owner acceptance. It does not contain the complete command/result evidence structure required by AGENTS §8.
+
+Disposition: evidence gap only. Complete the report during the dedicated testing/closure stage; do not invent execution results.
+
+### P10-04 — Phase 10 static harness cannot prove runtime security
+
+scripts/test-phase10.mjs checks route wiring, query predicates, moderation anchors, translations and rule anchors. It does not execute Firestore rules, verify real unauthorized writes, or exercise the full review/contact lifecycle.
+
+Disposition: runtime verification requirement, not a production defect. Preserve the static checks and add runtime evidence in the testing stage.
+
+## Phase 10 cross-phase findings
+
+### P10-CP01 — Contact-target server validation is present
+
+The current firestore.rules contactLinks contract does invoke isContactTarget(...) inside valid(). Therefore the previously recorded concern that the helper was defined but unused is no longer valid against the current repository state.
+
+Disposition: mark the earlier contact-target validation concern as resolved/obsolete; no Phase 10 repair is required for that point.
+
+### P10-CP02 — Public Contact analytics is later Phase 13 behavior
+
+Contact.tsx calls trackEvent() for contact_click and social_click. This is a later analytics integration and should not be treated as original Phase 10 verification evidence. The analytics implementation remains owned by Phase 13.
+
+### P10-CP03 — Review/contact public queries depend on Phase 05 composite indexes
+
+The public queries use status == published + orderBy(order) for reviews and published == true + orderBy(order) for contact links. These are covered by the canonical Phase 05 index contract.
+
+Disposition: no defect; preserve the dependency during Phase 05 repair.
+
+## Phase 10 conclusion
+
+The deep audit found one confirmed direct production hardening defect: seconds-only optimistic-concurrency comparison for reviews and contact links.
+
+It also found one destructive-operation concurrency hardening consideration, evidence/runtime limitations, and confirmed that the contact-target server validation is already active.
+
+Phase 10 is not CLOSED.
