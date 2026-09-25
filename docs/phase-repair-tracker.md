@@ -1150,6 +1150,26 @@ It also found one destructive-operation concurrency hardening consideration, evi
 Phase 10 is not CLOSED.
 
 
+# Phase 10 — Repair Pass
+
+**Repair status: COMPLETED for the confirmed Phase 10 production-code defect.**
+
+### P10-R1 — Exact optimistic-concurrency comparison — COMPLETED
+- Replaced the seconds-only optimistic-concurrency comparison with exact Firestore Timestamp.isEqual() checks in review save/status operations and contact-link save.
+- Confirmed the current Phase 10 harness rejects any remaining updatedAt.seconds comparison and requires isEqual(expectedUpdatedAt).
+- Preserved the existing review/contact workflow, server-side rules, and public-query contracts.
+
+### P10-R2 — Delete concurrency — NOT CHANGED
+- deleteReview() and deleteContactLink() still use direct deleteDoc() without compare-before-delete.
+- This remains a hardening consideration from P10-02, not a confirmed contract violation, so it was intentionally not changed during this repair pass.
+
+### Repair verification boundary
+- Fresh GitHub re-inspection confirmed the exact Timestamp equality contract and the regression guards.
+- No local build, lint, schema test, Firestore/Storage emulator run, browser test, or production Firebase execution was performed.
+
+**Phase 10 remains NOT CLOSED. Runtime verification and owner acceptance are still required by AGENTS.md.**
+
+**I did not advance to the next phase.**
 # Phase 11 — HOME, CONVERSION FLOW & FEATURED PROJECT
 
 ## Audit status
