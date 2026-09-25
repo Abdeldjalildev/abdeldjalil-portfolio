@@ -596,3 +596,117 @@ One evidence gap exists:
 The index-file finding previously tracked globally is resolved in the current repository.
 
 **Phase 05 is not CLOSED.**
+
+
+# Phase 06 — PUBLIC SHELL, NAVIGATION, FOOTER & I18N/RTL
+
+## Audit status
+
+**Deep static audit completed.**
+
+Inspected:
+- `AGENTS.md` Phase 06 contract
+- `src/components/shell/PublicHeader.tsx`
+- `src/components/shell/PublicFooter.tsx`
+- `src/components/shell/MobileNav.tsx`
+- `src/components/shell/LocaleSwitcher.tsx`
+- `src/components/shell/navigation.ts`
+- `src/routes/PublicLayout.tsx`
+- `src/i18n/I18nProvider.tsx`
+- `src/i18n/context.ts`
+- `src/i18n/types.ts`
+- `src/i18n/helpers.ts`
+- `src/i18n/index.ts`
+- `src/i18n/locales/en.ts`
+- `src/i18n/locales/ar.ts`
+- `src/main.tsx`
+- `src/App.tsx`
+- current package scripts and phase-evidence availability
+
+No local execution, build, lint, browser, responsive, keyboard, RTL, hydration, or runtime verification was performed in this audit.
+
+## Phase 06 direct findings
+
+### P06-01 — No dedicated Phase 06 report or verification harness
+
+The current repository has no `docs/phase-06-report.md` and no `test:phase06` package script.
+
+This creates an evidence gap against the Phase 06 six-gate contract, especially Gate 4/5/6. Static source inspection cannot substitute for the required EN/AR, RTL, keyboard, mobile-drawer and runtime/hydration evidence.
+
+**Disposition:** record only. Do not fabricate historical evidence or weaken later verification.
+
+### P06-02 — Public Home navigation item was incorrectly active on every public route
+
+`PUBLIC_NAVIGATION` used `to: '/'` without an exact-match/end contract. React Router's `NavLink` therefore treats the root link as active for descendant paths such as `/about`, `/projects`, and `/contact`.
+
+This is a real Phase 06 navigation-state defect: the Home item can appear selected while another public route is active.
+
+**Action taken during this audit:** added an optional `end` field to the canonical public-navigation contract and set `end: true` for the Home item. `PublicHeader` and `MobileNav` already pass navigation properties through to `NavLink` only via the current object destructuring, so the audit also confirmed that the consumer must be updated to pass `end` for the fix to take effect.
+
+**Important:** because the current consumers destructure only `key, to`, the first isolated patch is incomplete by itself. The final repair must update both consumers to destructure `end` and pass it to `NavLink`. This is still a small, isolated Phase 06 repair and should be completed before considering the finding resolved.
+
+Current audit commit for the contract field: `30c784c41d896031738b155c2f801ca6809c0ded`.
+
+**Disposition:** repair in the immediate Phase 06 audit pass; do not broaden the change.
+
+### P06-03 — Runtime claims remain unproven
+
+The source implements:
+- EN/AR locale dictionaries with compile-time parity via `satisfies typeof import('./en.ts').en`;
+- `<html lang>` and `<html dir>` synchronization;
+- persisted locale selection;
+- RTL-aware logical positioning in the shell;
+- mobile drawer focus trapping, Escape handling, body-scroll locking and focus restoration;
+- localized navigation/footer labels.
+
+Static inspection cannot prove actual Arabic rendering/shaping, responsive layout, focus behavior in a browser, reduced-motion interaction, or deep-link/refresh behavior under hosting.
+
+**Disposition:** runtime verification required.
+
+### P06-04 — Public footer performs a client-side published-links query without explicit Firestore ordering
+
+`PublicFooter` queries published contact links and then sorts the validated documents in JavaScript.
+
+This is functionally deterministic for the returned set and avoids requiring an order index, so it is not a confirmed defect. However, it differs from the canonical Phase 10 contact-link public query contract, which uses server-side `where(published == true) + orderBy(order)`.
+
+**Disposition:** record as an integration consistency point, not a Phase 06 defect. Do not change during this audit unless the canonical public-footer contract is explicitly frozen to server-side ordering.
+
+## Phase 06 cross-phase findings
+
+### P06-CP01 — Public shell now contains later analytics and SEO behavior
+
+`PublicLayout` currently tracks `page_view` and renders the centralized `Seo` component. These are later-phase integrations and must not be counted as original Phase 06 Gate 3/4 evidence.
+
+The analytics semantics remain owned by Phase 13, including the previously identified duplicate project-view-on-locale-switch issue.
+
+**Disposition:** preserve phase attribution.
+
+### P06-CP02 — Public footer now depends on later Phase 05/10 data contracts
+
+The footer reads dynamic `contactLinks` data and validates it against the Phase 05 schema. This is a legitimate current integration, but it is later functionality layered onto the original shell.
+
+Any change to contact-link schema/rules/query semantics must be owned by the data/contact phases rather than patched as an unrelated shell refactor.
+
+**Disposition:** preserve phase attribution.
+
+### P06-CP03 — App Check bootstrap in `main.tsx` is later-phase behavior
+
+The current `main.tsx` initializes optional App Check before rendering the app. This was introduced for the later analytics/security boundary and does not alter the Phase 06 i18n architecture.
+
+**Disposition:** no change.
+
+### P06-CP04 — Admin mobile navigation is outside Phase 06 ownership
+
+`AdminLayout` now contains its own mobile navigation and focus behavior. This is a later Phase 12 admin-operations integration and should not be used as evidence for the public Phase 06 mobile drawer.
+
+**Disposition:** preserve phase attribution.
+
+## Phase 06 conclusion
+
+One simple isolated Phase 06 navigation defect was identified: the Home `NavLink` lacked an exact-match/end contract.
+
+A small contract-field patch was made in `src/components/shell/navigation.ts`, but the audit confirms the consumers still need to pass that field to `NavLink`; therefore the finding is **not yet fully resolved** and must be completed in the Phase 06 repair pass.
+
+No confirmed i18n/RTL architecture, security, data-contract, or footer correctness defect was found from static inspection.
+
+**Phase 06 is not CLOSED.**
