@@ -9,9 +9,7 @@ import SignIn from './routes/SignIn.tsx'
 import LoadingFallback from './components/ui/LoadingFallback.tsx'
 import { AdminAccessBoundary } from './routes/AdminAccessBoundary.tsx'
 import { AuthProvider } from './auth/AuthProvider.tsx'
-import { useI18n } from './i18n/context.ts'
 import type { RootHandle } from './routes/Root.tsx'
-import type { TranslationKey } from './i18n/types.ts'
 
 const Home = lazy(() => import('./features/public/Home.tsx'))
 const About = lazy(() => import('./features/public/About.tsx'))
@@ -30,19 +28,6 @@ const Dashboard = lazy(() => import('./features/cms/Dashboard.tsx'))
 const SettingsAdmin = lazy(() => import('./features/cms/SettingsAdmin.tsx'))
 const AnalyticsAdmin = lazy(() => import('./features/cms/AnalyticsAdmin.tsx'))
 const DesignSystemPreview = lazy(() => import('./design-system/DesignSystemPreview.tsx'))
-
-const placeholder = (key: TranslationKey) => {
-  function Placeholder() {
-    const { t } = useI18n()
-    return (
-      <div className="p-6">
-        <h2 className="text-h3 font-semibold text-foreground">{t(key)}</h2>
-      </div>
-    )
-  }
-
-  return <Placeholder />
-}
 
 const developmentRoutes = import.meta.env.DEV
   ? [
