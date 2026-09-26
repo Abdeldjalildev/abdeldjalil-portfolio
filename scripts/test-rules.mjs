@@ -398,6 +398,13 @@ await expectAllow('admin create valid project', () =>
     updatedAt: serverTimestamp(),
   }),
 )
+await expectAllow('admin create project with comma-containing technology label', () =>
+  setDoc(doc(adminDb, 'projects/comma-technology-project'), {
+    ...validProject('comma-technology-project', { technologies: ['C, C++', 'React'] }),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }),
+)
 await expectAllow('admin update project (slug unchanged)', () =>
   updateDoc(doc(adminDb, 'projects/new-project'), {
     published: false,
