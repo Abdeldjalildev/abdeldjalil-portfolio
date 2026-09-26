@@ -9,7 +9,7 @@ Development follows `AGENTS.md`, the authoritative project plan and agent contra
 
 **Phase 15 — Final production verification & release readiness: implementation complete, pending local/runtime evidence and explicit owner acceptance.**
 
-Phases 01–14 are implemented in the repository and have phase reports. The phase ledger in
+Phases 07–15 have dedicated phase reports. Phases 01–06 do not have dedicated historical reports; their evidence gap is explicitly tracked rather than fabricated. The phase ledger in
 `AGENTS.md` remains unchanged by design: only the owner may mark phases CLOSED or the project
 RELEASE-READY.
 
@@ -63,6 +63,8 @@ npm run build
 npm run functions:check
 npm run test:schema
 npm run test:rules
+# Phase 05 canonical data contract is covered by the shared schema/rules suites.
+# Phase 06 requires the later browser/runtime EN/AR/RTL evidence; no dedicated test:phase06 exists.
 npm run test:phase07
 npm run test:phase08
 npm run test:phase09
