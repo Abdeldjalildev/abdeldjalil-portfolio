@@ -2067,3 +2067,95 @@ No production code, dependency, Firestore rule, Storage rule, test, or phase led
 Phase 07 remains **NOT CLOSED** under AGENTS.md. This Step 2 execution does not alter the phase ledger.
 
 **I did not advance to the next step.**
+
+
+# Step 4 — Phase 09 Repair & Integration Execution Record — 2026-09-26
+
+**Status: COMPLETED**
+
+Step 4 was executed against `docs/repair-roadmap-9-steps.md`. The previously identified Phase 09 repair was re-confirmed against the current repository, and the downstream project/SEO contracts were re-inspected. No new Phase 09 production defect was confirmed.
+
+## Findings handled
+
+### P09-R1 — Stale Phase 09 SEO harness — already repaired and re-confirmed
+
+The current Phase 09 verification harness now verifies the shared `<Seo />` component and its localized project SEO inputs, while separately verifying that `src/components/seo/Seo.tsx` owns document metadata and runtime-origin canonical URL construction.
+
+The repair is preserved in commit `021fff02a07d1f7aa44c904608283586f595fc60` (`test: align phase09 SEO harness with shared component`).
+
+**Disposition:** no additional production or harness change required.
+
+## Step 4 contract re-inspection
+
+- Public project listing still calls `listProjects(true)`, preserving published-only behavior.
+- Project detail still calls `getPublishedProject(slug)`.
+- Missing/unpublished projects remain non-disclosing at the public UI boundary.
+- Project document ID and public URL segment remain the same slug contract.
+- `projectPath(slug)` documents that the project document ID is the public URL segment.
+- Project SEO uses the same slug for its canonical path.
+- External project links retain `noopener noreferrer`.
+- Project media remains resolved through Firebase Storage download URLs.
+- EN/AR project presentation helpers remain intact.
+- `public/sitemap.xml` contains only fixed public routes; dynamic `/projects/:slug` URLs remain absent.
+
+## Dynamic sitemap disposition
+
+The dynamic project URL dependency remains open as a later cross-phase hardening/release item. It was not implemented in Step 4 because the roadmap assigns the production-safe published-project sitemap strategy to Phase 14/15 ownership.
+
+No unpublished/admin route was added to the sitemap, and no static sitemap workaround was introduced.
+
+## Files inspected
+
+- `AGENTS.md`
+- `docs/repair-roadmap-9-steps.md`
+- `docs/phase-repair-tracker.md`
+- `src/features/public/Projects.tsx`
+- `src/features/public/ProjectDetail.tsx`
+- `src/features/public/projectPresentation.ts`
+- `src/features/public/ProjectDetails.tsx`
+- `src/features/public/ProjectCard.tsx`
+- `src/features/public/ProjectMedia.tsx`
+- `src/features/cms/projects.ts`
+- `src/data/types.ts`
+- `src/data/paths.ts`
+- `firestore.rules`
+- `scripts/test-phase09.mjs`
+- `docs/phase-09-report.md`
+- `docs/data-model.md`
+- `src/components/seo/Seo.tsx`
+- `src/App.tsx`
+- `public/robots.txt`
+- `public/sitemap.xml`
+- `firebase.json`
+
+## Files changed during Step 4
+
+- `docs/phase-repair-tracker.md` — this Step 4 execution record only.
+
+No production code, dependency, Firestore rule, Storage rule, sitemap, phase ledger, or existing Phase 09 harness was changed during this execution because the confirmed repair was already present and correct.
+
+## Exact static verification
+
+- Confirmed the stale direct-SEO assertions are absent from the current Phase 09 harness.
+- Confirmed the harness checks the shared SEO component and runtime-origin canonical URL construction.
+- Confirmed project slug/document-ID/URL consistency through the canonical path contract and public detail route.
+- Confirmed published-only project reads remain in both collection and detail paths.
+- Confirmed dynamic project URLs remain an explicitly recorded sitemap dependency rather than silently being omitted.
+
+No local Node test, build, lint, Firestore Emulator, Storage Emulator, browser, Firebase deployment, or production runtime test was executed.
+
+## Cross-phase impact
+
+- Phase 08 project publication/media contracts remain unchanged.
+- Phase 14 centralized SEO remains the canonical metadata implementation.
+- Phase 14/15 remain owners of the dynamic sitemap production strategy.
+- Phase 13 analytics behavior remains untouched; locale-triggered duplicate `project_view` events remain owned by Step 7.
+- No security boundary was weakened.
+
+## Remaining issues
+
+1. Dynamic published-project sitemap generation remains open for Step 8/Step 9 ownership.
+2. Runtime verification of Phase 09 remains pending.
+3. Phase 09 remains NOT CLOSED under `AGENTS.md`.
+
+**I did not advance to the next step.**
