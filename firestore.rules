@@ -411,6 +411,24 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    /**
+     * analyticsDaily/{date} - server-owned daily aggregates.
+     * Admins may read analytics for the dashboard; browser clients can never
+     * write these documents because aggregation is performed by Cloud Functions.
+     */
+    match /analyticsDaily/{date} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    /**
+     * analyticsVisitors/{visitorKey} - server-owned privacy marker.
+     * The browser has no direct read/write access to visitor markers.
+     */
+    match /analyticsVisitors/{visitorKey} {
+      allow read, write: if false;
+    }
+
     // ====================================================== deny by default
     // Explicit deny-by-default. Anything not matched above - including any
     // future collection such as an analytics store - has no allow rule and can
