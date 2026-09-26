@@ -113,9 +113,8 @@ service cloud.firestore {
      */
     function isStringList(v, maxItems, maxJoinedLength) {
       return v is list && v.size() <= maxItems
-        && (v.size() == 0
-            || (v.join(',').size() <= maxJoinedLength
-                && v.join(',').matches('^[^,]+(,[^,]+)*$')));
+        && !v.hasAny([''])
+        && (v.size() == 0 || v.join(',').size() <= maxJoinedLength);
     }
 
     /**
