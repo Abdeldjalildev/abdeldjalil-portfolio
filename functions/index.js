@@ -184,17 +184,27 @@ exports.recordAnalyticsEvent = onCall({ enforceAppCheck: true }, async request =
 })
 
 
+const RETENTION_DELETE_BATCH_SIZE = 450
+const RETENTION_MAX_BATCHES_PER_RUN = 5
+
 exports.pruneAnalytics = onSchedule('every 24 hours', async () => {
   const now = Timestamp.now()
   const collections = ['analyticsDaily', 'analyticsVisitors']
+
   for (const collectionName of collections) {
-    const snapshot = await db.collection(collectionName)
-      .where('expiresAt', '<=', now)
-      .limit(100)
-      .get()
-    if (snapshot.empty) continue
-    const batch = db.batch()
-    snapshot.docs.forEach(snapshotDoc => batch.delete(snapshotDoc.ref))
-    await batch.commit()
+    for (let batchNumber = 0; batchNumber < RETENTION_MAX_BATCHES_PER_RUN; batchNumber += 1) {
+      const snapshot = await db.collection(collectionName)
+        .where('expiresAt', '<=', now)
+        .limit(RETENTION_DELETE_BATCH_SIZE)
+        .get()
+
+      if (snapshot.empty) break
+
+      const batch = db.batch()
+      snapshot.docs.forEach(snapshotDoc => batch.delete(snapshotDoc.ref))
+      await batch.commit()
+
+      if (snapshot.size < RETENTION_DELETE_BATCH_SIZE) break
+    }
   }
 })
