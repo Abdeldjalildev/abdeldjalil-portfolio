@@ -374,3 +374,34 @@ Therefore:
 Run the Phase 14 local verification suite first, then perform the Firebase Emulator/security checks and browser accessibility/performance walkthrough. Resolve any runtime findings before formal closure.
 
 **I did not advance to the next phase.**
+
+## Step 8 repair pass — dynamic published-project sitemap
+
+**Status: COMPLETED**
+
+The previously recorded dynamic sitemap dependency was repaired as part of Step 8 of the repository repair roadmap.
+
+### Repair
+
+- Added a server-owned `sitemap` HTTPS Function in `functions/index.js`.
+- The function includes the fixed public routes plus only project documents with `published == true`.
+- Project slugs are constrained to the canonical lowercase slug shape before entering the XML.
+- XML values are escaped before response generation.
+- The function refuses to generate a potentially incomplete single sitemap when the published-project count exceeds the configured 50,000-URL limit.
+- Added cache headers suitable for a public sitemap while keeping the source data refreshable.
+- Added a Firebase Hosting rewrite from `/sitemap.xml` to the `sitemap` function.
+- Removed the stale static `public/sitemap.xml`, so Hosting cannot serve an outdated fixed-route-only sitemap instead of the dynamic contract.
+- `public/robots.txt` continues to advertise `/sitemap.xml`.
+
+### Verification contract
+
+`scripts/test-phase14.mjs` now verifies:
+- the static sitemap file is absent;
+- the sitemap Function exists;
+- the Function queries only published projects;
+- the single-sitemap safety limit exists;
+- Hosting routes `/sitemap.xml` to the `sitemap` Function in `us-central1`.
+
+No local Node execution, Functions deployment, Hosting request, Firestore Emulator test, browser test, or production runtime verification was performed.
+
+The final deployed hostname remains runtime-dependent: the sitemap Function derives its absolute URL origin from the incoming Hosting request host rather than hardcoding a domain.
