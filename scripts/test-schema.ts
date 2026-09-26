@@ -177,6 +177,12 @@ test('schemas reject structural and security-sensitive malformed values', () => 
   }
   assert.equal(validate(projectSchema, maxTechnologyList, 'project').ok, true)
 
+  const commaTechnology = {
+    ...validProject(),
+    technologies: ['C, C++', 'React'],
+  }
+  assert.equal(validate(projectSchema, commaTechnology, 'project').ok, true)
+
   const maxGalleryList = {
     ...validProject(),
     galleryPaths: Array.from({ length: 12 }, () => 'g'.repeat(512)),
