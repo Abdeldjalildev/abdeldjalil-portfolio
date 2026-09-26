@@ -19,10 +19,10 @@ const main = read('src/main.tsx')
 const appCheck = read('src/firebase/appCheck.ts')
 const functions = read('functions/index.js')
 const functionPackage = JSON.parse(read('functions/package.json'))
-const sitemap = read('public/sitemap.xml')
 const robots = read('public/robots.txt')
 const firestore = read('firestore.rules')
 const storage = read('storage.rules')
+const hostingRewrites = firebase.hosting?.rewrites ?? []
 
 assert(firebase.hosting?.public === 'dist', 'Firebase Hosting must publish the Vite dist directory')
 assert(
@@ -65,12 +65,29 @@ assert(app.includes('<AdminAccessBoundary />'), 'Admin route is missing the auth
 assert(main.includes('initializeConfiguredAppCheck()') && main.includes('getFirebaseApp()'), 'Firebase/App Check bootstrap ordering contract is missing')
 
 assert(robots.includes('Disallow: /admin') && robots.includes('Disallow: /sign-in') && robots.includes('Sitemap: /sitemap.xml'), 'robots.txt release policy is incomplete')
-assert(sitemap.includes('https://abdeldjalil-portfolio.web.app/'), 'sitemap must contain the configured production Firebase Hosting origin')
-assert(!sitemap.includes('localhost') && !sitemap.includes('127.0.0.1'), 'sitemap contains a development origin')
+assert(
+  hostingRewrites.some(rule =>
+    rule.source === '/sitemap.xml' &&
+    rule.function?.functionId === 'sitemap' &&
+    rule.function?.region === 'us-central1',
+  ),
+  'Hosting must route /sitemap.xml to the canonical sitemap Function',
+)
+assert(functions.includes('exports.sitemap = onRequest'), 'Dynamic sitemap Function is missing')
+assert(functions.includes(".where('published', '==', true)"), 'Dynamic sitemap must include only published projects')
+assert(functions.includes('MAX_SITEMAP_PROJECT_URLS = 50000'), 'Dynamic sitemap must enforce the single-sitemap URL ceiling')
+assert(functions.includes('SITEMAP_NAMESPACE'), 'Dynamic sitemap XML contract is missing')
 
 assert(firestore.includes('function isAdmin()') && firestore.includes('request.auth.token.admin == true'), 'Firestore admin authorization boundary is missing')
 assert(firestore.includes('match /analyticsVisitors/{visitorKey}') && firestore.includes('allow read, write: if false'), 'Analytics visitor markers must remain inaccessible to clients')
-assert(storage.includes('function isAdmin()') && storage.includes('allow write: if isAdmin()'), 'Storage admin write boundary is missing')
+assert(
+  storage.includes('function isAdmin()') &&
+    storage.includes('allow create:') &&
+    storage.includes('allow update:') &&
+    storage.includes('allow delete: if isAdmin()') &&
+    storage.includes('allow read, write: if false'),
+  'Storage admin create/update/delete boundary or deny-by-default rule is missing',
+)
 assert(storage.includes('image/svg+xml') === false, 'SVG must remain excluded from the hardened Storage image contract')
 
 const secretPatterns = [
@@ -83,10 +100,11 @@ for (const pattern of secretPatterns) {
   assert(!pattern.test(functions), 'Potential secret pattern found in functions/index.js: ' + pattern)
 }
 
-for (const phase of Array.from({ length: 14 }, (_, index) => String(index + 1).padStart(2, '0'))) {
-  assert(exists('docs/phase-' + phase + '-report.md'), 'Missing phase report: phase-' + phase)
+for (const phase of Array.from({ length: 9 }, (_, index) => String(index + 7).padStart(2, '0'))) {
+  assert(exists('docs/phase-' + phase + '-report.md'), 'Missing post-Phase-06 report: phase-' + phase)
 }
 assert(exists('docs/phase-15-report.md'), 'Missing Phase 15 report')
+assert(exists('docs/phase-repair-tracker.md'), 'Missing canonical repair/evidence tracker')
 assert(exists('scripts/test-phase15.mjs'), 'Missing Phase 15 verification harness')
 
 assert(
@@ -108,6 +126,6 @@ console.log('- Firebase resource wiring and deployment boundary')
 console.log('- complete verification command inventory')
 console.log('- production App Check and analytics security contract')
 console.log('- public/admin route and authorization boundaries')
-console.log('- robots/sitemap production metadata')
-console.log('- secret-pattern and phase-report checks')
+console.log('- robots/dynamic-sitemap production metadata')
+console.log('- secret-pattern and post-Phase-06 evidence/report checks')
 console.log('- AGENTS owner-closure and no-auto-deploy contract')
