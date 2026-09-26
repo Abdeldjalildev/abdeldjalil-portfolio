@@ -52,7 +52,7 @@ export default function ProjectDetail() {
     trackEvent('project_view', { projectId: project.id, path: `/projects/${project.slug}` })
 
     return undefined
-  }, [project, locale])
+  }, [project]
 
   if (loading) return <p className="text-body text-foreground-muted">{t('loading_label')}</p>
   if (error) {
