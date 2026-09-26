@@ -2485,3 +2485,50 @@ Step 8 replaced the static sitemap with a Hosting rewrite to the server-owned si
 Phase 15 remains **NOT CLOSED** under `AGENTS.md`.
 
 **I did not advance to the next step.**
+
+---
+
+# Post-Repair Reconciliation — 2026-09-26
+
+This section is authoritative for the current repository-level disposition after the nine-step repair execution. Earlier finding text is intentionally preserved as historical audit evidence. This section does not close any phase and does not replace AGENTS.md.
+
+## Current cross-phase finding disposition
+
+| Finding | Current disposition | Repository-level evidence / note |
+|---|---|---|
+| CP-01 — Missing firestore.indexes.json | **FIXED — VERIFICATION REQUIRED** | firestore.indexes.json now exists at the path referenced by firebase.json; deployment/runtime verification remains pending. |
+| CP-02 — Phase 13 analytics read contract | **FIXED — VERIFICATION REQUIRED** | analyticsDaily/{date} has an explicit trusted-admin read rule and browser writes remain denied; emulator/runtime verification remains pending. |
+| CP-03 — Phase 09 SEO harness drift | **FIXED** | Phase 09 verification was reconciled with centralized Seo.tsx; do not restore the obsolete direct-metadata expectation. |
+| CP-04 — Phase 12 analytics navigation drift | **FIXED** | Phase 12 verification was reconciled with the legitimate /admin/analytics route introduced by Phase 13. |
+| CP-05 — Missing Phase 01–06 reports | **OPEN — EVIDENCE BLOCKER** | Historical reports are still absent. No retrospective execution evidence is to be fabricated. |
+| CP-06 — Featured-project unpublish lifecycle | **FIXED — VERIFICATION REQUIRED** | Phase 08 unpublish flow clears/restores the featured reference within the repaired lifecycle; runtime/rules verification remains pending. |
+| CP-07 — Schema/rules aggregate-length mismatch | **FIXED — VERIFICATION REQUIRED** | Canonical limits and rules boundary handling were reconciled; executable rules verification remains pending. |
+| CP-08 — Duplicate project views on locale changes | **FIXED — VERIFICATION REQUIRED** | Project-view effect no longer depends on locale; browser/event verification remains pending. |
+| CP-09 — Phase 07 media-management contract | **OWNER ACTION / CONTRACT CLARIFICATION** | The audit did not establish that first-class upload/replace/delete CMS workflows are required by the current contract. No speculative code change was made. |
+| CP-10 — Orphaned staged project media | **FIXED — VERIFICATION REQUIRED** | Gallery cardinality is checked before staging and staged objects are tracked/cleaned on later batch failure. Runtime Storage verification remains pending. |
+| CP-11 — Full-object project-media buffering | **OPEN — HARDENING REQUIRED** | The promotion path still uses full-object download/upload semantics. This was not resolved by the repair pass and must not be reported as fixed. |
+| CP-12 — Dynamic project sitemap | **FIXED — VERIFICATION REQUIRED** | Dynamic sitemap implementation now derives published project URLs; deployed Hosting/Function behavior remains unverified. |
+| CP-13 — Phase 10 concurrency precision | **FIXED — VERIFICATION REQUIRED** | Exact Firestore Timestamp equality is used for the repaired concurrency path; runtime/emulator verification remains pending. |
+| CP-14 — Contact target server-side validation | **FIXED — VERIFICATION REQUIRED** | Per-target validation is wired into the Firestore rule path; emulator verification remains pending. |
+
+## Out-of-roadmap findings — not silently closed by Steps 1–9
+
+The nine-step roadmap did not resolve every historical deep-audit finding. These remain separately tracked:
+
+- **P04-01 — Manual auth claim refresh failure handling:** OPEN; requires Phase 04-owned repair.
+- **P04-02 — Async auth stale-result race:** OPEN; requires Phase 04-owned repair.
+- **P02-01 — Design-system preview organization:** OPEN; isolated Phase 02 repair candidate.
+
+These findings must not be counted as repaired merely because the nine-step roadmap reached Step 9.
+
+## Step 3 documentation reconciliation
+
+Phase 08 repair work was executed and recorded through the Phase 08 repair-pass section and its repair commits, but the tracker did not contain a standalone Step 3 execution heading. The implementation evidence is retained; the missing standalone heading was a documentation gap, not evidence that the repair was skipped.
+
+The Phase 08 repair pass resolved the confirmed lifecycle/staging/rollback findings. The full-object buffering concern (CP-11) remains open as a separate hardening item.
+
+## Current evidence boundary
+
+Repository-level repair evidence does **not** constitute runtime evidence. The following remain verification tasks under the separate testing stage: local build/typecheck/lint execution, Firebase emulator rules execution, real Google sign-in, claim refresh/revocation, deployed Functions, Hosting rewrites, App Check enforcement, browser accessibility/RTL/responsive behavior, production configuration, and release rollback behavior.
+
+**Phase ledger:** remains owner-controlled under AGENTS.md; no phase is closed by this reconciliation.
