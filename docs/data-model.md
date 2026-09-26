@@ -94,7 +94,7 @@ Analytics is intentionally server-owned. The public client invokes the `recordAn
 
 The payload contains only an opaque random visitor identifier plus bounded route/project/service identifiers. No name, email, phone, IP address, user-agent string, authentication token or free-form text is persisted. The visitor identifier is SHA-256 hashed server-side before it is stored.
 
-Aggregates are stored under `analyticsDaily/{YYYY-MM-DD}`. Each daily document contains fixed event counters, a bounded path counter map (maximum 50 distinct paths per day), service/project counters and a daily unique-visitor count. `analyticsVisitors/{day_hash}` stores only the hashed visitor marker, event-name set, bounded daily event count and retention timestamp.
+Aggregates are stored under `analyticsDaily/{YYYY-MM-DD}`. Each daily document contains fixed event counters, a bounded path counter map (maximum 50 distinct paths per day), service/project counters and a daily unique-visitor count. `analyticsVisitors/{day_hash}` stores only the hashed visitor marker, event-name set, bounded daily event count and retention timestamp. Its purpose is limited to daily unique-visitor accounting and per-visitor abuse/rate limiting; it expires under the same 90-day retention policy.
 
 Abuse controls:
 - callable event allowlist and strict payload validation;
