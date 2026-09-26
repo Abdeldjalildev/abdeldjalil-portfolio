@@ -38,7 +38,7 @@ Verified:
 - Firebase configuration files are present for Firestore, Storage, Functions and Hosting.
 - Production environment contract is documented in .env.example.
 - Security-sensitive service-account patterns remain gitignored.
-- Dedicated phase reports 07–15 are present. Dedicated Phase 01–06 historical reports are absent; this evidence gap is preserved in the repair tracker rather than fabricated.
+- Dedicated phase reports 07–15 are present. Dedicated Phase 01–06 historical reports are absent; this evidence gap remains a release-evidence blocker and is preserved in the repair tracker rather than fabricated.
 - README now describes the actual production-oriented architecture and verification process.
 
 ### Gate 2 — Final architecture/security review
@@ -211,11 +211,11 @@ Deployment itself is a separate explicit action.
 
 ## Step 9 repair reconciliation
 
-The Phase 15 repair pass reconciled the final repository-level release contract without fabricating historical evidence:
+The Phase 15 repair pass reconciled the final repository-level release contract without fabricating historical evidence or weakening the evidence gate:
 
 - the Phase 15 harness no longer reads the deleted static `public/sitemap.xml`; it verifies the Hosting rewrite and dynamic sitemap Function contract instead;
 - the Storage assertion now checks the actual explicit create/update/delete rules and deny-by-default boundary rather than a stale `allow write` string;
-- the final evidence harness requires the available dedicated Phase 07–15 reports and the canonical repair tracker, while explicitly preserving the missing Phase 01–06 evidence gap;
+- the final evidence harness continues to require all Phase 01–14 reports, so the missing Phase 01–06 reports remain an explicit blocking evidence finding rather than being silently ignored;
 - the README and this report now distinguish shared Phase 05 verification from the absence of a dedicated Phase 05 harness, and the lack of a dedicated Phase 06 harness from the later runtime/browser evidence requirement;
 - no dependency, security rule, authorization boundary, phase ledger, or production feature was weakened or changed merely to obtain a static PASS.
 
