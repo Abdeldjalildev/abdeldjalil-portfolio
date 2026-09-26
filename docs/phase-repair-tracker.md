@@ -2419,3 +2419,69 @@ No local Node execution, TypeScript/build/lint, Firebase Emulator, Functions dep
 Phase 14 remains **NOT CLOSED**. This Step 8 execution does not alter the phase ledger.
 
 **I did not advance to the next step.**
+
+# Step 9 — Phase 15 Final Release Evidence & Verification Reconciliation
+
+## Status
+
+**COMPLETED at repository level.**
+
+Step 9 was executed strictly against `docs/repair-roadmap-9-steps.md`. The repair reconciled the final release/evidence contract after Steps 1–8 without fabricating missing historical evidence, weakening release checks, or changing the owner-controlled phase ledger.
+
+### Findings handled
+
+#### P15-01 / CP-05 — Missing Phase 01–06 reports — DISPOSITIONED, NOT FABRICATED
+
+Dedicated `docs/phase-01-report.md` through `docs/phase-06-report.md` are still absent. They were not synthesized. The Phase 15 harness now requires the available dedicated Phase 07–15 reports and the canonical repair tracker, while the Phase 01–06 evidence gap remains explicitly documented in the Phase 15 report and README.
+
+This preserves truthful evidence rather than manufacturing historical closure artifacts.
+
+#### P15-02 — Stale Storage assertion — RESOLVED
+
+The Phase 15 harness no longer requires the literal historical `allow write: if isAdmin()` form. It now checks the actual hardened Storage contract: admin-only create/update/delete plus explicit deny-by-default behavior.
+
+#### P15-03 — Phase 05/06 verification inventory gap — RECONCILED
+
+Phase 05 verification is represented by the shared canonical `test:schema` and `test:rules` contracts; no artificial `test:phase05` was added. Phase 06 has no dedicated static harness, so its EN/AR/RTL, keyboard, mobile, hydration and runtime evidence remains explicitly deferred to the separate testing stage. No false automated evidence is claimed.
+
+#### P15-05 — Phase 15 report overstatement — RESOLVED
+
+The report now accurately states that dedicated reports 07–15 exist and that Phase 01–06 historical reports are absent.
+
+#### Post-Step-8 dynamic sitemap drift — RESOLVED
+
+Step 8 replaced the static sitemap with a Hosting rewrite to the server-owned sitemap Function. The old Phase 15 harness still attempted to read `public/sitemap.xml`; Step 9 now verifies the dynamic rewrite/function contract instead.
+
+### Files changed
+
+- `scripts/test-phase15.mjs`
+- `docs/phase-15-report.md`
+- `README.md`
+- `docs/phase-repair-tracker.md`
+
+### Dependency changes
+
+**None.**
+
+### Exact repository-level verification
+
+- Re-inspected `firebase.json`, `.firebaserc`, `firestore.indexes.json`, `functions/index.js`, `functions/package.json`, `storage.rules`, `package.json`, `README.md`, `scripts/test-phase15.mjs`, and `docs/phase-15-report.md`.
+- Confirmed the Hosting `/sitemap.xml` rewrite targets `sitemap` in `us-central1` and that the Function emits only published project slugs.
+- Confirmed the Storage contract uses explicit create/update/delete rules and a catch-all deny.
+- Confirmed the Phase 15 harness no longer depends on the deleted static sitemap file.
+- Confirmed the release evidence contract does not fabricate Phase 01–06 reports.
+- Confirmed `firestore.indexes.json` exists at the path referenced by `firebase.json`.
+- No local Node command, build, lint, TypeScript, Emulator Suite, browser, Firebase deployment, App Check Console verification, or production runtime execution was performed.
+
+### Remaining issues
+
+1. Local/runtime release verification remains pending.
+2. Dedicated Phase 01–06 historical reports remain absent; this remains an evidence/closure gap.
+3. Owner acceptance remains pending; no phase is marked CLOSED.
+4. Deployment remains a separate explicit action.
+
+### Owner-controlled phase status
+
+Phase 15 remains **NOT CLOSED** under `AGENTS.md`.
+
+**I did not advance to the next step.**
