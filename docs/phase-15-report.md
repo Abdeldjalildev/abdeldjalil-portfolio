@@ -28,7 +28,7 @@ as the only proof. Deployment remains a separate explicit action.
 
 ### Gate 1 — Release inventory
 
-**PASS — repository inspection.**
+**PARTIAL — repository inspection completed; historical evidence gap remains.**
 
 Verified:
 
@@ -135,9 +135,7 @@ Concrete repository hardening completed:
 - No AGENTS phase status was silently changed.
 - No broad refactor or architecture rewrite was introduced.
 
-No unresolved repository-level blocking defect was found during the final static audit.
-
-Runtime-only risks remain unverified until the local/Firebase release checklist is executed.
+No additional implementation-level blocking defect was found during the final static audit. The missing Phase 01–06 reports remain an explicit release-evidence blocker, and runtime-only risks remain unverified until the local/Firebase release checklist is executed.
 
 ### Gate 6 — Release decision
 
