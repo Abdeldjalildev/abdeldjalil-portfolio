@@ -184,6 +184,75 @@ exports.recordAnalyticsEvent = onCall({ enforceAppCheck: true }, async request =
 })
 
 
+const PUBLIC_SITEMAP_ROUTES = ['/', '/about', '/services', '/projects', '/reviews', '/contact']
+const MAX_SITEMAP_PROJECT_URLS = 50000
+const SITEMAP_NAMESPACE = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+
+function escapeXml(value) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;')
+}
+
+function sitemapOrigin(request) {
+  const host = request.get('host')
+  if (!host || !/^[A-Za-z0-9.-]+(?::\\d+)?$/.test(host)) {
+    throw new Error('Invalid sitemap host.')
+  }
+  const protocol = request.protocol === 'http' ? 'http' : 'https'
+  return `${protocol}://${host}`
+}
+
+exports.sitemap = onRequest(async (request, response) => {
+  if (request.method !== 'GET') {
+    response.set('Allow', 'GET')
+    response.status(405).send('Method Not Allowed')
+    return
+  }
+
+  try {
+    const origin = sitemapOrigin(request)
+    const projectSnapshot = await db.collection('projects')
+      .where('published', '==', true)
+      .get()
+
+    if (projectSnapshot.size > MAX_SITEMAP_PROJECT_URLS) {
+      throw new Error('Published project count exceeds the single-sitemap limit.')
+    }
+
+    const projectSlugs = projectSnapshot.docs
+      .map(snapshot => snapshot.data().slug)
+      .filter(slug => typeof slug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+      .sort()
+
+    const urls = [
+      ...PUBLIC_SITEMAP_ROUTES,
+      ...projectSlugs.map(slug => `/projects/${slug}`),
+    ]
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      `<urlset xmlns="${SITEMAP_NAMESPACE}">`,
+      ...urls.map(path => `  <url><loc>${escapeXml(`${origin}${path}`)}</loc></url>`),
+      '</urlset>',
+      '',
+    ].join('\\n')
+
+    response
+      .set('Content-Type', 'application/xml; charset=utf-8')
+      .set('Cache-Control', 'public, max-age=300, s-maxage=3600')
+      .status(200)
+      .send(xml)
+  } catch (error) {
+    console.error('Sitemap generation failed.', error)
+    response.status(500).type('text/plain').send('Sitemap generation failed.')
+  }
+})
+
+
 const RETENTION_DELETE_BATCH_SIZE = 450
 const RETENTION_MAX_BATCHES_PER_RUN = 5
 
