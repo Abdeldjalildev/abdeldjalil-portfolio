@@ -2360,3 +2360,62 @@ No local build, emulator, deployed Functions, App Check Console, scheduler, brow
 **Phase 13 remains NOT CLOSED.**
 
 **I did not advance to the next step.**
+
+# Step 8 — Phase 14 Cross-Cutting Hardening & SEO Repair
+
+## Status
+
+**COMPLETED**
+
+Step 8 was executed strictly against `docs/repair-roadmap-9-steps.md`. The confirmed dynamic published-project sitemap finding was repaired. Cross-cutting security, accessibility, performance and SEO contracts were re-inspected within the listed scope. No unrelated refactor or dependency change was introduced.
+
+## Finding handled
+
+### P14-R1 / CP-12 — Dynamic published-project sitemap — RESOLVED
+
+The previous static `public/sitemap.xml` contained only fixed public routes and could not represent published project URLs. The repair now:
+- generates `/sitemap.xml` through the server-owned `sitemap` HTTPS Function;
+- includes fixed public routes plus only projects with `published == true`;
+- filters project slugs against the canonical lowercase slug pattern before emitting URLs;
+- XML-escapes generated URL values;
+- rejects sitemap generation when the published-project count exceeds the single-sitemap 50,000-URL limit rather than silently omitting URLs;
+- caches the generated response for a bounded period;
+- routes Hosting `/sitemap.xml` explicitly to the Function;
+- removes the stale static sitemap file.
+
+## Files changed
+
+- `functions/index.js`
+- `firebase.json`
+- `public/sitemap.xml` — deleted because the dynamic rewrite must own this URL
+- `scripts/test-phase14.mjs`
+- `docs/phase-14-report.md`
+- this tracker
+
+## Static verification
+
+- Confirmed the sitemap Function exists and reads only published projects.
+- Confirmed the canonical slug shape is enforced before project URLs enter the XML.
+- Confirmed the 50,000-URL safety bound exists.
+- Confirmed `/sitemap.xml` is explicitly rewritten to `sitemap` in `us-central1`.
+- Confirmed the old static sitemap is absent.
+- Confirmed `robots.txt` continues to reference `/sitemap.xml`.
+- Confirmed the existing `Seo` component derives canonical URLs from the current deployment origin.
+- Confirmed Storage rules remain least-privilege and no admin/public authorization boundary was weakened.
+- Confirmed route lazy-loading and accessibility hardening remain intact.
+
+## Verification limits
+
+No local Node execution, TypeScript/build/lint, Firebase Emulator, Functions deployment, Hosting request, browser accessibility/performance walkthrough, or production runtime verification was performed. Those remain part of the separate testing stage.
+
+## Remaining issues
+
+1. Runtime verification of the sitemap Function and Hosting rewrite remains pending.
+2. Production App Check enforcement, deployed Firebase rules, browser accessibility, and performance measurements remain runtime evidence items.
+3. Phase 14 remains **NOT CLOSED** under `AGENTS.md`.
+
+## Owner-controlled phase status
+
+Phase 14 remains **NOT CLOSED**. This Step 8 execution does not alter the phase ledger.
+
+**I did not advance to the next step.**
