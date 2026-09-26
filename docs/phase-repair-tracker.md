@@ -98,14 +98,12 @@ The repository now contains `firestore.indexes.json` at the referenced path, wit
 
 **Status:** resolved by current repository state; remaining index deployment/runtime verification belongs to the dedicated testing stage.
 
-### CP-02 — Phase 13 analytics Firestore read contract is incomplete
+### CP-02 — Phase 13 analytics Firestore read contract is incomplete — RESOLVED
 
-The previously identified Phase 13 issue remains:
-- `AnalyticsAdmin` reads `analyticsDaily/{date}`;
-- current Firestore rules do not provide the corresponding rule;
-- Phase 13 test/data-model expectations are therefore out of sync.
+The Phase 13 repair pass added an explicit `analyticsDaily/{date}` rule allowing reads only for the trusted admin claim, while browser writes remain denied.
 
 **Owning area:** Phase 13, with Phase 05 contract dependency.
+**Status:** resolved at repository level; runtime/emulator verification remains pending.
 
 ### CP-03 — Phase 09 verification contract conflicts with Phase 14 SEO architecture
 
@@ -137,11 +135,12 @@ The canonical schema and Firestore rule aggregate limits can disagree at exact m
 
 **Owning area:** Phase 05.
 
-### CP-08 — Project-view analytics can duplicate on locale changes
+### CP-08 — Project-view analytics can duplicate on locale changes — RESOLVED
 
-The project detail analytics effect depends on locale, allowing a language switch to create another `project_view` for the same project visit.
+The Phase 13 repair pass changed the project-view effect dependency from `[project, locale]` to `[project]`, so locale changes no longer retrigger the event for the same loaded project.
 
 **Owning area:** Phase 13.
+**Status:** resolved at repository level; runtime event verification remains pending.
 
 ### CP-09 — Phase 07 media-management contract may be incomplete
 
@@ -2333,3 +2332,31 @@ No production code, dependency, Firestore rule, Storage rule, phase report, or p
 - Phase 11 and Phase 12 remain owner-controlled and are **not CLOSED**.
 
 **Step 6 does not advance the phase ledger or close either phase.**
+
+
+# Phase 13 — ANALYTICS, OBSERVABILITY & ABUSE RESISTANCE
+
+## Repair Pass
+
+**Step 7 repository repair status: COMPLETED.**
+
+### Findings repaired
+
+- **CP-02 / Phase 13 admin analytics reads:** added explicit `analyticsDaily/{date}` Firestore rules with admin-only reads and explicit client-write denial.
+- **CP-08 / duplicate project views:** removed `locale` from the `ProjectDetail` project-view effect dependency so EN/AR switching does not retrigger the same project-view event.
+- **Retention cleanup:** changed the scheduled cleanup from one 100-document batch per collection to bounded multi-batch cleanup: 450 documents per batch, up to 5 batches per collection per invocation. The 90-day `expiresAt` policy remains authoritative and later scheduled runs continue draining backlog.
+
+### Verification
+
+Repository-level reinspection confirmed:
+- the dedicated analytics Firestore read/write boundary exists;
+- the project-view effect is keyed to the loaded project rather than locale;
+- the retention constants and loop are present;
+- Phase 13 static verification was strengthened to guard these contracts;
+- the data-model and Phase 13 report now describe the repaired behavior truthfully.
+
+No local build, emulator, deployed Functions, App Check Console, scheduler, browser, or end-to-end analytics execution was performed.
+
+**Phase 13 remains NOT CLOSED.**
+
+**I did not advance to the next step.**
