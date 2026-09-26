@@ -144,3 +144,17 @@ Repository verification:
 AGENTS.md phase ledger remains unchanged. Phase 11 is NOT marked CLOSED.
 
 **I did not advance to the next phase.**
+
+
+
+## Step 6 integration recheck
+
+- Home continues to resolve the featured project only from the published project result set.
+- The existing WhatsApp non-digit normalization repair remains present and is explicitly guarded by `scripts/test-phase11.mjs`.
+- Show More remains presentation-only state.
+- Public Reviews and Contact consumers continue to use their published-only data-access contracts.
+- No additional Phase 11 production-code repair was required in Step 6.
+
+Repository/runtime execution remains pending for the dedicated testing stage.
+
+**I did not advance to the next phase.**
