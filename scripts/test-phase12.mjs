@@ -36,7 +36,8 @@ const checks = [
   ['Destructive CMS actions use confirmation', services.includes('window.confirm') && skills.includes('window.confirm')],
   ['Existing admin headings render translated text', profile.includes("{t('route_profile')}") && services.includes("{t('route_services')}") && skills.includes("{t('route_skills')}")],
   ['EN/AR Phase 12 translations exist', en.includes('admin_dashboard_subtitle') && ar.includes('admin_dashboard_subtitle')],
-  ['Phase 12 stays isolated from analytics', !layout.includes('analytics') && !dashboard.includes('analytics') && app.includes("path: 'analytics'")],
+  ['Phase 12 required routes remain compatible with later analytics',
+    ['/admin','/admin/projects','/admin/services','/admin/skills','/admin/reviews','/admin/profile','/admin/contact','/admin/settings'].every(path => layout.includes(`to: '${path}'`)) && app.includes("path: 'analytics'")],
   ['Phase 12 report states no automatic advancement', report.includes('I did not advance to the next phase.')],
 ]
 const failed = checks.filter(([, ok]) => !ok)
