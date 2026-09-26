@@ -149,3 +149,24 @@ Firebase Security Rules remain the authoritative access-control boundary; client
 AGENTS.md phase status ledger remains unchanged.
 
 **I did not advance to the next phase.**
+
+
+
+## Step 6 integration repair
+
+### Confirmed
+- Featured-project lifecycle handling is already integrated in the project data layer: unpublishing a featured project clears the featured reference before the publication-state write.
+- Deleting a featured project also clears the featured reference first.
+- Settings remains a read/display surface for the existing featured-project contract and does not introduce a second selection mechanism.
+
+### Repaired
+The Phase 12 static harness contained a stale assertion that rejected any `analytics` occurrence in `AdminLayout`. Phase 13 legitimately added `/admin/analytics`, so the assertion no longer represented the current architecture.
+
+`scripts/test-phase12.mjs` was updated to require the complete Phase 12 admin route set while explicitly allowing the legitimate later analytics route to coexist.
+
+No dependency, security rule, authorization boundary, schema, or analytics implementation was changed.
+
+### Verification limitation
+The harness was statically re-inspected after the edit. Actual `npm run test:phase12`, build, lint and browser/admin execution remain pending the dedicated testing stage.
+
+**I did not advance to the next phase.**
