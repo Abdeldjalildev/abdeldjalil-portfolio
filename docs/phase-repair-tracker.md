@@ -1943,3 +1943,127 @@ No local Node test, Firestore Emulator, Storage Emulator, Firebase deployment, i
 **Phase 05 remains NOT CLOSED.**
 
 **I did not advance to the next step.**
+
+
+# Step 2 — Phase 07 Repair & Integration Execution
+
+## Status
+
+**PARTIALLY COMPLETED**
+
+Step 2 was executed against the Phase 07 findings in the repair roadmap. No local/browser/Firebase/emulator tests were run.
+
+## Findings handled
+
+### P07-R1 — Services Firestore rule/schema mismatch — already resolved
+
+The Step 2 re-inspection confirms the previously applied repair remains correct:
+- `services/{serviceId}` uses the canonical Phase 07 service field contract;
+- the unrelated `isContactTarget(...)` condition is absent from the service rule block;
+- `scripts/test-phase07.mjs` contains a regression assertion for this exact condition.
+
+No additional code change was required.
+
+### P07-R2 — Services-rule regression guard — already resolved
+
+The Phase 07 harness still verifies both the service field allowlist and the absence of contact-link validation in the service rule.
+
+No additional change was required.
+
+### P07-R3 — Static re-inspection — completed
+
+The Phase 07 schema/rules boundary was re-inspected after the earlier repair. No recurrence of the service-rule mismatch was found.
+
+## Media contract disposition
+
+### P07-R4 — Profile/Services/Skills media management remains an explicit contract gap, not a safe autonomous implementation change
+
+The current admin forms expose:
+- Profile: `avatarPath`, `resumePath`
+- Services: `iconPath`
+- Skills: `iconPath`
+
+These are Storage-path reference fields. The inspected Phase 07 implementation does not provide a first-class upload/select/delete workflow comparable to Phase 08 project media.
+
+This confirms the previously recorded P07-03 observation. However, the Phase 07 gate contract requires CMS CRUD/public rendering and does not explicitly require a dedicated media-upload workflow. Adding one would introduce a new media lifecycle and UI contract without owner authorization.
+
+**Disposition:** BLOCKED FOR CONTRACT CLARIFICATION / NO CODE CHANGE.
+
+Required owner decision before implementation:
+1. **Reference-only contract:** keep manual Storage-path references and document them as the supported Phase 07 media operation; or
+2. **First-class media contract:** define upload/select/delete behavior, ownership, replacement cleanup, allowed paths/types/sizes, and UX before implementation.
+
+### P07-CP01 — Storage path specificity remains dependent on the media decision
+
+The generic Phase 05 `mediaPath()` validation confirms that a value is a safe Storage path, while Storage rules independently constrain actual object access. The current schema does not prove that:
+- `avatarPath` is under `profile/avatar/`;
+- `resumePath` is under `profile/resume/`;
+- service `iconPath` is under the service icon namespace;
+- skill `iconPath` is under the skill icon namespace.
+
+This is a data-integrity contract question, not a demonstrated authorization bypass.
+
+**Disposition:** remain open pending the P07-R4 media contract decision. Do not broaden the generic schema or weaken Storage rules as a workaround.
+
+## Files inspected for Step 2
+
+- `AGENTS.md`
+- `docs/repair-roadmap-9-steps.md`
+- `docs/phase-repair-tracker.md`
+- `docs/data-model.md`
+- `src/features/cms/ProfileAdmin.tsx`
+- `src/features/cms/ServicesAdmin.tsx`
+- `src/features/cms/SkillsAdmin.tsx`
+- `src/features/cms/profile.ts`
+- `src/features/cms/services.ts`
+- `src/features/cms/skills.ts`
+- `src/features/cms/data.ts`
+- `src/data/schema.ts`
+- `src/data/types.ts`
+- `src/data/paths.ts`
+- `firestore.rules`
+- `storage.rules`
+- `scripts/test-schema.ts`
+- `scripts/test-rules.mjs`
+- `scripts/test-phase07.mjs`
+- `docs/phase-07-report.md`
+- `src/features/public/About.tsx`
+- `src/features/public/Services.tsx`
+
+## Exact static verification performed
+
+- Confirmed the Phase 07 services rule no longer invokes `isContactTarget()`.
+- Confirmed the Phase 07 harness checks the canonical service field contract and explicitly rejects `isContactTarget()` inside the service rule.
+- Confirmed Profile/Services/Skills admin surfaces expose Storage-path references rather than an upload/select/delete workflow.
+- Confirmed the current Phase 07 report already records the services-rule repair and its static re-inspection.
+- Confirmed the media-path validation remains generic at the canonical schema layer and Storage rules remain the authorization boundary.
+
+No executable repository tests were run.
+
+## Files changed
+
+- `docs/phase-repair-tracker.md` — this Step 2 execution record only.
+
+No production code, dependency, Firestore rule, Storage rule, test, or phase ledger was changed.
+
+## Cross-phase impact
+
+- Phase 05 generic media-path contract remains unchanged.
+- Phase 08 project media lifecycle remains unchanged.
+- Phase 10 contact-link validation remains unchanged.
+- No security boundary was weakened.
+- No Phase 07/08 media architecture was invented prematurely.
+
+## Remaining issues
+
+1. Owner must decide whether Phase 07 profile/service/skill media is reference-only or requires first-class CMS media management.
+2. If first-class management is required, a separate explicit media contract must define path ownership, upload/delete/replacement behavior, validation and cleanup.
+3. Runtime verification of Phase 07 remains pending.
+4. Phase 07 report/evidence completeness remains pending.
+5. Delete-concurrency hardening remains a non-blocking consideration.
+
+## Owner-controlled phase status
+
+Phase 07 remains **NOT CLOSED** under AGENTS.md. This Step 2 execution does not alter the phase ledger.
+
+**I did not advance to the next step.**
