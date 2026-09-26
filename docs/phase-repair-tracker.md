@@ -2296,3 +2296,40 @@ No production code, dependency, Firestore rule, Storage rule, phase report, or p
 **Owner-controlled phase status:** Phase 10 remains **NOT CLOSED**.
 
 **I did not advance to the next step.**
+
+
+# Step 6 — Phase 11 & 12 Integration Repair
+
+## Audit/reconciliation status
+
+**Step 6 repository-repair pass completed.**
+
+### Phase 11 verification
+- The current Home implementation uses the corrected non-digit WhatsApp normalization expression: `replace(/\D/g, '')`.
+- `scripts/test-phase11.mjs` already contains a static guard for that exact contract.
+- Featured resolution remains constrained to the loaded published-project set: Home resolves `featuredProjectId` against `listProjects(true)` results rather than reading unpublished project data.
+- Show More remains presentation-only React state and does not introduce persistence.
+- Public Reviews and Contact consumers remain separate data-access consumers with published-only queries.
+- No additional Step 6 production-code change was required for Phase 11.
+
+### Phase 12 verification
+- The featured-project lifecycle integration is already present in the project data layer: unpublishing a featured project clears the featured reference before changing publication state, preserving the Firestore invariant.
+- Project admin deletion also clears the featured reference before deleting the project.
+- Settings continues to expose the existing featured state rather than creating a second featured-selection mechanism.
+- The Phase 12 static harness contained a historical assertion that required analytics to be absent from AdminLayout. Phase 13 legitimately added `/admin/analytics`, so that assertion was stale.
+- Repaired `scripts/test-phase12.mjs` to assert that all required Phase 12 routes remain present while the legitimate later analytics route is also present. The repair does not remove or weaken any Phase 12 functional assertion and does not remove Phase 13 analytics.
+
+### Files changed
+- `scripts/test-phase12.mjs`
+
+### Static verification
+- Re-inspected the changed Phase 12 harness contract after the edit.
+- Confirmed the obsolete blanket prohibition of analytics navigation is gone.
+- Confirmed the replacement assertion requires the complete Phase 12 admin route set and the later `/admin/analytics` route.
+- Confirmed no dependency, Firebase rule, data schema, authorization boundary, or Phase 13 analytics implementation was changed.
+
+### Remaining
+- Local execution of `npm run test:phase11` and `npm run test:phase12` remains pending for the dedicated runtime/testing stage.
+- Phase 11 and Phase 12 remain owner-controlled and are **not CLOSED**.
+
+**Step 6 does not advance the phase ledger or close either phase.**
