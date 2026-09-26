@@ -100,8 +100,9 @@ for (const pattern of secretPatterns) {
   assert(!pattern.test(functions), 'Potential secret pattern found in functions/index.js: ' + pattern)
 }
 
-for (const phase of Array.from({ length: 9 }, (_, index) => String(index + 7).padStart(2, '0'))) {
-  assert(exists('docs/phase-' + phase + '-report.md'), 'Missing post-Phase-06 report: phase-' + phase)
+// Historical Phase 01–06 reports remain a deliberate release-evidence gate.
+for (const phase of Array.from({ length: 14 }, (_, index) => String(index + 1).padStart(2, '0'))) {
+  assert(exists('docs/phase-' + phase + '-report.md'), 'Missing phase report: phase-' + phase)
 }
 assert(exists('docs/phase-15-report.md'), 'Missing Phase 15 report')
 assert(exists('docs/phase-repair-tracker.md'), 'Missing canonical repair/evidence tracker')
@@ -127,5 +128,5 @@ console.log('- complete verification command inventory')
 console.log('- production App Check and analytics security contract')
 console.log('- public/admin route and authorization boundaries')
 console.log('- robots/dynamic-sitemap production metadata')
-console.log('- secret-pattern and post-Phase-06 evidence/report checks')
+console.log('- secret-pattern and complete phase-report evidence checks')
 console.log('- AGENTS owner-closure and no-auto-deploy contract')
