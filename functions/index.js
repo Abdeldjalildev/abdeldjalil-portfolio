@@ -199,7 +199,7 @@ function escapeXml(value) {
 
 function sitemapOrigin(request) {
   const host = request.get('host')
-  if (!host || !/^[A-Za-z0-9.-]+(?::\\d+)?$/.test(host)) {
+  if (!host || !/^[A-Za-z0-9.-]+(?::\d+)?$/.test(host)) {
     throw new Error('Invalid sitemap host.')
   }
   const protocol = request.protocol === 'http' ? 'http' : 'https'
@@ -239,7 +239,7 @@ exports.sitemap = onRequest(async (request, response) => {
       ...urls.map(path => `  <url><loc>${escapeXml(`${origin}${path}`)}</loc></url>`),
       '</urlset>',
       '',
-    ].join('\\n')
+    ].join('\n')
 
     response
       .set('Content-Type', 'application/xml; charset=utf-8')
