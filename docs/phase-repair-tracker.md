@@ -1896,3 +1896,50 @@ Fresh repository re-inspection confirmed the Home implementation, Phase 11 harne
 **Phase 11 remains NOT CLOSED.** Runtime verification and owner acceptance are still required by AGENTS.md.
 
 **I did not advance the phase status or mark Phase 11 CLOSED.**
+
+
+# Step 1 — Phase 05 Repair & Integration Execution Record — 2026-09-26
+
+**Status: COMPLETED**
+
+Step 1 was revalidated against `docs/repair-roadmap-9-steps.md` after the existing Phase 05 repair pass.
+
+## Confirmed repairs re-inspected
+
+- Schema/rules maximum-size budgets remain aligned:
+  - technologies: 30 × 60 characters + 29 join separators = **1,829**
+  - gallery paths: 12 × 512 characters + 11 join separators = **6,155**
+- Timestamp runtime validation remains hardened to reject invalid nanoseconds and out-of-range seconds.
+- `firestore.indexes.json` exists at the path referenced by `firebase.json` and contains the documented ordered CMS indexes plus analytics map field overrides.
+- Storage limits remain represented in `storage.rules` and covered by `scripts/test-schema.ts`.
+- Phase 07/08/10 consumers continue importing the canonical data/schema/path layer rather than introducing a second CMS schema.
+- Phase 13 analytics remains intentionally server-owned; its missing `analyticsDaily` client-read rule remains owned by Step 7, not Step 1.
+
+## Additional confirmed Step 1 contract defect repaired
+
+### P05-06 — Technology labels containing commas were rejected by Firestore rules
+
+The project schema permits technology labels containing commas, but `isStringList()` used comma both as the aggregation separator and as a character-level regex restriction. That made valid schema values such as `C, C++` fail the Firestore write contract.
+
+**Repair:** retained the existing maximum item count, aggregate character budget and empty-string rejection, while removing the delimiter-dependent regex restriction.
+
+**Targeted verification added:**
+- `scripts/test-schema.ts` now explicitly accepts a comma-containing technology label.
+- `scripts/test-rules.mjs` now contains an admin allow-case for a project using `C, C++`.
+
+No authorization boundary was weakened: all project writes remain admin-only, the list count/aggregate budget remain enforced, and the application schema remains the full element-shape validator.
+
+## Files changed during Step 1 execution
+
+- `firestore.rules`
+- `scripts/test-schema.ts`
+- `scripts/test-rules.mjs`
+- this tracker
+
+## Verification limits
+
+No local Node test, Firestore Emulator, Storage Emulator, Firebase deployment, index deployment, browser or production runtime test was executed. These remain part of the later runtime testing stage.
+
+**Phase 05 remains NOT CLOSED.**
+
+**I did not advance to the next step.**
