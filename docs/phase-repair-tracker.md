@@ -2159,3 +2159,140 @@ No local Node test, build, lint, Firestore Emulator, Storage Emulator, browser, 
 3. Phase 09 remains NOT CLOSED under `AGENTS.md`.
 
 **I did not advance to the next step.**
+
+
+# Step 5 — Phase 10 Repair & Integration Execution Record — 2026-09-26
+
+**Status: COMPLETED**
+
+Step 5 was executed strictly against `docs/repair-roadmap-9-steps.md). The roadmap identifies the Phase 10 production findings as already repaired and requires re-verification after Step 1's canonical data-contract repair.
+
+## Confirmed Step 5 findings re-inspected
+
+### P10-R1 — Exact Firestore Timestamp concurrency — CONFIRMED REPAIRED
+
+Re-inspected:
+- `src/features/cms/reviews.ts`
+- `src/features/cms/contactLinks.ts`
+- `scripts/test-phase10.mjs`
+
+Confirmed:
+- `saveReview()` uses `current.value.updatedAt.isEqual(expectedUpdatedAt)`.
+- `changeReviewStatus()` uses `current.value.updatedAt.isEqual(expectedUpdatedAt)`.
+- `saveContactLink()` uses `current.value.updatedAt.isEqual(expectedUpdatedAt)`.
+- The Phase 10 harness explicitly requires `isEqual(expectedUpdatedAt)` and rejects `updatedAt.seconds` in the affected modules.
+
+No seconds-only optimistic-concurrency comparison remains in the Step 5 scope.
+
+### P10-CP01 — Contact-target server validation — CONFIRMED REPAIRED
+
+Re-inspected:
+- `firestore.rules`
+- `scripts/test-phase10.mjs`
+- `src/features/cms/contactLinks.ts`
+
+Confirmed:
+- `contactLinks/{linkId}.valid()` directly invokes `isContactTarget(request.resource.data.type, request.resource.data.value)`.
+- Contact-link writes remain admin-only.
+- Public reads remain constrained to published entries.
+- The Phase 10 static harness contains a regression assertion that the rule helper is wired into the contactLinks validation block.
+- The client data layer also validates the target before writing, while the Firestore rule remains the authoritative server-side boundary.
+
+The previously suspected "defined but unused" server validation defect is therefore resolved and must not be reopened.
+
+### P10-CP03 — Phase 05 query/index dependency — CONFIRMED CONSISTENT
+
+Re-inspected:
+- `src/features/cms/reviews.ts`
+- `src/features/cms/contactLinks.ts`
+- canonical Phase 05 data/schema contract
+- Phase 10 report
+
+Confirmed public queries remain:
+- reviews: `where('status', '==', 'published')` + `orderBy('order')`
+- contact links: `where('published', '==', true)` + `orderBy('order')`
+
+No Phase 10-local query/schema fork was introduced after Step 1.
+
+## Review lifecycle and publication semantics
+
+Static re-inspection confirms:
+- new reviews must start `pending`;
+- allowed transitions remain pending → approved → published and published → approved;
+- public review reads are published-only;
+- `publishedAt` is server-controlled in Firestore rules;
+- while a review remains published, its existing `publishedAt` is preserved;
+- unpublishing clears `publishedAt`;
+- review writes remain admin-only.
+
+## Public/admin boundary and localization
+
+Confirmed:
+- public Reviews uses `listReviews(false)`;
+- public Contact uses `listContactLinks(false)`;
+- admin workflows use the admin data paths;
+- external Contact links retain `noopener noreferrer`;
+- Phase 10 EN/AR translation anchors remain present;
+- no anonymous review-write path was introduced.
+
+## Step 5 disposition
+
+No additional production-code repair was justified.
+
+The previously identified delete-concurrency consideration remains unchanged:
+- `deleteReview()` and `deleteContactLink()` still use direct deletion without compare-before-delete.
+- This was explicitly classified as a hardening consideration rather than a confirmed contract violation, so Step 5 does not redefine or silently change delete semantics.
+
+## Files inspected
+
+- `AGENTS.md`
+- `docs/repair-roadmap-9-steps.md`
+- `docs/phase-repair-tracker.md`
+- `src/features/cms/reviews.ts`
+- `src/features/cms/contactLinks.ts`
+- `src/features/cms/ReviewsAdmin.tsx`
+- `src/features/cms/ContactLinksAdmin.tsx`
+- `src/features/public/Reviews.tsx`
+- `src/features/public/Contact.tsx`
+- `src/data/schema.ts`
+- `firestore.rules`
+- `storage.rules`
+- `scripts/test-phase10.mjs`
+- `scripts/test-rules.mjs`
+- `scripts/test-schema.ts`
+- `docs/phase-10-report.md`
+
+## Files changed
+
+- `docs/phase-repair-tracker.md` — this Step 5 execution record only.
+
+No production code, dependency, Firestore rule, Storage rule, phase report, or phase ledger was changed.
+
+## Exact static verification
+
+- Exact Timestamp equality confirmed in all three affected data-access operations.
+- No seconds-only concurrency comparison remains in those operations.
+- Server-side ContactLink target validation confirmed active inside the Firestore rule's `valid()` function.
+- Review transition and `publishedAt` rule invariants confirmed.
+- Published-only public query predicates confirmed.
+- EN/AR and public/admin wiring confirmed by the existing Phase 10 static harness assertions.
+- No local Node test, build, lint, TypeScript, Firestore Emulator, Storage Emulator, browser, Firebase deployment, or production runtime test was executed.
+
+## Cross-phase impact
+
+- Phase 05 canonical schema/query/index contract remains authoritative.
+- Phase 07 remains unchanged.
+- Phase 08 project lifecycle remains unchanged.
+- Phase 11/12 consumers remain compatible with the repaired Phase 10 Timestamp contract.
+- Phase 13 analytics remains outside Step 5 ownership.
+
+## Remaining issues
+
+1. Delete-concurrency remains a non-blocking hardening consideration.
+2. Runtime verification of Phase 10 remains pending.
+3. Phase 10 owner acceptance remains pending.
+4. Phase 10 remains NOT CLOSED under `AGENTS.md`.
+
+**Owner-controlled phase status:** Phase 10 remains **NOT CLOSED**.
+
+**I did not advance to the next step.**
