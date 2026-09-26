@@ -103,6 +103,6 @@ Abuse controls:
 - Firebase App Check enforcement on the analytics callable, with reCAPTCHA Enterprise client integration;
 - analytics failures are isolated from public rendering/navigation.
 
-Retention is 90 days. Both aggregate and visitor-marker documents carry `expiresAt`; the scheduled `pruneAnalytics` function removes expired documents daily. This cleanup requires the Cloud Scheduler capability used by scheduled Cloud Functions at deployment time.
+Retention is 90 days. Both aggregate and visitor-marker documents carry `expiresAt`; the scheduled `pruneAnalytics` function drains expired documents in bounded batches (450 documents per batch, up to 5 batches per collection per invocation) and runs daily. If an unusually large backlog exists, subsequent scheduled invocations continue draining it. This cleanup requires the Cloud Scheduler capability used by scheduled Cloud Functions at deployment time.
 
 Admin analytics reads are allowed only for the trusted Phase 04 `admin` claim. Public and non-admin analytics reads/writes remain denied.
