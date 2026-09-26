@@ -14,7 +14,9 @@ const storage = read('storage.rules')
 const storageTests = read('scripts/test-rules.mjs')
 const indexHtml = read('index.html')
 const robots = read('public/robots.txt')
-const sitemap = read('public/sitemap.xml')
+const firebase = read('firebase.json')
+const functionsIndex = read('functions/index.js')
+const sitemapExists = fs.existsSync(new URL('../public/sitemap.xml', import.meta.url))
 const en = read('src/i18n/locales/en.ts')
 const ar = read('src/i18n/locales/ar.ts')
 const report = read('docs/phase-14-report.md')
@@ -29,7 +31,8 @@ const checks = [
   ['Public shell applies SEO metadata', publicLayout.includes('<Seo')],
   ['Project detail uses centralized SEO', projectDetail.includes('<Seo') && !projectDetail.includes('document.querySelector(\'meta[name="description"]\')')],
   ['Crawler robots policy exists', robots.includes('Disallow: /admin') && robots.includes('Disallow: /sign-in')],
-  ['Sitemap uses absolute URLs', sitemap.includes('<loc>https://') && sitemap.includes('/projects</loc>')],
+  ['Sitemap is generated from published projects', !sitemapExists && functionsIndex.includes('exports.sitemap') && functionsIndex.includes("where('published', '==', true)") && functionsIndex.includes('MAX_SITEMAP_PROJECT_URLS')],
+  ['Hosting routes sitemap to the sitemap function', firebase.includes('"source": "/sitemap.xml"') && firebase.includes('"functionId": "sitemap"') && firebase.includes('"region": "us-central1"')],
   ['Index metadata includes crawler/social defaults', indexHtml.includes('og:title') && indexHtml.includes('robots') && indexHtml.includes('theme-color')],
   ['Public media prioritizes critical images', media.includes('fetchPriority={priority ? \'high\' : \'auto\'}')],
   ['Admin mobile navigation has dialog semantics', adminLayout.includes('role="dialog"') && adminLayout.includes('aria-modal="true"')],
