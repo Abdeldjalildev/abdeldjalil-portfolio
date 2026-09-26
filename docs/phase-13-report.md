@@ -208,3 +208,19 @@ Reason:
 Run the local verification suite and then perform the Firebase runtime/App Check deployment checks. Do not mark Phase 13 CLOSED until those results are available and the owner accepts the evidence.
 
 **I did not advance to the next phase.**
+
+## Step 7 Repair Pass — Repository-level analytics contract reconciliation
+
+The repository repair pass confirmed and corrected three previously identified Phase 13 integration findings:
+
+1. **Admin analytics read boundary:** added an explicit `analyticsDaily/{date}` rule allowing reads only when `isAdmin()` is true. Browser writes remain explicitly denied.
+2. **Project-view duplication:** changed the project-view effect dependency from `[project, locale]` to `[project]`, so changing EN/AR does not emit another `project_view` for the same loaded project.
+3. **Retention cleanup:** replaced the single 100-document cleanup pass with bounded multi-batch cleanup (450 documents per batch, up to 5 batches per collection per scheduled invocation). The `expiresAt` field remains the retention authority and subsequent daily invocations continue draining any backlog.
+
+The Phase 13 static harness was strengthened to assert these repaired contracts directly.
+
+No dependency changes were introduced. No analytics security boundary was weakened, no browser write path was added, and no local/emulator/Firebase runtime execution was performed.
+
+**Step 7 repository repair status:** COMPLETED.
+
+**I did not advance to the next step.**
