@@ -38,7 +38,7 @@ Verified:
 - Firebase configuration files are present for Firestore, Storage, Functions and Hosting.
 - Production environment contract is documented in .env.example.
 - Security-sensitive service-account patterns remain gitignored.
-- Phase reports 01–15 are present after this implementation.
+- Dedicated phase reports 07–15 are present. Dedicated Phase 01–06 historical reports are absent; this evidence gap is preserved in the repair tracker rather than fabricated.
 - README now describes the actual production-oriented architecture and verification process.
 
 ### Gate 2 — Final architecture/security review
@@ -58,14 +58,14 @@ Verified:
 
 ### Gate 3 — Full verification contract
 
-**IMPLEMENTED; execution BLOCKED pending local environment.**
+**IMPLEMENTED; repository contract reconciled; execution BLOCKED pending local environment.**
 
 Added the missing release verification wiring:
 
 - `npm run functions:check`
 - `npm run test:phase15`
 
-The release command inventory now covers:
+The release command inventory now covers the available automated repository checks:
 
 1. `npm ci`
 2. `npm run lint`
@@ -82,6 +82,8 @@ The release command inventory now covers:
 13. `npm run test:phase13`
 14. `npm run test:phase14`
 15. `npm run test:phase15`
+
+Phase 05 is represented by the shared `test:schema` and `test:rules` contracts; no dedicated `test:phase05` exists. Phase 06 has no dedicated static harness, so its EN/AR/RTL, keyboard, mobile and runtime evidence remains part of the later browser/testing stage. No missing historical report is synthesized to make the inventory appear complete.
 
 The Phase 15 harness statically verifies the release configuration, security boundaries,
 environment contract, production metadata and phase-report/owner-closure requirements.
@@ -190,10 +192,12 @@ Deployment itself is a separate explicit action.
 3. Firebase Emulator rules evidence is not yet executed in this environment.
 4. Production Firebase App Check enforcement cannot be proven from repository files alone.
 5. A production deployment has intentionally not been performed.
-6. The sitemap currently targets `https://abdeldjalil-portfolio.web.app`. If a custom domain is
-   chosen later, the sitemap and canonical/OG production origin must be updated as part of release
-   configuration before deployment.
-7. Firebase Hosting rollback remains an operational action after a real deployment; no release has
+6. Dedicated historical Phase 01–06 reports remain absent; this is an evidence/closure gap, not a
+   claim that those implementations are invalid. The gap must remain visible until owner evidence
+   is supplied or the owner accepts the historical evidence boundary.
+7. The dynamic sitemap derives its origin from the Hosting request, so it is not hardcoded to the
+   Firebase Hosting domain in repository source.
+8. Firebase Hosting rollback remains an operational action after a real deployment; no release has
    been deployed by Phase 15.
 
 ## Out of scope
@@ -204,6 +208,18 @@ Deployment itself is a separate explicit action.
 - Changing the AGENTS.md phase ledger or declaring a phase CLOSED.
 - Feature additions unrelated to release readiness.
 - MenuFlow.
+
+## Step 9 repair reconciliation
+
+The Phase 15 repair pass reconciled the final repository-level release contract without fabricating historical evidence:
+
+- the Phase 15 harness no longer reads the deleted static `public/sitemap.xml`; it verifies the Hosting rewrite and dynamic sitemap Function contract instead;
+- the Storage assertion now checks the actual explicit create/update/delete rules and deny-by-default boundary rather than a stale `allow write` string;
+- the final evidence harness requires the available dedicated Phase 07–15 reports and the canonical repair tracker, while explicitly preserving the missing Phase 01–06 evidence gap;
+- the README and this report now distinguish shared Phase 05 verification from the absence of a dedicated Phase 05 harness, and the lack of a dedicated Phase 06 harness from the later runtime/browser evidence requirement;
+- no dependency, security rule, authorization boundary, phase ledger, or production feature was weakened or changed merely to obtain a static PASS.
+
+Previously recorded release-integration findings for Phase 09 SEO harness drift, Phase 12 analytics navigation drift, Phase 13 analyticsDaily access, and Phase 14 dynamic sitemap coverage are already repaired by their owning steps and are therefore no longer open Step 9 blockers.
 
 ## Recommended next action
 
