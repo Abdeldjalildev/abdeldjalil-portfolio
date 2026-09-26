@@ -398,3 +398,42 @@ Before any RELEASE-READY conclusion:
 - the owner explicitly accepts the final evidence package.
 
 **This file is a repair plan only. It does not close phases, authorize deployment, or replace `AGENTS.md`.**
+
+---
+
+# Post-Repair Reconciliation — 2026-09-26
+
+The sections above are the historical deep-audit repair plan and are intentionally preserved. The following records what the repository-level repair pass actually changed or left unresolved; it is the current disposition, not a retroactive rewrite of the original audit.
+
+## Findings resolved at repository level
+
+The repair pass resolved the confirmed repository-level findings covering the canonical data/rules/index contract, Phase 09 SEO verification drift, Phase 12 analytics-navigation verification drift, featured-project lifecycle, project-media staging cleanup, multi-object media rollback, Phase 10 timestamp concurrency, contact-target rule validation, analytics admin-read authorization, locale-triggered duplicate project views, dynamic project sitemap generation, and the corresponding Phase 15 verification/report drift.
+
+These resolutions remain subject to the runtime/evidence boundary defined in AGENTS.md and this plan.
+
+## Findings not resolved by the nine-step roadmap
+
+The following must remain explicit rather than being silently promoted to resolved:
+
+- **CP-05:** historical Phase 01–06 reports remain unavailable; no evidence is fabricated.
+- **CP-09:** Phase 07 media-management semantics still require contract clarification/owner decision.
+- **CP-11:** project-media promotion still uses full-object download/upload semantics and remains an open hardening concern.
+- **P04-01:** manual authentication claim-refresh failure handling remains open.
+- **P04-02:** asynchronous authentication stale-result protection remains open.
+- **P02-01:** design-system preview organization remains an isolated Phase 02 repair candidate.
+
+## Step execution interpretation
+
+The nine-step roadmap reached Step 9 at repository level. This must **not** be interpreted as “all historical findings fixed” or “runtime verified.” Step 2 retains the Phase 07 contract-clarification disposition; Step 3 retains CP-11; Step 9 retains the historical evidence gap. Runtime verification remains a separate stage.
+
+## Filename/path clarification
+
+The repository's canonical paths are:
+- docs/deep-audit-repair-plan.md
+- docs/repair-roadmap-9-steps.md
+
+Earlier handoff wording used Deep-audit-repair-plan.md and Repair-redmoap-9-steps.md. Those are not the current repository paths. This clarification is documentation-only and does not rename files.
+
+## Closure boundary
+
+No phase is marked CLOSED by this reconciliation. Implementation/repaired/verified/formally-closed remain distinct states. Owner acceptance and the required runtime evidence package remain mandatory before any phase or release is closed.
