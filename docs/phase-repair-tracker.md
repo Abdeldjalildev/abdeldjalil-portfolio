@@ -2424,17 +2424,17 @@ Phase 14 remains **NOT CLOSED**. This Step 8 execution does not alter the phase 
 
 ## Status
 
-**COMPLETED at repository level.**
+**PARTIALLY COMPLETED at repository level.**
 
 Step 9 was executed strictly against `docs/repair-roadmap-9-steps.md`. The repair reconciled the final release/evidence contract after Steps 1–8 without fabricating missing historical evidence, weakening release checks, or changing the owner-controlled phase ledger.
 
 ### Findings handled
 
-#### P15-01 / CP-05 — Missing Phase 01–06 reports — DISPOSITIONED, NOT FABRICATED
+#### P15-01 / CP-05 — Missing Phase 01–06 reports — PRESERVED AS A BLOCKING EVIDENCE FINDING
 
-Dedicated `docs/phase-01-report.md` through `docs/phase-06-report.md` are still absent. They were not synthesized. The Phase 15 harness now requires the available dedicated Phase 07–15 reports and the canonical repair tracker, while the Phase 01–06 evidence gap remains explicitly documented in the Phase 15 report and README.
+Dedicated `docs/phase-01-report.md` through `docs/phase-06-report.md` are still absent. They were not synthesized. The Phase 15 harness continues to require all Phase 01–14 reports, so the missing historical reports remain an explicit release-evidence failure rather than being silently ignored.
 
-This preserves truthful evidence rather than manufacturing historical closure artifacts.
+This preserves truthful evidence and the original release gate rather than manufacturing historical closure artifacts or weakening the check.
 
 #### P15-02 — Stale Storage assertion — RESOLVED
 
