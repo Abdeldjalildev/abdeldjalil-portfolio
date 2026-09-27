@@ -1101,7 +1101,7 @@ This is a confirmed source/JSX structural defect, not merely a historical note. 
 
 ### GitHub / CI state
 
-Current HEAD: `6c2da9a67c47b691c1d6447a6f4ace723a702c69`.
+Stage 6 starting HEAD: `6c2da9a67c47b691c1d6447a6f4ace723a702c69`.
 
 The GitHub combined-status query returned an empty status list for this commit. Therefore there is **no CI check result available to report as PASS or FAIL** from the repository status surface inspected. This is not treated as CI failure.
 
