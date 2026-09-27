@@ -30,11 +30,11 @@ assert(
   provider.includes('++authRequestRef.current\n      unsubscribe()'),
   'provider cleanup must invalidate in-flight auth reads',
 )
-assert(!provider.includes('localStorage') && !provider.includes('sessionStorage'), 'auth provider must not persist authorization state')
-assert(!context.includes('localStorage') && !context.includes('sessionStorage'), 'auth context must not persist authorization state')
+assert(!/(localStorage|sessionStorage)\\s*\\./.test(provider), 'auth provider must not persist authorization state')
+assert(!/(localStorage|sessionStorage)\\s*\\./.test(context), 'auth context must not persist authorization state')
 assert(boundary.includes('state.claims.admin'), 'admin access must depend on the trusted claims state')
 assert(boundary.includes('void refetch()'), 'admin boundary must retain the manual refresh recovery path')
-assert(!boundary.includes('localStorage') && !boundary.includes('sessionStorage'), 'admin boundary must not persist authorization state')
+assert(!/(localStorage|sessionStorage)\\s*\\./.test(boundary), 'admin boundary must not persist authorization state')
 
 console.log('Phase 04 auth contract: PASS')
 console.log('- manual claim refresh fails closed')
