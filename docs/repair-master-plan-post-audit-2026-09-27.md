@@ -954,3 +954,55 @@ Phase state:
 - F-04 is FIXED at repository level.
 - Phase 02 is NOT CLOSED.
 - Stage 4 has NOT STARTED.
+
+
+# Stage 4 execution record — 2026-09-27
+
+## F-07 — Phase 02/03/05/06 verification-surface preparation
+
+Status: **RESOLVED AT REPOSITORY-CONTRACT LEVEL — NO ADDITIONAL DEDICATED HARNESS REQUIRED FOR PHASE 02/03/06; EXISTING PHASE 05 COVERAGE IS SUFFICIENT FOR CURRENT CONTRACTS**
+
+Inspection result:
+- Phase 04 has the dedicated `scripts/test-phase04.mjs` harness created in Stage 1. It was not recreated or replaced.
+- Phase 05 already has repository-backed contract coverage through `scripts/test-schema.ts` and `scripts/test-rules.mjs`, plus the existing Firestore index/storage configuration. The current contract surface is machine-checkable at the repository/emulator-rule level without inventing another duplicate harness.
+- Phase 02's AGENTS verification requirements are predominantly visual/runtime (responsive layouts, keyboard focus, contrast, reduced motion, Arabic shaping/direction). A static harness would not provide equivalent evidence, so none was added.
+- Phase 03's verification requirements include route resolution, refresh/deep navigation, unknown routes and mobile navigation behavior. These require runtime/router evidence; no synthetic static harness was added.
+- Phase 06's verification requirements include routes, EN/AR, true RTL, keyboard navigation and the mobile drawer. These require runtime/browser evidence; no synthetic static harness was added.
+- `package.json` contains `test:phase04`, `test:schema`, and `test:rules`; there are no Phase 01/02/03/05/06 dedicated scripts, consistent with the above disposition.
+
+No test was weakened, removed, or replaced, and no dependency was added.
+
+## F-06 — Historical Phase 01–06 evidence
+
+Status: **OPEN — MISSING HISTORICAL EVIDENCE**
+
+Repository tree inspection confirms that the only dedicated early-phase test script currently present is `scripts/test-phase04.mjs`. No historical files named `docs/phase-01-report.md` through `docs/phase-06-report.md` are present in the current repository tree.
+
+This current repository inspection is not being represented as historical phase evidence. No historical reports were fabricated or backfilled.
+
+## New finding recorded — F-08
+
+A pre-existing structural/source defect was discovered while re-reading the Phase 02 preview during Stage 4: `src/design-system/DesignSystemPreview.tsx` contains a duplicated `colorSwatches.map(...)` fragment and a closing `SectionFrame` after the independent `Surfaces, depth and glass` section, without a corresponding opening colour-token section at that location. Comparison against the Stage 2 baseline confirms this fragment pre-dates Stage 3 and is therefore not caused by Stage 3.
+
+Status: **OPEN — OUT OF STAGE 4 SCOPE; NOT FIXED**
+
+This finding is recorded only. It must not be interpreted as fixed by the F-04 correction.
+
+## Stage 4 verification boundary
+
+Repository-side verification completed:
+- inspected `AGENTS.md`, the authoritative repair master plan, repair tracker, deep-audit repair plan, 9-step roadmap, `package.json`, Phase 04 harness, schema/rules harnesses, Phase 02/03/06 implementation surfaces, and repository tree entries for Phase 01–06 reports/harnesses;
+- re-read the relevant Phase 02 preview source and compared it with the pre-Stage-3 baseline to distinguish the new F-08 observation from Stage 3 work;
+- confirmed no Phase 01–06 historical report was created;
+- confirmed no dedicated Phase 02/03/06 harness was added because the relevant AGENTS requirements are runtime/visual/browser evidence rather than useful static contracts;
+- confirmed Phase 05 already has dedicated schema/rules machine-checkable coverage.
+
+Not proven by this GitHub-only stage:
+- execution/pass of any harness;
+- local TypeScript/lint/build results;
+- Firebase Emulator execution;
+- browser/runtime behavior;
+- responsive, accessibility, visual contrast, reduced-motion, EN/AR/RTL or navigation behavior;
+- formal phase closure.
+
+Phase status remains owner-controlled and all phases remain NOT CLOSED.
