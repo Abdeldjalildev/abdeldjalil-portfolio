@@ -161,11 +161,13 @@ Some project upload paths can stage media before final gallery cardinality valid
 
 **Owning area:** Phase 08.
 
-### CP-11 — Project media promotion currently buffers full objects
+### CP-11 — Project media promotion currently buffers full objects — HISTORICAL FINDING
 
-The project media promotion path uses full-object download/upload semantics. This is not currently classified as a blocker because the configured individual file limit is small, but it should be reviewed under the Phase 08/14 performance-hardening pass.
+The original Phase 08/14 audit found a browser-side full-object download/upload promotion path. That implementation was subsequently replaced by the trusted `moveProjectMedia` callable.
 
 **Owning areas:** Phase 08 / Phase 14.
+
+**Current status:** **FIXED — VERIFICATION REQUIRED.** See the authoritative current post-repair disposition at the end of this tracker.
 
 ### CP-12 — Sitemap does not currently enumerate dynamic project routes
 
