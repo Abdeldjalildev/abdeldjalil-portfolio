@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore'
-import { deleteObject, getBytes, getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import { getFirebaseApp } from '../../firebase/app.ts'
@@ -35,6 +35,11 @@ import { ALLOWED_IMAGE_CONTENT_TYPES, STORAGE_LIMITS } from '../../data/paths.ts
 const app = getFirebaseApp()
 const db = getFirestore(app)
 const storage = getStorage(app)
+const functions = getFunctions(app, 'us-central1')
+const moveProjectMediaCallable = httpsCallable<
+  { moves: Array<{ fromPath: string; toPath: string }> },
+  { moved: string[] }
+>(functions, 'moveProjectMedia')
 
 function inputOrThrow<T>(parser: (value: unknown, path: string, issues: { path: string; message: string }[]) => T | undefined, value: unknown): T {
   const result = validate(parser, value)
@@ -130,16 +135,8 @@ export async function uploadProjectMedia(
   return { path, url: await getDownloadURL(storageRef) }
 }
 
-async function copyStorageObject(fromPath: string, toPath: string): Promise<void> {
-  const source = ref(storage, fromPath)
-  const bytes = await getBytes(source)
-  const target = ref(storage, toPath)
-  await uploadBytes(target, bytes)
-}
-
 async function moveStorageObject(fromPath: string, toPath: string): Promise<void> {
-  await copyStorageObject(fromPath, toPath)
-  await deleteObject(ref(storage, fromPath))
+  await moveProjectMediaCallable({ moves: [{ fromPath, toPath }] })
 }
 
 async function moveMediaPaths(
