@@ -182,22 +182,25 @@ Do not:
 # 3. Contract/evidence findings
 
 ### F-05 — Phase 07 media-management contract ambiguity (CP-09)
-Status: OWNER/CONTRACT DECISION REQUIRED
+Status: RESOLVED — OWNER DECISION CP-09-A / REFERENCE-ONLY CONTRACT
 Severity: MEDIUM
 Owner: Phase 07
 
 Finding:
-Profile/services/skills expose media-path fields, but the audit does not prove that they are required to have the same first-class upload/replace/delete/staging lifecycle as Phase 08 projects.
+Profile/services/skills expose media-path fields, but the audit did not prove that they are required to have the same first-class upload/replace/delete/staging lifecycle as Phase 08 projects.
 
-Action:
-Do NOT implement speculative media-management functionality.
+Decision:
+The project owner selected **CP-09-A — Reference-only media contract**.
 
-Before changing code, establish one explicit contract:
-A. Phase 07 media fields are references only and media lifecycle is outside Phase 07 scope.
-OR
-B. Phase 07 requires full CMS media lifecycle, in which case the contract, implementation, rules and verification must be added.
+Explicit Phase 07 boundary:
+- Profile, Services and Skills media fields are Storage-path references only.
+- Phase 07 supports storing/editing those references as part of CMS CRUD.
+- First-class upload, replace, delete, selection, staging, promotion or cleanup lifecycle for these media assets is outside the Phase 07 contract unless a future phase explicitly adds that requirement.
+- The existing Storage rules remain the authorization boundary.
+- No speculative media-management implementation is introduced by this decision.
 
-Until the owner decision exists, this finding remains OPEN/CONTRACT.
+Disposition:
+CP-09 is resolved at the contract/documentation level. This decision does not close Phase 07 and does not provide runtime verification evidence.
 
 ---
 
@@ -1006,3 +1009,52 @@ Not proven by this GitHub-only stage:
 - formal phase closure.
 
 Phase status remains owner-controlled and all phases remain NOT CLOSED.
+
+
+---
+
+# Stage 5 execution record — 2026-09-27
+
+## CP-09-A — Reference-only media contract
+
+Status: **COMPLETED — GITHUB CONTRACT CORRECTION**
+
+Owner decision:
+- The project owner explicitly selected **DECISION=A / CP-09-A**.
+
+Repository inspection:
+- AGENTS.md defines Phase 07 as CMS CRUD/public rendering and does not require a dedicated media-upload lifecycle.
+- ProfileAdmin.tsx exposes avatarPath and resumePath as reference fields only.
+- ServicesAdmin.tsx exposes iconPath as a reference field only.
+- SkillsAdmin.tsx exposes iconPath as a reference field only.
+- The Phase 07 data-access/forms persist these references as part of normal CMS CRUD; no first-class upload/replace/delete/staging workflow is present.
+- storage.rules already defines explicit admin-only write/delete boundaries for profile, service and skill media namespaces.
+- The existing project-media pipeline is materially different and is owned by Phase 08; it was not copied into Phase 07.
+- Existing Phase 07 verification covers the CMS/data-contract surfaces and was not weakened or replaced.
+
+Explicit contract decision:
+> **Profile / Services / Skills media fields are references only. First-class upload/replace/delete/staging lifecycle is outside the Phase 07 CMS contract unless a future phase explicitly adds it.**
+
+Correction scope:
+- Documentation/contract reconciliation only.
+- No media implementation was added.
+- No Storage rules were changed.
+- No production behavior was changed.
+- No dependency was added.
+- No unrelated finding was repaired.
+
+Files changed:
+- docs/repair-master-plan-post-audit-2026-09-27.md
+- docs/phase-repair-tracker.md
+
+Verification:
+- Re-read the affected Phase 07 CMS surfaces, media/storage contracts, existing Phase 07 harness, tracker and master plan before editing.
+- Re-read both modified documentation files after editing.
+- Confirmed the CP-09 decision is recorded as CP-09-A and that the reference-only boundary is explicit.
+- Confirmed no Phase 07 implementation, Storage rule, dependency or unrelated source file was changed.
+- No local testing, build, lint, TypeScript, emulator, browser, deployment or runtime verification was performed.
+
+Phase state:
+- CP-09 is **RESOLVED — CONTRACT DECISION A** at repository/documentation level.
+- Phase 07 remains **NOT CLOSED**.
+- Stage 6 has **NOT STARTED**.
