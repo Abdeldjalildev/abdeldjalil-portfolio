@@ -142,11 +142,18 @@ The Phase 13 repair pass changed the project-view effect dependency from `[proje
 **Owning area:** Phase 13.
 **Status:** resolved at repository level; runtime event verification remains pending.
 
-### CP-09 — Phase 07 media-management contract may be incomplete
+### CP-09 — Phase 07 media-management contract — RESOLVED BY OWNER DECISION
 
-Profile/services/skills expose media-path fields and Storage contracts, but their CMS workflows are weaker than the Phase 08 project media pipeline.
+The project owner selected **CP-09-A — Reference-only media contract**.
 
-**Owning area:** Phase 07. Requires contract-level inspection before deciding whether this is a defect.
+Explicit contract:
+- Profile, Services and Skills media fields are Storage-path references only.
+- First-class upload/replace/delete/selection/staging/promotion/cleanup lifecycle for these assets is outside the Phase 07 contract unless a future phase explicitly adds it.
+- Phase 07 CMS CRUD may store/edit the references; no dedicated media-management workflow is implied.
+- Existing Storage rules remain the authorization boundary.
+
+**Owning area:** Phase 07.
+**Disposition:** RESOLVED at contract/documentation level; Phase 07 remains open pending its normal verification and owner acceptance.
 
 ### CP-10 — Project media staging can leave orphaned draft objects after validation failure
 
@@ -1986,11 +1993,9 @@ These are Storage-path reference fields. The inspected Phase 07 implementation d
 
 This confirms the previously recorded P07-03 observation. However, the Phase 07 gate contract requires CMS CRUD/public rendering and does not explicitly require a dedicated media-upload workflow. Adding one would introduce a new media lifecycle and UI contract without owner authorization.
 
-**Disposition:** BLOCKED FOR CONTRACT CLARIFICATION / NO CODE CHANGE.
+**Disposition:** RESOLVED — CP-09-A / REFERENCE-ONLY CONTRACT.
 
-Required owner decision before implementation:
-1. **Reference-only contract:** keep manual Storage-path references and document them as the supported Phase 07 media operation; or
-2. **First-class media contract:** define upload/select/delete behavior, ownership, replacement cleanup, allowed paths/types/sizes, and UX before implementation.
+The supported Phase 07 media operation is storing/editing Storage-path references as part of CMS CRUD. First-class upload/select/delete/replacement/staging lifecycle is explicitly outside Phase 07 unless a future phase adds it. No media implementation was introduced.
 
 ### P07-CP01 — Storage path specificity remains dependent on the media decision
 
@@ -2504,7 +2509,7 @@ This section is authoritative for the current repository-level disposition after
 | CP-06 — Featured-project unpublish lifecycle | **FIXED — VERIFICATION REQUIRED** | Phase 08 unpublish flow clears/restores the featured reference within the repaired lifecycle; runtime/rules verification remains pending. |
 | CP-07 — Schema/rules aggregate-length mismatch | **FIXED — VERIFICATION REQUIRED** | Canonical limits and rules boundary handling were reconciled; executable rules verification remains pending. |
 | CP-08 — Duplicate project views on locale changes | **FIXED — VERIFICATION REQUIRED** | Project-view effect no longer depends on locale; browser/event verification remains pending. |
-| CP-09 — Phase 07 media-management contract | **OWNER ACTION / CONTRACT CLARIFICATION** | The audit did not establish that first-class upload/replace/delete CMS workflows are required by the current contract. No speculative code change was made. |
+| CP-09 — Phase 07 media-management contract | **RESOLVED — CP-09-A REFERENCE-ONLY CONTRACT** | Profile/Services/Skills media fields are references only; first-class upload/replace/delete/staging lifecycle is outside Phase 07 unless a future phase explicitly adds it. No media implementation was added. |
 | CP-10 — Orphaned staged project media | **FIXED — VERIFICATION REQUIRED** | Gallery cardinality is checked before staging and staged objects are tracked/cleaned on later batch failure. Runtime Storage verification remains pending. |
 | CP-11 — Full-object project-media buffering | **OPEN — HARDENING REQUIRED** | The promotion path still uses full-object download/upload semantics. This was not resolved by the repair pass and must not be reported as fixed. |
 | CP-12 — Dynamic project sitemap | **FIXED — VERIFICATION REQUIRED** | Dynamic sitemap implementation now derives published project URLs; deployed Hosting/Function behavior remains unverified. |
@@ -2532,3 +2537,43 @@ The Phase 08 repair pass resolved the confirmed lifecycle/staging/rollback findi
 Repository-level repair evidence does **not** constitute runtime evidence. The following remain verification tasks under the separate testing stage: local build/typecheck/lint execution, Firebase emulator rules execution, real Google sign-in, claim refresh/revocation, deployed Functions, Hosting rewrites, App Check enforcement, browser accessibility/RTL/responsive behavior, production configuration, and release rollback behavior.
 
 **Phase ledger:** remains owner-controlled under AGENTS.md; no phase is closed by this reconciliation.
+
+---
+
+# Stage 5 execution record — 2026-09-27
+
+## CP-09-A — Reference-only media contract
+
+**Status:** COMPLETED — GITHUB CONTRACT CORRECTION
+
+**Owner decision:** CP-09-A selected explicitly by the project owner.
+
+**Repository evidence rechecked:**
+- ProfileAdmin.tsx exposes avatarPath and resumePath as plain Storage-path reference fields.
+- ServicesAdmin.tsx exposes iconPath as a plain Storage-path reference field.
+- SkillsAdmin.tsx exposes iconPath as a plain Storage-path reference field.
+- The Phase 07 CMS/data-access flow persists these references as part of normal CRUD; it does not provide a first-class upload/replace/delete/staging workflow.
+- storage.rules already provides explicit admin-only write/delete boundaries for the profile, service and skill media namespaces.
+- The Project media lifecycle is owned by Phase 08 and was not copied into Phase 07.
+- scripts/test-phase07.mjs remains unchanged.
+
+**Contract decision recorded:**
+> Profile / Services / Skills media fields are references only. First-class upload/replace/delete/staging lifecycle is outside the Phase 07 CMS contract unless a future phase explicitly adds it.
+
+**Scope control:**
+- Documentation/contract reconciliation only.
+- No media implementation.
+- No Storage-rule change.
+- No production behavior change.
+- No dependency change.
+- No unrelated finding fixed.
+
+**Files changed:**
+- docs/repair-master-plan-post-audit-2026-09-27.md
+- docs/phase-repair-tracker.md
+
+**Verification boundary:**
+- Both modified documentation files were re-read after editing.
+- No source/config/dependency files outside the two documentation records were changed.
+- No local testing, build, lint, TypeScript, Firebase Emulator, browser, deployment or runtime verification was performed.
+- Phase 07 was not closed and Stage 6 was not started.
