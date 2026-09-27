@@ -2060,11 +2060,10 @@ No production code, dependency, Firestore rule, Storage rule, test, or phase led
 
 ## Remaining issues
 
-1. Owner must decide whether Phase 07 profile/service/skill media is reference-only or requires first-class CMS media management.
-2. If first-class management is required, a separate explicit media contract must define path ownership, upload/delete/replacement behavior, validation and cleanup.
-3. Runtime verification of Phase 07 remains pending.
-4. Phase 07 report/evidence completeness remains pending.
-5. Delete-concurrency hardening remains a non-blocking consideration.
+1. Runtime verification of Phase 07 remains pending.
+2. Phase 07 report/evidence completeness remains pending.
+3. Delete-concurrency hardening remains a non-blocking consideration.
+4. Any future first-class media lifecycle for Profile/Services/Skills requires a separate explicit owner-authorized contract and implementation stage.
 
 ## Owner-controlled phase status
 
