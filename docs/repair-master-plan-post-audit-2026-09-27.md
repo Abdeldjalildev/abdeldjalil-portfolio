@@ -1141,3 +1141,37 @@ No local build, lint, TypeScript, Emulator Suite, browser, deployment or runtime
 Phase 02 remains NOT CLOSED. F-06 (missing historical Phase 01–06 evidence) remains OPEN. No other repair was performed as part of this follow-up.
 
 Final source-repair commit: `41552411f0c8670942c5055d72cf6764444028a3`.
+
+
+# Final current repository disposition — 2026-09-27
+
+This section is the current repository-level reconciliation after the F-08 source repair. Earlier audit/stage records that described F-08 or CP-11 as open are intentionally preserved as historical evidence; the statuses below supersede those historical snapshots for current-state interpretation.
+
+| Finding | Current status | Evidence boundary |
+|---|---|---|
+| F-01 | **FIXED — VERIFICATION REQUIRED** | Auth runtime verification remains pending. |
+| F-02 | **FIXED — VERIFICATION REQUIRED** | Auth stale-result runtime verification remains pending. |
+| F-03 / CP-11 | **FIXED — VERIFICATION REQUIRED** | `moveProjectMedia` is the trusted server-side promotion path; runtime/deployed verification remains pending. |
+| F-04 | **FIXED — VERIFICATION REQUIRED** | Design-system preview runtime/visual verification remains pending. |
+| F-05 / CP-09 | **RESOLVED — CP-09-A REFERENCE-ONLY CONTRACT** | No Phase 07 media lifecycle implementation is required under the current contract. |
+| F-06 / CP-05 | **OPEN — EVIDENCE GAP** | Historical Phase 01–06 reports remain absent; no evidence is fabricated. |
+| F-07 | **RESOLVED — VERIFICATION SURFACE DEFINED** | Phase 02/03/06 remain runtime/visual/browser verification surfaces; Phase 05 has machine-checkable schema/rules coverage. |
+| F-08 | **FIXED — REPOSITORY/SOURCE LEVEL** | Build/runtime/visual verification remains pending. |
+
+## Current CP-09 contract
+
+CP-09-A is the owner-selected current contract. Profile, Services and Skills media fields are Storage-path references only; Phase 07 CMS CRUD may store/edit those references, but first-class upload/replace/delete/staging/promotion/cleanup is outside Phase 07 unless a future phase explicitly adds it. Project-media lifecycle remains under Phase 08.
+
+## Current CP-11 implementation
+
+The browser-side full-object promotion concern is repaired. `src/features/cms/projects.ts` delegates project-media movement to `moveProjectMedia`; `functions/index.js` performs the Storage copy/delete server-side with admin authorization, path validation, a maximum move count and rollback handling. No runtime/deployed PASS is claimed.
+
+## Current F-08 implementation
+
+The orphaned duplicated `colorSwatches.map(...)` fragment and unmatched closing markup were removed by commit `41552411f0c8670942c5055d72cf6764444028a3`. The current `DesignSystemPreview.tsx` contains the valid independent sections without that orphaned fragment. No runtime/build PASS is claimed.
+
+## Current evidence boundary
+
+F-06/CP-05 remains an honest historical evidence gap. The absence of Phase 01–06 reports is not treated as a source defect and no retrospective reports are to be fabricated.
+
+No phase is closed by this reconciliation. Runtime/local/deployed verification remains a separate stage.
