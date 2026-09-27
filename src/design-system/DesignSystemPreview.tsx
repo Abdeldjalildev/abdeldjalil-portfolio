@@ -248,17 +248,6 @@ export function DesignSystemPreview() {
         </SectionFrame>
 
         <Divider />
-            {colorSwatches.map((swatch) => (
-              <Stack key={swatch.label} gap="xs">
-                <div
-                  className={`h-12 rounded-md border border-border ${swatch.className}`}
-                  aria-hidden="true"
-                />
-                <Text variant="subtle">{swatch.label}</Text>
-              </Stack>
-            ))}
-          </div>
-        </SectionFrame>
 
 <SectionFrame
           title="Interactive states"
