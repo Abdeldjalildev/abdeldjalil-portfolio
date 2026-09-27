@@ -2616,3 +2616,24 @@ The GitHub combined-status query for current HEAD returned an empty status list.
 No local build, lint, TypeScript, Emulator Suite, browser, deployment or runtime testing was performed.
 
 Phase 07 and all other phases remain NOT CLOSED. No new phase was started.
+
+
+# F-08 follow-up repair record — 2026-09-27
+
+## Minimal GitHub-only source repair
+
+**Status:** FIXED — repository/source level; runtime/build verification required.
+
+The explicitly scoped follow-up removed only the orphaned duplicated `colorSwatches.map(...)` fragment and its unmatched closing `</div>` / `</SectionFrame>` from `src/design-system/DesignSystemPreview.tsx`.
+
+Verification confirmed:
+- starting HEAD was `1a20c8c3291b7a8e34e07a29289196922a33e9ac`;
+- the source diff is limited to `src/design-system/DesignSystemPreview.tsx` with 11 deletions and no additions;
+- the valid Colour tokens and Surfaces, depth and glass sections remain intact and separate;
+- exactly one `colorSwatches.map(...)` remains for the valid Colour tokens section;
+- the orphaned trailing fragment and unmatched closing markup are gone;
+- no dependencies, configuration, Firebase files, tests or unrelated production files changed.
+
+No local/runtime testing was performed. Phase 02 remains NOT CLOSED. F-06 remains OPEN. No unrelated repair was performed.
+
+Final source-repair commit: `41552411f0c8670942c5055d72cf6764444028a3`.
