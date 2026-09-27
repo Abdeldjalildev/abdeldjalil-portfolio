@@ -933,11 +933,13 @@ The delete UI does clear featured first, but unpublish does not.
 
 **Owning areas:** Phase 08 + Phase 12. Repair should keep the server-side invariant authoritative and make the CMS operation handle the lifecycle coherently.
 
-### P08-CP02 — Full-object media promotion uses `getBytes()` + `uploadBytes()`
+### P08-CP02 — Full-object media promotion uses `getBytes()` + `uploadBytes()` — HISTORICAL FINDING
 
-Promotion/unpublish movement buffers each entire object in memory. Individual project media is bounded, but repeated gallery operations can increase client memory pressure.
+The original Phase 08 audit found browser-side full-object buffering during promotion/unpublish. The repair pass subsequently replaced that path with the trusted `moveProjectMedia` callable and server-side Storage movement.
 
-**Owning areas:** Phase 08 / Phase 14 performance hardening. Not a closure blocker by itself at the current file limits.
+**Owning areas:** Phase 08 / Phase 14 performance hardening.
+
+**Current status:** **FIXED — VERIFICATION REQUIRED.** See the authoritative current post-repair disposition at the end of this tracker.
 
 ### P08-CP03 — Project media path classification is string-based
 
