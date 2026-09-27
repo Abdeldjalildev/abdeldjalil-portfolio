@@ -1112,3 +1112,32 @@ The repository is **not cleanly ready for local testing closure** because F-08 i
 No local command, build, lint, TypeScript check, Emulator Suite, browser test or deployment was executed.
 
 Phase ledger remains owner-controlled; no phase was closed and no new phase was started.
+
+
+# F-08 follow-up repair record — 2026-09-27
+
+## Minimal GitHub-only source repair
+
+**Status:** FIXED — repository/source level; runtime/build verification required.
+
+The explicitly scoped F-08 follow-up removed only the orphaned duplicated `colorSwatches.map(...)` fragment and its unmatched closing `</div>` / `</SectionFrame>` from `src/design-system/DesignSystemPreview.tsx`.
+
+### Verification
+
+- Starting HEAD: `1a20c8c3291b7a8e34e07a29289196922a33e9ac`.
+- The repository was identical to that Stage 6 final audit HEAD before the repair.
+- The source diff contains exactly one modified production file and 11 deletions, with no additions.
+- The valid `Colour tokens` section remains intact.
+- The valid `Surfaces, depth and glass` section remains an independent sibling section.
+- Only one `colorSwatches.map(...)` occurrence remains, corresponding to the valid Colour tokens section.
+- The orphaned trailing fragment and unmatched closing markup are absent.
+- `Interactive states` follows the preceding section without the orphaned markup.
+- No dependencies, configuration, Firebase files, tests or unrelated production files were changed.
+
+### Testing boundary
+
+No local build, lint, TypeScript, Emulator Suite, browser, deployment or runtime testing was performed. Therefore F-08 is fixed at repository/source level only and remains subject to runtime/build verification.
+
+Phase 02 remains NOT CLOSED. F-06 (missing historical Phase 01–06 evidence) remains OPEN. No other repair was performed as part of this follow-up.
+
+Final source-repair commit: `41552411f0c8670942c5055d72cf6764444028a3`.
