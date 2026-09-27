@@ -1,6 +1,7 @@
 const crypto = require('node:crypto')
 const { initializeApp } = require('firebase-admin/app')
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore')
+const { getStorage } = require('firebase-admin/storage')
 const { HttpsError, onCall } = require('firebase-functions/v2/https')
 const { onSchedule } = require('firebase-functions/v2/scheduler')
 const { setGlobalOptions } = require('firebase-functions/v2')
@@ -15,6 +16,81 @@ setGlobalOptions({
 })
 
 const db = getFirestore()
+
+const storageBucket = getStorage().bucket()
+const PROJECT_MEDIA_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
+
+function isAdminRequest(request) {
+  return request.auth != null && request.auth.token.admin === true
+}
+
+function parseProjectMediaPath(path) {
+  if (typeof path !== 'string' || path.length > 500) return null
+  const parts = path.split('/')
+  if (parts.length === 4 && parts[0] === 'projects' && (parts[2] === 'thumbnail' || parts[2] === 'gallery')) {
+    if (!PROJECT_MEDIA_SEGMENT.test(parts[1]) || !PROJECT_MEDIA_SEGMENT.test(parts[3])) return null
+    return { scope: 'public', projectId: parts[1], kind: parts[2], fileName: parts[3] }
+  }
+  if (parts.length === 3 && parts[0] === 'drafts') {
+    const match = /^project-([A-Za-z0-9][A-Za-z0-9._-]*)-(thumbnail|gallery)$/.exec(parts[1])
+    if (!match || !PROJECT_MEDIA_SEGMENT.test(parts[2])) return null
+    return { scope: 'draft', projectId: match[1], kind: match[2], fileName: parts[2] }
+  }
+  return null
+}
+
+function validateProjectMediaMove(move) {
+  if (!isPlainObject(move)) return null
+  const from = parseProjectMediaPath(move.fromPath)
+  const to = parseProjectMediaPath(move.toPath)
+  if (!from || !to || from.projectId !== to.projectId || from.kind !== to.kind || move.fromPath === move.toPath) {
+    return null
+  }
+  if (from.scope === to.scope) return null
+  if (from.fileName !== to.fileName) return null
+  return { fromPath: move.fromPath, toPath: move.toPath }
+}
+
+exports.moveProjectMedia = onCall(async request => {
+  if (!isAdminRequest(request)) {
+    throw new HttpsError('permission-denied', 'Admin access is required.')
+  }
+  if (!isPlainObject(request.data) || !Array.isArray(request.data.moves) || request.data.moves.length < 1 || request.data.moves.length > 12) {
+    throw new HttpsError('invalid-argument', 'Invalid project media move request.')
+  }
+
+  const moves = request.data.moves.map(validateProjectMediaMove)
+  if (moves.some(move => move == null)) {
+    throw new HttpsError('invalid-argument', 'Invalid project media move.')
+  }
+
+  const moved = []
+  try {
+    for (const move of moves) {
+      const source = storageBucket.file(move.fromPath)
+      const target = storageBucket.file(move.toPath)
+      const [exists] = await source.exists()
+      if (!exists) throw new HttpsError('not-found', 'Project media source does not exist.')
+      await source.copy(target)
+      await source.delete()
+      moved.push(move.toPath)
+    }
+    return { moved }
+  } catch (error) {
+    for (const path of [...moved].reverse()) {
+      const move = moves.find(item => item.toPath === path)
+      if (!move) continue
+      try {
+        await storageBucket.file(path).copy(storageBucket.file(move.fromPath))
+        await storageBucket.file(path).delete()
+      } catch (rollbackError) {
+        console.error('Project media move rollback failed.', rollbackError)
+      }
+    }
+    if (error instanceof HttpsError) throw error
+    throw new HttpsError('internal', 'Project media move failed.')
+  }
+})
 
 const EVENTS = new Set([
   'page_view',
