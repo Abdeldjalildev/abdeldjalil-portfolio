@@ -923,3 +923,34 @@ Phase state:
 - F-03 remains VERIFICATION REQUIRED for runtime behavior and deployed Functions/Storage integration.
 - Phase 08 and Phase 14 are NOT CLOSED.
 - Stage 3 has NOT STARTED.
+
+
+---
+
+# Stage 3 execution record — 2026-09-27
+
+## F-04 / P02-02 — Phase 02 DesignSystemPreview structural verification
+
+Status: FIXED — GITHUB CORRECTION COMPLETE
+
+Correction:
+- `src/design-system/DesignSystemPreview.tsx` now renders the `Colour tokens` verification section as a complete independent section.
+- `Surfaces, depth and glass` is now a separate sibling `SectionFrame`, separated by its own divider.
+- No production design tokens, reusable components, Tailwind configuration, routing, localization, or runtime behavior were changed.
+
+Changed files:
+- `src/design-system/DesignSystemPreview.tsx` — corrected only the verification-surface structural hierarchy and formatting.
+- `docs/repair-master-plan-post-audit-2026-09-27.md` — recorded Stage 3 completion and verification boundary.
+
+Verification:
+- Re-read the modified DesignSystemPreview source from GitHub after the edit.
+- Confirmed the colour swatches are fully contained by the `Colour tokens` SectionFrame before its closing tag.
+- Confirmed `Surfaces, depth and glass` begins in a separate sibling SectionFrame after a Divider.
+- Confirmed the Stage 3 diff contains no other source/config/dependency changes.
+- No suitable dedicated Phase 02 harness was identified that needed modification for this isolated structural cleanup; no synthetic test was added.
+- No local build, lint, browser, or visual runtime test was executed in this GitHub-only stage.
+
+Phase state:
+- F-04 is FIXED at repository level.
+- Phase 02 is NOT CLOSED.
+- Stage 4 has NOT STARTED.
