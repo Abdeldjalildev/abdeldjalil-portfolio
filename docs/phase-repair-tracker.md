@@ -2576,3 +2576,43 @@ Repository-level repair evidence does **not** constitute runtime evidence. The f
 - No source/config/dependency files outside the two documentation records were changed.
 - No local testing, build, lint, TypeScript, Firebase Emulator, browser, deployment or runtime verification was performed.
 - Phase 07 was not closed and Stage 6 was not started.
+
+
+---
+
+# Stage 6 execution record — 2026-09-27
+
+## Final GitHub pre-testing audit
+
+**Status:** PARTIAL — F-08 remains an open confirmed source defect.
+
+Rechecked:
+- F-01 through F-07 dispositions;
+- CP-01 through CP-14 carried-forward dispositions;
+- CP-09-A reference-only contract;
+- Phase 04 auth repair;
+- Phase 08 project-media promotion repair;
+- Phase 02 DesignSystemPreview correction;
+- Phase 05 schema/rules verification surface;
+- repair-document consistency;
+- AGENTS.md authority and owner-controlled phase ledger;
+- dependency/source scope;
+- GitHub commit status.
+
+### F-08 final disposition
+
+F-08 remains **OPEN — CONFIRMED**.
+
+`src/design-system/DesignSystemPreview.tsx` still contains an orphaned second `colorSwatches.map(...)` fragment after the independent `Surfaces, depth and glass` section, followed by unmatched closing markup. The existing Stage 4 baseline comparison establishes that this predates Stage 3.
+
+No source repair was performed during Stage 6. The defect is documented in the Master Plan and must be repaired in an explicitly scoped follow-up before treating the repository as clean for local verification.
+
+### CI boundary
+
+The GitHub combined-status query for current HEAD returned an empty status list. No CI PASS/FAIL result is therefore available from that status surface.
+
+### Testing boundary
+
+No local build, lint, TypeScript, Emulator Suite, browser, deployment or runtime testing was performed.
+
+Phase 07 and all other phases remain NOT CLOSED. No new phase was started.
