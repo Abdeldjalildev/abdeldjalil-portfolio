@@ -883,3 +883,43 @@ Phase 04 is NOT CLOSED. Stage 1 completion is repository correction only and doe
 - Stage 1: COMPLETE at GitHub correction level.
 - Phase 04: NOT CLOSED.
 - Stage 2: NOT STARTED.
+
+
+---
+
+# Stage 2 execution record — 2026-09-27
+
+## F-03 / CP-11 — Full-object project-media promotion
+
+Status: FIXED — GITHUB CORRECTION COMPLETE; RUNTIME VERIFICATION REQUIRED
+
+Correction:
+- Removed the browser-side `getBytes()` + `uploadBytes()` promotion path from `src/features/cms/projects.ts`.
+- Project media promotion/unpublication now delegates object movement to the trusted `moveProjectMedia` callable.
+- The callable uses the Firebase Admin Storage bucket server-side and performs object copy/delete without buffering the object in the browser.
+- The callable requires the Firebase Auth `admin == true` claim and validates that each move is a same-project, same-media-kind transition between the project draft namespace and its corresponding public namespace.
+- Source and target filenames must match, paths are constrained to the canonical project-media shapes, and batch size is capped at 12.
+- Completed moves are tracked before source deletion so a source-delete failure can still be rolled back.
+- The callable retains rollback for earlier completed moves if a later move fails.
+- Existing client-side staging, file-type/size validation, gallery cardinality checks, Firestore transaction/concurrency handling, public-path selection, cleanup, and publish/unpublish lifecycle behavior remain in place.
+- Firebase Admin Storage copy preserves the stored object metadata/content type; no client-side byte buffering is introduced.
+
+Changed files:
+- `src/features/cms/projects.ts` — replaced full-object promotion with the trusted callable.
+- `functions/index.js` — added the authenticated server-side project media move callable with path validation and rollback.
+- `scripts/test-phase08.mjs` — strengthened the Phase 08 static contract to reject browser-side full-object promotion and require the trusted callable/security/rollback contract.
+- `docs/repair-master-plan-post-audit-2026-09-27.md` — recorded the Stage 2 correction and verification boundary.
+
+Verification boundary:
+- Re-read the complete corrected project-media path and the new callable implementation.
+- Confirmed the project promotion path no longer imports or calls `getBytes()` or `copyStorageObject()`.
+- Confirmed the callable requires the admin claim, uses the Admin Storage bucket, validates path shape/project/kind/filename, tracks moves before source deletion, and retains rollback.
+- Confirmed existing Phase 08 rollback, staging, gallery cardinality, cleanup and optimistic-concurrency contracts remain present.
+- Confirmed no dependency change was required.
+- No local build, emulator, browser, Functions deployment, or production Storage runtime test was executed in this GitHub-only stage.
+
+Phase state:
+- F-03 is FIXED at repository level.
+- F-03 remains VERIFICATION REQUIRED for runtime behavior and deployed Functions/Storage integration.
+- Phase 08 and Phase 14 are NOT CLOSED.
+- Stage 3 has NOT STARTED.
