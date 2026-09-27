@@ -170,6 +170,21 @@ export function DesignSystemPreview() {
           description="Semantic roles only. Components never reference raw colour values."
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {colorSwatches.map((swatch) => (
+              <Stack key={swatch.label} gap="xs">
+                <div
+                  className={`h-12 rounded-md border border-border ${swatch.className}`}
+                  aria-hidden="true"
+                />
+                <Text variant="subtle">{swatch.label}</Text>
+              </Stack>
+            ))}
+          </div>
+
+        </SectionFrame>
+
+        <Divider />
+
 <SectionFrame
           title="Surfaces, depth and glass"
           description="Four surface variants and four shadow tokens. Glass is an intentional variant, never the default."
