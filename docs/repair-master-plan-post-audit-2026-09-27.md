@@ -832,3 +832,54 @@ PHASE-CLOSED
 = all AGENTS.md gates and owner acceptance requirements are satisfied.
 
 Never use one state as a substitute for another.
+
+
+---
+
+# 12. Stage 1 execution record — 2026-09-27
+
+## F-01 — Manual auth claim refresh failure handling
+Status: FIXED — GITHUB CORRECTION COMPLETE; RUNTIME VERIFICATION REMAINS REQUIRED
+
+Correction:
+- AuthProvider.refetch() now treats forced claim loading as an authorization-state transition.
+- It enters deny-by-default loading state before the forced token read.
+- Claim-read failures are caught and resolve to unauthenticated state for the current request instead of propagating an unhandled rejection or retaining stale admin claims.
+- A successful refresh is published only after the request generation and current Firebase user UID are revalidated.
+
+## F-02 — Async auth stale-result race
+Status: FIXED — GITHUB CORRECTION COMPLETE; RUNTIME VERIFICATION REMAINS REQUIRED
+
+Correction:
+- AuthProvider now uses a monotonic request generation ref shared by auth-state claim loading and manual refetch.
+- Each async auth operation captures its generation and ignores results from older generations.
+- Before publishing authenticated claims, the implementation also rechecks auth.currentUser and the expected UID.
+- Provider cleanup invalidates in-flight reads.
+- No authorization state is persisted in localStorage/sessionStorage.
+
+## Stage 1 repository changes
+
+Changed files:
+- src/auth/AuthProvider.tsx — hardened claim refresh failure handling and stale-result protection.
+- scripts/test-phase04.mjs — added a contract-backed static Phase 04 auth harness covering failure, generation guards, current-user validation, cleanup invalidation and client-side authorization persistence boundaries.
+- package.json — registered test:phase04 for the new harness; no dependency change.
+
+Not changed:
+- AGENTS.md remains authoritative and unchanged.
+- src/auth/context.ts was inspected and required no modification.
+- AdminAccessBoundary and admin routes were inspected and required no modification.
+- Firestore/Storage authorization boundaries were not changed.
+
+## Stage 1 verification boundary
+
+GitHub-side verification completed by re-reading the modified AuthProvider and dependent auth/admin files and checking the new Phase 04 harness contract. The harness has been added but was NOT executed in this GitHub-only stage, so runtime behavior, Firebase token-refresh behavior, browser lifecycle timing and emulator integration remain unverified until the local/runtime verification stage.
+
+Phase 04 is NOT CLOSED. Stage 1 completion is repository correction only and does not satisfy the six-gate Phase 04 closure requirements or owner acceptance.
+
+## Stage 1 result
+
+- F-01: FIXED at repository level; runtime verification required.
+- F-02: FIXED at repository level; runtime verification required.
+- Stage 1: COMPLETE at GitHub correction level.
+- Phase 04: NOT CLOSED.
+- Stage 2: NOT STARTED.
