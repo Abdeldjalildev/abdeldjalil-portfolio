@@ -52,7 +52,7 @@ The fresh audit found a small set of actionable GitHub-side corrections plus evi
 ## Actionable technical corrections
 
 ### F-01 — Phase 04 manual auth claim refresh failure handling
-Status: OPEN
+Status: FIXED — VERIFICATION REQUIRED
 Severity: HIGH
 Owner: Phase 04
 
@@ -88,7 +88,7 @@ Do not:
 ---
 
 ### F-02 — Phase 04 async auth-state stale-result race
-Status: OPEN
+Status: FIXED — VERIFICATION REQUIRED
 Severity: HIGH
 Owner: Phase 04
 
@@ -118,7 +118,7 @@ Do not:
 ---
 
 ### F-03 — CP-11 full-object project-media promotion
-Status: OPEN
+Status: FIXED — VERIFICATION REQUIRED
 Severity: MEDIUM/HIGH
 Owner: Phase 08 / Phase 14
 
@@ -159,7 +159,7 @@ Do not:
 ---
 
 ### F-04 — Phase 02 DesignSystemPreview structural verification defect
-Status: OPEN
+Status: FIXED — VERIFICATION REQUIRED
 Severity: LOW
 Owner: Phase 02
 
@@ -221,7 +221,7 @@ Keep historical evidence explicitly distinct from new current-state verification
 ---
 
 ### F-07 — Phase 02/03/05/06 dedicated harness coverage gap
-Status: OPEN — TEST PREPARATION
+Status: RESOLVED AT REPOSITORY-CONTRACT LEVEL
 Severity: MEDIUM
 Owner: respective phases / Phase 15 evidence
 
@@ -1058,3 +1058,57 @@ Phase state:
 - CP-09 is **RESOLVED — CONTRACT DECISION A** at repository/documentation level.
 - Phase 07 remains **NOT CLOSED**.
 - Stage 6 has **NOT STARTED**.
+
+
+# Stage 6 execution record — 2026-09-27
+
+## Final GitHub pre-testing audit
+
+**Status: PARTIAL — one confirmed source defect remains open**
+
+The final audit rechecked the repair plan, tracker, governing contract, affected implementation surfaces, verification harnesses, Firebase rules/configuration, dependency declarations and GitHub commit status.
+
+### Disposition reconciliation
+
+- F-01 — FIXED at repository level; runtime verification required.
+- F-02 — FIXED at repository level; runtime verification required.
+- F-03 / CP-11 — FIXED at repository level through the trusted `moveProjectMedia` callable; runtime/deployed verification required.
+- F-04 — FIXED at repository level; runtime/visual verification required.
+- F-05 / CP-09 — RESOLVED by owner decision CP-09-A; reference-only media contract.
+- F-06 — OPEN evidence gap; no historical Phase 01–06 evidence was fabricated.
+- F-07 — RESOLVED at repository-contract level; Phase 02/03/06 remain runtime/visual verification surfaces and Phase 05 has existing schema/rules coverage.
+- F-08 — OPEN and CONFIRMED during this final audit; see below.
+
+### F-08 confirmation
+
+The previously recorded F-08 is still present in `src/design-system/DesignSystemPreview.tsx`.
+
+After the valid independent `Surfaces, depth and glass` section closes, the file contains a second `colorSwatches.map(...)` fragment followed by a closing `</div>` and `</SectionFrame>` without a corresponding opening section at that location.
+
+This is a confirmed source/JSX structural defect, not merely a historical note. It predates Stage 3 according to the existing baseline comparison and remains outside the completed Stage 3 correction.
+
+**Action:** F-08 is documented as an open confirmed defect. It was **not fixed during Stage 6**, because the stage protocol requires documenting a newly confirmed defect before any correction and this final audit is not authorized to expand into an unplanned source repair.
+
+### Regression / contract checks
+
+- Phase 04 generation guard, current-user identity checks, fail-closed refresh behavior and no authorization persistence remain present.
+- Phase 08 browser-side `getBytes()`/copy helper usage remains absent; trusted `moveProjectMedia` callable and server-side copy/delete/rollback remain present.
+- DesignSystemPreview contains the corrected independent Colour tokens and Surfaces sections, but also retains the pre-existing F-08 orphan fragment.
+- CP-09-A reference-only boundary remains explicit in both repair documents.
+- Storage rules remain unchanged by Stages 1–6.
+- No dependency additions were introduced by the repair stages.
+- No unrelated production source changes were introduced by Stage 6.
+
+### GitHub / CI state
+
+Current HEAD: `6c2da9a67c47b691c1d6447a6f4ace723a702c69`.
+
+The GitHub combined-status query returned an empty status list for this commit. Therefore there is **no CI check result available to report as PASS or FAIL** from the repository status surface inspected. This is not treated as CI failure.
+
+### Local-testing readiness
+
+The repository is **not cleanly ready for local testing closure** because F-08 is a confirmed source/JSX defect that should be repaired before relying on local build/runtime evidence.
+
+No local command, build, lint, TypeScript check, Emulator Suite, browser test or deployment was executed.
+
+Phase ledger remains owner-controlled; no phase was closed and no new phase was started.
