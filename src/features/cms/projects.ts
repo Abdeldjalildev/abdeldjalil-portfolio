@@ -12,6 +12,7 @@ import {
 import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 import { getFirebaseApp } from '../../firebase/app.ts'
 import {
   projectInputSchema,
