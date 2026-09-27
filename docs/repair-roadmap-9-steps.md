@@ -336,12 +336,14 @@ This section records the final repository-level interpretation of the nine-step 
 
 ## Residual work before testing
 
-Before the separate runtime testing stage begins, the repository has two non-runtime dispositions that must remain visible:
+Before the separate runtime testing stage begins, the repository has one remaining documentation/evidence gap that must remain visible:
 
-1. **CP-09:** owner/contract clarification for Phase 07 media-management semantics.
-2. **CP-11:** open project-media full-object buffering hardening concern.
+1. **CP-05 / F-06:** historical Phase 01–06 evidence is absent. This must remain explicitly documented; no retrospective reports are to be fabricated.
 
-The historical **CP-05** evidence gap must also remain explicitly documented.
+The previously open CP-09 and CP-11 repository-level items have been reconciled:
+- **CP-09:** resolved by owner decision **CP-09-A — Reference-only media contract**. No additional Phase 07 implementation is required under the current contract.
+- **CP-11:** fixed at repository/source level through the trusted **moveProjectMedia** callable; runtime/deployed verification remains pending.
+- **F-08:** fixed at repository/source level; build/runtime/visual verification remains pending.
 
 ## Testing boundary
 
