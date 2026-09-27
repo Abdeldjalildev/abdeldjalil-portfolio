@@ -2637,3 +2637,29 @@ Verification confirmed:
 No local/runtime testing was performed. Phase 02 remains NOT CLOSED. F-06 remains OPEN. No unrelated repair was performed.
 
 Final source-repair commit: `41552411f0c8670942c5055d72cf6764444028a3`.
+
+
+# Current post-repair disposition — 2026-09-27
+
+This section is authoritative for the repository-level status after the F-08 source repair. Earlier Stage 6 text that described F-08 or CP-11 as open is preserved as historical audit evidence and is not the current disposition.
+
+| Finding | Current repository disposition | Verification boundary |
+|---|---|---|
+| F-08 | **FIXED — repository/source level** | Build/runtime/visual verification remains required. |
+| CP-11 / F-03 | **FIXED — repository/source level** through the trusted `moveProjectMedia` callable | Runtime/deployed verification remains required. No browser-side full-object buffering remains in the project promotion path. |
+| CP-09 | **RESOLVED — CP-09-A reference-only contract** | No implementation is required under the current Phase 07 contract; Phase 07 itself remains open. |
+| F-06 / CP-05 | **OPEN — HISTORICAL EVIDENCE GAP** | Phase 01–06 reports are absent; no retrospective evidence is to be fabricated. |
+
+## Current F-08 evidence
+
+The F-08 follow-up repair commit `41552411f0c8670942c5055d72cf6764444028a3` removed the orphaned duplicated `colorSwatches.map(...)` fragment and unmatched closing markup from `src/design-system/DesignSystemPreview.tsx`. The current source contains the valid independent Colour tokens and Surfaces sections with no remaining orphaned fragment.
+
+## Current CP-11 evidence
+
+The project promotion path in `src/features/cms/projects.ts` delegates movement to the trusted `moveProjectMedia` callable and no longer uses browser-side `getBytes()`/full-object copy semantics. The corresponding Cloud Function in `functions/index.js` performs server-side Storage copy/delete with admin authorization, validation, bounded moves and rollback handling.
+
+## Current CP-09 evidence
+
+CP-09-A is the current owner-selected contract: Profile/Services/Skills media fields are reference-only Storage paths. First-class upload/replace/delete/staging/promotion/cleanup is outside Phase 07 unless a future phase explicitly adds it. Project-media lifecycle remains owned by Phase 08.
+
+No phase is closed by this disposition.
