@@ -72,8 +72,8 @@ exports.moveProjectMedia = onCall(async request => {
       const [exists] = await source.exists()
       if (!exists) throw new HttpsError('not-found', 'Project media source does not exist.')
       await source.copy(target)
-      await source.delete()
       moved.push(move.toPath)
+      await source.delete()
     }
     return { moved }
   } catch (error) {
