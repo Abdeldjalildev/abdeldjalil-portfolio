@@ -180,12 +180,11 @@ export function DesignSystemPreview() {
               </Stack>
             ))}
           </div>
-
         </SectionFrame>
 
         <Divider />
 
-<SectionFrame
+        <SectionFrame
           title="Surfaces, depth and glass"
           description="Four surface variants and four shadow tokens. Glass is an intentional variant, never the default."
         >
